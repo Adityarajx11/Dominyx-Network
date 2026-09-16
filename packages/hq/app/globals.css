@@ -628,6 +628,7 @@ textarea {
   height: 26px;
   border-radius: 99px;
   background: #26263f;
+  border: 1px solid rgba(255, 255, 255, 0.22);
   position: relative;
   transition: background 0.16s ease;
   flex-shrink: 0;

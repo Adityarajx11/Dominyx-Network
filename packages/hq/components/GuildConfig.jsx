@@ -2,13 +2,12 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { BOTS } from '@/lib/bots';
-import { getInviteUrl } from '@/lib/invite';
 import { Field, Toggle, Select, SaveBar } from './ui';
 
 const TEXT_TYPES = [0, 5];
 const CATEGORY_TYPE = 4;
 
-export default function GuildConfig({ guildId, botsPresent = {} }) {
+export default function GuildConfig({ guildId, botsPresent = {}, inviteUrls = {} }) {
   const [data, setData] = useState(null);
   const [active, setActive] = useState('music');
   const [revision, setRevision] = useState(0);
@@ -104,7 +103,7 @@ export default function GuildConfig({ guildId, botsPresent = {} }) {
               <h3 style={{ fontSize: 14, marginBottom: 12 }}>Add more bots</h3>
               <div className="invite-links">
                 {absentBots.map((bot) => {
-                  const url = getInviteUrl(bot.id);
+                  const url = inviteUrls[bot.id];
                   if (!url) return null;
                   return (
                     <a key={bot.id} className="btn btn-discord btn-sm" href={url} target="_blank" rel="noreferrer">
