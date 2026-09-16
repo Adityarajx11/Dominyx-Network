@@ -2,9 +2,9 @@ const { clientId, clientSecret, redirectUri, botToken } = require('./env');
 
 const API = 'https://discord.com/api/v10';
 
-async function discordFetch(path, { token, method = 'GET', body } = {}) {
+async function discordFetch(path, { token, bot, method = 'GET', body } = {}) {
   const headers = {
-    Authorization: token ? `Bearer ${token}` : `Bot ${botToken}`,
+    Authorization: token ? `Bearer ${token}` : `Bot ${bot || botToken}`,
     'Content-Type': 'application/json',
   };
   const res = await fetch(`${API}${path}`, {
@@ -25,7 +25,7 @@ function oauthAuthorizeUrl(state) {
     client_id: clientId,
     response_type: 'code',
     redirect_uri: redirectUri,
-    scope: 'identify guilds guilds.channels',
+    scope: 'identify guilds',
     prompt: 'none',
   });
   if (state) params.set('state', state);
@@ -99,16 +99,16 @@ function canManage(permissions) {
   return (bits & ADMINISTRATOR) === ADMINISTRATOR || (bits & MANAGE_GUILD) === MANAGE_GUILD;
 }
 
-async function getGuild(guildId, token) {
-  return discordFetch(`/guilds/${guildId}`, { token });
+async function getGuild(guildId, botOverride) {
+  return discordFetch(`/guilds/${guildId}`, { bot: botOverride });
 }
 
-async function getGuildChannels(guildId, token) {
-  return discordFetch(`/guilds/${guildId}/channels`, { token });
+async function getGuildChannels(guildId, botOverride) {
+  return discordFetch(`/guilds/${guildId}/channels`, { bot: botOverride });
 }
 
-async function getGuildRoles(guildId, token) {
-  return discordFetch(`/guilds/${guildId}/roles`, { token });
+async function getGuildRoles(guildId, botOverride) {
+  return discordFetch(`/guilds/${guildId}/roles`, { bot: botOverride });
 }
 
 async function getBotsInGuild(guildId, token) {
@@ -134,6 +134,27 @@ async function getBotsInGuild(guildId, token) {
   await Promise.all(checks);
   return Object.keys(present).length > 0 ? present : null;
 }
+
+const BOT_TOKEN_MAP = {
+  music: () => process.env.BOT_TOKEN_MUSIC,
+  level: () => process.env.BOT_TOKEN_LEVEL,
+  greet: () => process.env.BOT_TOKEN_GREET,
+  ticket: () => process.env.BOT_TOKEN_TICKET,
+  ping: () => process.env.BOT_TOKEN_PING,
+  guard: () => process.env.BOT_TOKEN_GUARD,
+};
+
+// Returns a bot token that is in the given guild (for reading channels/roles).
+async function getGuildBotToken(guildId) {
+  const present = await getBotsInGuild(guildId);
+  if (present) {
+    for (const botId of Object.keys(present)) {
+      const t = BOT_TOKEN_MAP[botId]?.();
+      if (t) return t;
+    }
+  }
+  return botToken;
+}
 module.exports = {
   oauthAuthorizeUrl,
   exchangeCode,
@@ -145,4 +166,5 @@ module.exports = {
   getGuildChannels,
   getGuildRoles,
   getBotsInGuild,
+  getGuildBotToken,
 };

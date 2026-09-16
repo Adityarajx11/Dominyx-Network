@@ -1,17 +1,18 @@
 import { NextResponse } from 'next/server';
 import { requireGuildAccess } from '@/lib/auth';
 import { readConfigs, applyPatch } from '@/lib/configStore';
-import { getGuild, getGuildChannels, getGuildRoles } from '@/lib/discord';
+import { getGuild, getGuildChannels, getGuildRoles, getGuildBotToken } from '@/lib/discord';
 
 export async function GET(request, { params }) {
   try {
     const guildId = params.guildId;
-    const access = await requireGuildAccess(guildId);
+    await requireGuildAccess(guildId);
+    const botToken = await getGuildBotToken(guildId);
 
     const [guild, channels, roles, configs] = await Promise.all([
-      getGuild(guildId, access.token),
-      getGuildChannels(guildId, access.token),
-      getGuildRoles(guildId, access.token),
+      getGuild(guildId, botToken),
+      getGuildChannels(guildId, botToken),
+      getGuildRoles(guildId, botToken),
       readConfigs(guildId),
     ]);
 
