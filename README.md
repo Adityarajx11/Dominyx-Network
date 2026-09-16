@@ -1,21 +1,21 @@
-# Rook Network
+# Dominyx
 
-A family of single-purpose Discord bots, sharing one core package. Each bot lives in `packages/` and deploys independently to Railway.
+A family of single-purpose Discord bots, sharing one core package. Each bot lives in `packages/` and deploys independently to Railway. Hub: **Dominyx HQ**.
 
 ## Members
 
 | Bot | Package | Purpose |
 | --- | --- | --- |
-| Rook Music | `packages/music` | Lavalink music player: play, queue, skip, stop, loop, shuffle, volume, nowplaying, 24/7, personal playlists |
+| Dominyx Music | `packages/music` | Lavalink music player: play, queue, skip, stop, loop, shuffle, volume, nowplaying, 24/7, personal playlists |
 
-Planned: Rook Guard (security/moderation), Rook Level (XP + greeting), Rook Tickets, Rook Ping (YouTube/streamers), Rook HQ (web dashboard).
+Planned: Dominyx Guard (security/moderation), Dominyx Level (XP + greeting), Dominyx Tickets, Dominyx Ping (YouTube/streamers), Dominyx HQ (web dashboard).
 
 ## Repo layout
 
 ```
 packages/
-  core/    @rook/core — shared command loader, deploy, embeds, Postgres pool
-  music/   rook-music — the music bot
+  core/    @dominyx/core — shared command loader, deploy, embeds, Postgres pool
+  music/   dominyx-music — the music bot
 ```
 
 ## Setup
@@ -30,4 +30,4 @@ packages/
 - CommonJS `require`/`module.exports` — never ESM.
 - Slash commands export `{ data: SlashCommandBuilder, execute(interaction, client) }`; run deploy after adding/modifying.
 - Events export `{ name, once?, execute(...args, client) }`; no deploy needed.
-- Shared code goes in `@rook/core`; per-bot state uses its own Postgres table via `init*` functions in that bot's `events/ready.js`.
+- Shared code goes in `@dominyx/core`; per-bot state uses its own Postgres table via `init*` functions in that bot's `events/ready.js`.

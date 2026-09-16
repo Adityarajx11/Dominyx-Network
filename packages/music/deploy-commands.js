@@ -1,6 +1,6 @@
 require('dotenv').config();
 const path = require('path');
-const { deployCommands } = require('@rook/core');
+const { deployCommands } = require('@dominyx/core');
 
 deployCommands(path.join(__dirname, 'commands'))
   .then(() => process.exit(0))

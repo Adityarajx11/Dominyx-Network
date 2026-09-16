@@ -2,7 +2,7 @@ require('dotenv').config();
 const path = require('path');
 const { Client, GatewayIntentBits } = require('discord.js');
 
-const { loadCommands, loadEvents } = require('@rook/core');
+const { loadCommands, loadEvents } = require('@dominyx/core');
 const { attachLavalink, getManager } = require('./lib/lavalink');
 
 const client = new Client({

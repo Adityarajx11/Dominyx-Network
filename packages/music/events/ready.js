@@ -1,4 +1,4 @@
-const { initDatabase } = require('@rook/core');
+const { initDatabase } = require('@dominyx/core');
 const { initManager } = require('../lib/lavalink');
 const { initMusicSettings } = require('../lib/settings');
 

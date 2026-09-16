@@ -1,4 +1,4 @@
-const { pool } = require('@rook/core');
+const { pool } = require('@dominyx/core');
 
 async function initMusicSettings() {
   await pool.query(`
