@@ -16,7 +16,7 @@ export default async function GuildPage({ params }) {
     access = { error: err.message };
   }
 
-  let botsPresent = {};
+  let botsPresent = null;
   if (access.token && access.guild) {
     try {
       botsPresent = await getBotsInGuild(guildId, access.token);

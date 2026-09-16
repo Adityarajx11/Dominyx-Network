@@ -14,8 +14,8 @@ export default function GuildConfig({ guildId, botsPresent = {} }) {
   const [revision, setRevision] = useState(0);
   const [error, setError] = useState(null);
 
-  const presentBots = BOTS.filter((b) => botsPresent[b.id]);
-  const absentBots = BOTS.filter((b) => !botsPresent[b.id]);
+  const presentBots = botsPresent ? BOTS.filter((b) => botsPresent[b.id]) : BOTS;
+  const absentBots = botsPresent ? BOTS.filter((b) => !botsPresent[b.id]) : [];
 
   useEffect(() => {
     if (presentBots.length > 0 && !presentBots.find((b) => b.id === active)) {
