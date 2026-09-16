@@ -1,0 +1,58 @@
+export const BOTS = [
+  {
+    id: 'music',
+    name: 'Dominyx Music',
+    emoji: '🎵',
+    tagline: 'High-quality Lavalink playback',
+    description: '24/7 queue, radio-quality audio, and a full control panel with loop, shuffle, volume and now-playing buttons.',
+    features: ['Lavalink audio', '24/7 mode', 'Queue & playlists', 'Now-playing buttons'],
+    color: '#8B5CF6',
+  },
+  {
+    id: 'level',
+    name: 'Dominyx Level',
+    emoji: '🏆',
+    tagline: 'XP ranks & rewards',
+    description: 'Everyone earns XP while chatting. Climb rank, earn role-based rewards at set levels.',
+    features: ['XP per message', 'Rank & leaderboard', 'Level role rewards', 'Custom announcements'],
+    color: '#2ECC71',
+  },
+  {
+    id: 'greet',
+    name: 'Dominyx Greet',
+    emoji: '👋',
+    tagline: 'Crimson welcome cards',
+    description: 'Stunning red-and-black welcome cards on join, custom welcome text, and automatic member roles.',
+    features: ['Canvas welcome cards', 'Custom messages', 'Auto-role on join'],
+    color: '#DC143C',
+  },
+  {
+    id: 'ticket',
+    name: 'Dominyx Ticket',
+    emoji: '🎫',
+    tagline: 'Support made simple',
+    description: 'One-click ticket panels with categories, staff claims, priorities, and full transcripts to your log channel.',
+    features: ['Ticket panels', 'Categories & priority', 'Staff claims', 'Transcripts'],
+    color: '#F59E0B',
+  },
+  {
+    id: 'ping',
+    name: 'Dominyx Ping',
+    emoji: '📡',
+    tagline: 'YouTube live alerts',
+    description: 'Watches YouTube channels and pings the moment a creator goes live.',
+    features: ['Live detection', 'Custom alert channel', 'Per-server config'],
+    color: '#3B82F6',
+  },
+  {
+    id: 'guard',
+    name: 'Dominyx Guard',
+    emoji: '🛡️',
+    tagline: 'Security & moderation',
+    description: 'Bans, kicks, warns with case history, staff notes, bulk ban, and self-assignable roles.',
+    features: ['Case history', 'Staff notes', 'Bulk ban', 'Self-assign roles'],
+    color: '#64748B',
+  },
+];
+
+export const BOT_MAP = Object.fromEntries(BOTS.map((b) => [b.id, b]));

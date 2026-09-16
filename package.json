@@ -19,6 +19,9 @@
     "deploy:ping": "npm -w dominyx-ping run deploy",
     "start:guard": "npm -w dominyx-guard start",
     "deploy:guard": "npm -w dominyx-guard run deploy",
+    "dev:hq": "npm -w dominyx-hq run dev",
+    "build:hq": "npm -w dominyx-hq run build",
+    "start:hq": "npm -w dominyx-hq run start",
     "install:all": "npm install"
   }
 }

@@ -13,6 +13,7 @@ A family of single-purpose Discord bots, sharing one core package. Each bot live
 | Dominyx Ticket | `packages/ticket` | Ticket panels, categories, claim/priority, transcripts to log channel |
 | Dominyx Ping | `packages/ping` | YouTube "went live" alerts (needs `YOUTUBE_API_KEY`) |
 | Dominyx Guard | `packages/guard` | Moderation: ban/kick/warn, case history, staff notes, bulk ban, self-assignable roles, mod-log channel |
+| Dominyx HQ | `packages/hq` | Web dashboard (Next.js): landing, guild picker, config UI for every bot. Deploy to Vercel. |
 
 Planned: Dominyx HQ (web dashboard).
 
@@ -27,14 +28,21 @@ packages/
   ticket/  dominyx-ticket — the ticket bot
   ping/    dominyx-ping — the YouTube live-alert bot
   guard/   dominyx-guard — the moderation bot
+  hq/      dominyx-hq — web dashboard (Vercel)
 ```
 
-## Setup
+## Bots setup
 
 1. `npm install`
-2. Copy `.env.example` to `.env` and fill in `BOT_TOKEN`, `CLIENT_ID`, `LAVALINK_*`. (`DATABASE_URL` needed for leveling, greetings, 24/7 mode, tickets, moderation; `YOUTUBE_API_KEY` + `YOUTUBE_POLL_MINUTES` for live alerts.)
+2. Copy `.env.example` in each bot (or the root) and fill in `BOT_TOKEN`, `CLIENT_ID`, `LAVALINK_*`. (`DATABASE_URL` needed for leveling, greetings, 24/7 mode, tickets, moderation; `YOUTUBE_API_KEY` + `YOUTUBE_POLL_MINUTES` for live alerts.)
 3. Deploy commands: `npm run deploy:music` / `npm run deploy:level` / `npm run deploy:greet` / `npm run deploy:ticket` / `npm run deploy:ping` / `npm run deploy:guard`
 4. Run: `npm run start:music` / `npm run start:level` / `npm run start:greet` / `npm run start:ticket` / `npm run start:ping` / `npm run start:guard`
+
+## Web dashboard (Dominyx HQ)
+
+1. Copy `packages/hq/.env.example` → `packages/hq/.env.local` and fill in `DISCORD_CLIENT_ID`, `DISCORD_CLIENT_SECRET`, `BOT_TOKEN`, `DATABASE_URL` (the same Postgres the bots use) + `DISCORD_REDIRECT_URI` / `PUBLIC_APP_URL`.
+2. Local dev: `npm run dev:hq`
+3. Deploy to Vercel (set **root directory = `packages/hq`**, install command `npm install`, no build step needed — Vercel auto-detects Next.js).
 
 ## Conventions
 
