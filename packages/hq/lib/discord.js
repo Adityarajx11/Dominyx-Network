@@ -25,7 +25,7 @@ function oauthAuthorizeUrl(state) {
     client_id: clientId,
     response_type: 'code',
     redirect_uri: redirectUri,
-    scope: 'identify guilds',
+    scope: 'identify guilds guilds.channels',
     prompt: 'none',
   });
   if (state) params.set('state', state);
@@ -99,16 +99,16 @@ function canManage(permissions) {
   return (bits & ADMINISTRATOR) === ADMINISTRATOR || (bits & MANAGE_GUILD) === MANAGE_GUILD;
 }
 
-async function getGuild(guildId) {
-  return discordFetch(`/guilds/${guildId}`, {});
+async function getGuild(guildId, token) {
+  return discordFetch(`/guilds/${guildId}`, { token });
 }
 
-async function getGuildChannels(guildId) {
-  return discordFetch(`/guilds/${guildId}/channels`, {});
+async function getGuildChannels(guildId, token) {
+  return discordFetch(`/guilds/${guildId}/channels`, { token });
 }
 
-async function getGuildRoles(guildId) {
-  return discordFetch(`/guilds/${guildId}/roles`, {});
+async function getGuildRoles(guildId, token) {
+  return discordFetch(`/guilds/${guildId}/roles`, { token });
 }
 
 module.exports = {

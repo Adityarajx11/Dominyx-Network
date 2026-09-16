@@ -43,12 +43,8 @@ async function requireGuildAccess(guildId) {
     err.status = 403;
     throw err;
   }
-  if (!data.botGuilds.has(guildId)) {
-    const err = new Error('None of the Dominyx bots are in this server yet');
-    err.status = 403;
-    throw err;
-  }
-  return { user: data.user, guild };
+  const hasBot = data.botGuilds.has(guildId);
+  return { user: data.user, guild, hasBot, token: data.token };
 }
 
 module.exports = { getSession, getAuthedData, requireApiAuth, requireGuildAccess };

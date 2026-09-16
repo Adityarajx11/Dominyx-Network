@@ -6,12 +6,12 @@ import { getGuild, getGuildChannels, getGuildRoles } from '@/lib/discord';
 export async function GET(request, { params }) {
   try {
     const guildId = params.guildId;
-    await requireGuildAccess(guildId);
+    const access = await requireGuildAccess(guildId);
 
     const [guild, channels, roles, configs] = await Promise.all([
-      getGuild(guildId),
-      getGuildChannels(guildId),
-      getGuildRoles(guildId),
+      getGuild(guildId, access.token),
+      getGuildChannels(guildId, access.token),
+      getGuildRoles(guildId, access.token),
       readConfigs(guildId),
     ]);
 

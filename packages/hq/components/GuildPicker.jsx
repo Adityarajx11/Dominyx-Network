@@ -1,8 +1,6 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { BOTS } from '@/lib/bots';
-import { getInviteUrl } from '@/lib/invite';
 
 function iconUrl(guild, size = 128) {
   return guild.icon
@@ -25,30 +23,20 @@ export default function GuildPicker({ guilds }) {
       ) : (
         <div className="server-grid">
           {guilds.map((g) => (
-            <div key={g.id} className="server-card">
-              <div className="server-row" onClick={() => g.hasBot && router.push(`/dashboard/${g.id}`)} style={{ cursor: g.hasBot ? 'pointer' : 'default' }}>
+            <div key={g.id} className="server-card" onClick={() => router.push(`/dashboard/${g.id}`)}>
+              <div className="server-row">
                 <div className="avatar">
                   {iconUrl(g) ? <img src={iconUrl(g)} alt={g.name} /> : g.name[0]}
                 </div>
                 <div style={{ minWidth: 0 }}>
                   <div className="server-name">{g.name}</div>
-                  <div className="server-sub">{g.hasBot ? 'Manage' : 'Ready to invite'}</div>
+                  <div className="server-sub">{g.hasBot ? 'Manage' : 'No Dominyx bot yet'}</div>
                 </div>
               </div>
               {g.hasBot ? (
                 <span className="status status-ok">✓ Bot ready</span>
               ) : (
-                <div className="invite-links">
-                  {BOTS.map((bot) => {
-                    const url = getInviteUrl(bot.id);
-                    if (!url) return null;
-                    return (
-                      <a key={bot.id} className="btn btn-discord btn-sm" href={url} target="_blank" rel="noreferrer">
-                        {bot.emoji} Add {bot.name.replace('Dominyx ', '')}
-                      </a>
-                    );
-                  })}
-                </div>
+                <span className="status status-missing">✗ Invite a bot to configure</span>
               )}
             </div>
           ))}
