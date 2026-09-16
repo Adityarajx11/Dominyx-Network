@@ -1,0 +1,14 @@
+{
+  "name": "rook-network",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Rook Network — a family of single-purpose Discord bots",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "start:music": "npm -w rook-music start",
+    "deploy:music": "npm -w rook-music run deploy",
+    "install:all": "npm install"
+  }
+}

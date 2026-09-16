@@ -1,0 +1,11 @@
+{
+  "name": "@rook/core",
+  "version": "0.1.0",
+  "private": true,
+  "main": "index.js",
+  "dependencies": {
+    "discord.js": "^14.16.3",
+    "dotenv": "^16.4.5",
+    "pg": "^8.13.0"
+  }
+}
