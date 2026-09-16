@@ -25,7 +25,7 @@ function oauthAuthorizeUrl(state) {
     client_id: clientId,
     response_type: 'code',
     redirect_uri: redirectUri,
-    scope: 'identify guilds guilds.channels',
+    scope: 'identify guilds guilds.channels guilds.members.read',
     prompt: 'none',
   });
   if (state) params.set('state', state);
@@ -111,6 +111,34 @@ async function getGuildRoles(guildId, token) {
   return discordFetch(`/guilds/${guildId}/roles`, { token });
 }
 
+async function getGuildMembers(guildId, token) {
+  const headers = {
+    Authorization: `Bearer ${token}`,
+    'Content-Type': 'application/json',
+  };
+  const res = await fetch(`${API}/guilds/${guildId}/members?limit=1000`, { headers });
+  if (!res.ok) return [];
+  return res.json();
+}
+
+const BOT_IDS = {
+  music: process.env.BOT_ID_MUSIC,
+  level: process.env.BOT_ID_LEVEL,
+  greet: process.env.BOT_ID_GREET,
+  ticket: process.env.BOT_ID_TICKET,
+  ping: process.env.BOT_ID_PING,
+  guard: process.env.BOT_ID_GUARD,
+};
+
+async function getBotsInGuild(guildId, token) {
+  const members = await getGuildMembers(guildId, token);
+  const memberIds = new Set(members.map((m) => m.user?.id).filter(Boolean));
+  const present = {};
+  for (const [botId, clientId] of Object.entries(BOT_IDS)) {
+    if (clientId && memberIds.has(clientId)) present[botId] = true;
+  }
+  return present;
+}
 module.exports = {
   oauthAuthorizeUrl,
   exchangeCode,
@@ -121,4 +149,5 @@ module.exports = {
   getGuild,
   getGuildChannels,
   getGuildRoles,
+  getBotsInGuild,
 };

@@ -1,6 +1,7 @@
 import { requireGuildAccess } from '@/lib/auth';
 import { SiteNav } from '@/components/SiteNav';
 import GuildConfig from '@/components/GuildConfig';
+import { getBotsInGuild } from '@/lib/discord';
 
 function iconUrl(guild, size = 128) {
   return guild.icon ? `https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.png?size=${size}` : null;
@@ -13,6 +14,13 @@ export default async function GuildPage({ params }) {
     access = await requireGuildAccess(guildId);
   } catch (err) {
     access = { error: err.message };
+  }
+
+  let botsPresent = {};
+  if (access.token && access.guild) {
+    try {
+      botsPresent = await getBotsInGuild(guildId, access.token);
+    } catch {}
   }
 
   return (
@@ -52,7 +60,7 @@ export default async function GuildPage({ params }) {
               </div>
             </div>
           )}
-          <GuildConfig guildId={guildId} />
+          <GuildConfig guildId={guildId} botsPresent={botsPresent} />
         </>
       )}
     </>

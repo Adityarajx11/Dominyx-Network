@@ -2,16 +2,26 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { BOTS } from '@/lib/bots';
+import { getInviteUrl } from '@/lib/invite';
 import { Field, Toggle, Select, SaveBar } from './ui';
 
 const TEXT_TYPES = [0, 5];
 const CATEGORY_TYPE = 4;
 
-export default function GuildConfig({ guildId }) {
+export default function GuildConfig({ guildId, botsPresent = {} }) {
   const [data, setData] = useState(null);
   const [active, setActive] = useState('music');
   const [revision, setRevision] = useState(0);
   const [error, setError] = useState(null);
+
+  const presentBots = BOTS.filter((b) => botsPresent[b.id]);
+  const absentBots = BOTS.filter((b) => !botsPresent[b.id]);
+
+  useEffect(() => {
+    if (presentBots.length > 0 && !presentBots.find((b) => b.id === active)) {
+      setActive(presentBots[0].id);
+    }
+  }, [presentBots.length]);
 
   const loadConfig = useCallback(async () => {
     try {
@@ -65,7 +75,7 @@ export default function GuildConfig({ guildId }) {
       </div>
       <div className="config-layout">
         <div className="tabs">
-          {BOTS.map((bot) => (
+          {presentBots.map((bot) => (
             <button
               key={bot.id}
               className={`tab ${active === bot.id ? 'active' : ''}`}
@@ -77,12 +87,34 @@ export default function GuildConfig({ guildId }) {
           ))}
         </div>
         <div className="panel">
-          {active === 'music' && <MusicPanel key={revision} cfg={data.configs.music} meta={meta} onRefresh={loadConfig} guildId={guildId} />}
-          {active === 'level' && <LevelPanel key={revision} cfg={data.configs.level} meta={meta} onRefresh={loadConfig} guildId={guildId} />}
-          {active === 'greet' && <GreetPanel key={revision} cfg={data.configs.greet} meta={meta} onRefresh={loadConfig} guildId={guildId} />}
-          {active === 'ticket' && <TicketPanel key={revision} cfg={data.configs.ticket} meta={meta} onRefresh={loadConfig} guildId={guildId} />}
-          {active === 'ping' && <PingPanel key={revision} cfg={data.configs.ping} meta={meta} onRefresh={loadConfig} guildId={guildId} />}
-          {active === 'guard' && <GuardPanel key={revision} cfg={data.configs.guard} meta={meta} onRefresh={loadConfig} guildId={guildId} />}
+          {presentBots.length === 0 ? (
+            <div className="empty">No Dominyx bots are in this server yet. Invite one from the home page to get started.</div>
+          ) : (
+            <>
+              {active === 'music' && botsPresent.music && <MusicPanel key={revision} cfg={data.configs.music} meta={meta} onRefresh={loadConfig} guildId={guildId} />}
+              {active === 'level' && botsPresent.level && <LevelPanel key={revision} cfg={data.configs.level} meta={meta} onRefresh={loadConfig} guildId={guildId} />}
+              {active === 'greet' && botsPresent.greet && <GreetPanel key={revision} cfg={data.configs.greet} meta={meta} onRefresh={loadConfig} guildId={guildId} />}
+              {active === 'ticket' && botsPresent.ticket && <TicketPanel key={revision} cfg={data.configs.ticket} meta={meta} onRefresh={loadConfig} guildId={guildId} />}
+              {active === 'ping' && botsPresent.ping && <PingPanel key={revision} cfg={data.configs.ping} meta={meta} onRefresh={loadConfig} guildId={guildId} />}
+              {active === 'guard' && botsPresent.guard && <GuardPanel key={revision} cfg={data.configs.guard} meta={meta} onRefresh={loadConfig} guildId={guildId} />}
+            </>
+          )}
+          {absentBots.length > 0 && (
+            <div style={{ marginTop: 24, paddingTop: 20, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+              <h3 style={{ fontSize: 14, marginBottom: 12 }}>Add more bots</h3>
+              <div className="invite-links">
+                {absentBots.map((bot) => {
+                  const url = getInviteUrl(bot.id);
+                  if (!url) return null;
+                  return (
+                    <a key={bot.id} className="btn btn-discord btn-sm" href={url} target="_blank" rel="noreferrer">
+                      {bot.emoji} Add {bot.name.replace('Dominyx ', '')}
+                    </a>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
