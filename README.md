@@ -7,8 +7,9 @@ A family of single-purpose Discord bots, sharing one core package. Each bot live
 | Bot | Package | Purpose |
 | --- | --- | --- |
 | Dominyx Music | `packages/music` | Lavalink music player: play, queue, skip, stop, loop, shuffle, volume, nowplaying, 24/7, personal playlists |
+| Dominyx Level | `packages/level` | XP leveling, rank cards, leaderboards, level roles, level-up announcements |
 
-Planned: Dominyx Guard (security/moderation), Dominyx Level (XP + greeting), Dominyx Tickets, Dominyx Ping (YouTube/streamers), Dominyx HQ (web dashboard).
+Planned: Dominyx Guard (security/moderation), Dominyx Greet (join/leave greeting), Dominyx Tickets, Dominyx Ping (YouTube/streamers), Dominyx HQ (web dashboard).
 
 ## Repo layout
 
@@ -16,14 +17,15 @@ Planned: Dominyx Guard (security/moderation), Dominyx Level (XP + greeting), Dom
 packages/
   core/    @dominyx/core — shared command loader, deploy, embeds, Postgres pool
   music/   dominyx-music — the music bot
+  level/   dominyx-level — the leveling bot
 ```
 
 ## Setup
 
 1. `npm install`
-2. Copy `.env.example` to `.env` and fill in `BOT_TOKEN`, `CLIENT_ID`, `LAVALINK_*`. (`DATABASE_URL` only needed for persistent 24/7 mode.)
-3. Deploy commands: `npm run deploy:music`
-4. Run: `npm run start:music`
+2. Copy `.env.example` to `.env` and fill in `BOT_TOKEN`, `CLIENT_ID`, `LAVALINK_*`. (`DATABASE_URL` only needed for persistent 24/7 mode and leveling.)
+3. Deploy commands: `npm run deploy:music` / `npm run deploy:level`
+4. Run: `npm run start:music` / `npm run start:level`
 
 ## Conventions
 

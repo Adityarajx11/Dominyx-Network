@@ -9,6 +9,8 @@
   "scripts": {
     "start:music": "npm -w dominyx-music start",
     "deploy:music": "npm -w dominyx-music run deploy",
+    "start:level": "npm -w dominyx-level start",
+    "deploy:level": "npm -w dominyx-level run deploy",
     "install:all": "npm install"
   }
 }
