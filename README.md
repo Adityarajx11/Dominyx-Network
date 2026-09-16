@@ -10,9 +10,11 @@ A family of single-purpose Discord bots, sharing one core package. Each bot live
 | Dominyx Level | `packages/level` | XP leveling, rank cards, leaderboards, level roles, level-up announcements |
 | Dominyx Greet | `packages/greet` | Crimson/black welcome cards, custom welcome text, auto-roles |
 | Dominyx Ticket | `packages/ticket` | Ticket panels, categories, claim/priority, transcripts to log channel |
+| Dominyx Ticket | `packages/ticket` | Ticket panels, categories, claim/priority, transcripts to log channel |
 | Dominyx Ping | `packages/ping` | YouTube "went live" alerts (needs `YOUTUBE_API_KEY`) |
+| Dominyx Guard | `packages/guard` | Moderation: ban/kick/warn, case history, staff notes, bulk ban, self-assignable roles, mod-log channel |
 
-Planned: Dominyx Guard (security/moderation), Dominyx HQ (web dashboard).
+Planned: Dominyx HQ (web dashboard).
 
 ## Repo layout
 
@@ -24,14 +26,15 @@ packages/
   greet/   dominyx-greet — the greeting bot (fonts live in packages/greet/fonts — swap the .ttf files to rebrand)
   ticket/  dominyx-ticket — the ticket bot
   ping/    dominyx-ping — the YouTube live-alert bot
+  guard/   dominyx-guard — the moderation bot
 ```
 
 ## Setup
 
 1. `npm install`
-2. Copy `.env.example` to `.env` and fill in `BOT_TOKEN`, `CLIENT_ID`, `LAVALINK_*`. (`DATABASE_URL` needed for leveling, greetings, 24/7 mode, and tickets; `YOUTUBE_API_KEY` + `YOUTUBE_POLL_MINUTES` for live alerts.)
-3. Deploy commands: `npm run deploy:music` / `npm run deploy:level` / `npm run deploy:greet` / `npm run deploy:ticket` / `npm run deploy:ping`
-4. Run: `npm run start:music` / `npm run start:level` / `npm run start:greet` / `npm run start:ticket` / `npm run start:ping`
+2. Copy `.env.example` to `.env` and fill in `BOT_TOKEN`, `CLIENT_ID`, `LAVALINK_*`. (`DATABASE_URL` needed for leveling, greetings, 24/7 mode, tickets, moderation; `YOUTUBE_API_KEY` + `YOUTUBE_POLL_MINUTES` for live alerts.)
+3. Deploy commands: `npm run deploy:music` / `npm run deploy:level` / `npm run deploy:greet` / `npm run deploy:ticket` / `npm run deploy:ping` / `npm run deploy:guard`
+4. Run: `npm run start:music` / `npm run start:level` / `npm run start:greet` / `npm run start:ticket` / `npm run start:ping` / `npm run start:guard`
 
 ## Conventions
 

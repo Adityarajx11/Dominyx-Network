@@ -17,6 +17,8 @@
     "deploy:ticket": "npm -w dominyx-ticket run deploy",
     "start:ping": "npm -w dominyx-ping start",
     "deploy:ping": "npm -w dominyx-ping run deploy",
+    "start:guard": "npm -w dominyx-guard start",
+    "deploy:guard": "npm -w dominyx-guard run deploy",
     "install:all": "npm install"
   }
 }
