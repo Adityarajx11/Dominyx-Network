@@ -1,8 +1,6 @@
 import { requireGuildAccess } from '@/lib/auth';
 import { SiteNav } from '@/components/SiteNav';
 import GuildConfig from '@/components/GuildConfig';
-import { BOTS } from '@/lib/bots';
-import { getInviteUrl } from '@/lib/invite';
 
 function iconUrl(guild, size = 128) {
   return guild.icon ? `https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.png?size=${size}` : null;
@@ -45,26 +43,17 @@ export default async function GuildPage({ params }) {
             </div>
           </div>
         </div>
-      ) : access.hasBot ? (
-        <GuildConfig guildId={guildId} />
       ) : (
-        <div className="wrap">
-          <div className="notice">
-            <strong>No Dominyx bot here yet.</strong>
-            <div style={{ marginTop: 4 }}>Invite one to add it to this server, then refresh to configure it.</div>
-          </div>
-          <div className="invite-links" style={{ marginTop: 20 }}>
-            {BOTS.map((bot) => {
-              const url = getInviteUrl(bot.id);
-              if (!url) return null;
-              return (
-                <a key={bot.id} className="btn btn-discord" href={url} target="_blank" rel="noreferrer">
-                  {bot.emoji} Add {bot.name}
-                </a>
-              );
-            })}
-          </div>
-        </div>
+        <>
+          {!access.hasBot && (
+            <div className="wrap" style={{ paddingBottom: 0 }}>
+              <div className="notice">
+                <strong>Tip:</strong> a Dominyx bot isn't in this server yet — invite one from the home page. Settings saved here will apply as soon as a bot joins.
+              </div>
+            </div>
+          )}
+          <GuildConfig guildId={guildId} />
+        </>
       )}
     </>
   );
