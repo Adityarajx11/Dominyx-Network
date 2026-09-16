@@ -483,6 +483,13 @@ a {
   border: 1px solid rgba(220, 20, 60, 0.4);
 }
 
+.invite-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
 /* ---------- config layout ---------- */
 .config-layout {
   display: grid;

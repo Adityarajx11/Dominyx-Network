@@ -63,12 +63,32 @@ async function getUserGuilds(token) {
 
 async function getBotGuilds() {
   if (!botToken) return new Set();
-  try {
-    const guilds = await discordFetch('/users/@me/guilds', {});
-    return new Set(guilds.map((g) => g.id));
-  } catch {
-    return new Set();
+  const tokens = [
+    botToken,
+    process.env.BOT_TOKEN_MUSIC,
+    process.env.BOT_TOKEN_LEVEL,
+    process.env.BOT_TOKEN_GREET,
+    process.env.BOT_TOKEN_TICKET,
+    process.env.BOT_TOKEN_PING,
+    process.env.BOT_TOKEN_GUARD,
+  ].filter(Boolean);
+  const guilds = new Set();
+  for (const token of tokens) {
+    try {
+      const headers = {
+        Authorization: `Bot ${token}`,
+        'Content-Type': 'application/json',
+      };
+      const res = await fetch(`${API}/users/@me/guilds`, { headers });
+      if (res.ok) {
+        const list = await res.json();
+        for (const g of list) guilds.add(g.id);
+      }
+    } catch {
+      // ignore failed bot lookups
+    }
   }
+  return guilds;
 }
 
 const ADMINISTRATOR = 8n;
