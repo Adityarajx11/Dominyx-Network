@@ -1,7 +1,6 @@
 import { BOTS } from '@/lib/bots';
 import { getSession } from '@/lib/auth';
 import { getInviteUrl } from '@/lib/invite';
-import './globals.css';
 
 async function readError(searchParams) {
   const error = searchParams?.error || null;

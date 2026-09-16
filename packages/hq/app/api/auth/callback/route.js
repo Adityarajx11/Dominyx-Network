@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { exchangeCode } from '@/lib/discord';
-import { setSessionToken, clearSessionToken } from '@/lib/session';
 import { appUrl } from '@/lib/env';
 
 export async function GET(request) {
@@ -19,12 +18,23 @@ export async function GET(request) {
     return NextResponse.redirect(new URL('/?error=invalid', appUrl));
   }
 
-  cookies().set('dq_state', '', { httpOnly: true, maxAge: 0, path: '/' });
+  const redirects = {};
+  redirects.clearState = (res) => {
+    res.cookies.set('dq_state', '', { httpOnly: true, maxAge: 0, path: '/' });
+    return res;
+  };
 
+  const res = redirects.clearState(NextResponse.redirect(new URL('/dashboard', appUrl)));
   try {
     const tokens = await exchangeCode(code);
-    setSessionToken(tokens.access_token);
-    return NextResponse.redirect(new URL('/dashboard', appUrl));
+    res.cookies.set('dq_session', tokens.access_token, {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 60 * 60 * 24 * 7,
+      path: '/',
+    });
+    return res;
   } catch (err) {
     console.error('OAuth callback failed:', err.message);
     return NextResponse.redirect(new URL('/?error=failed', appUrl));
