@@ -9,8 +9,9 @@ A family of single-purpose Discord bots, sharing one core package. Each bot live
 | Dominyx Music | `packages/music` | Lavalink music player: play, queue, skip, stop, loop, shuffle, volume, nowplaying, 24/7, personal playlists |
 | Dominyx Level | `packages/level` | XP leveling, rank cards, leaderboards, level roles, level-up announcements |
 | Dominyx Greet | `packages/greet` | Crimson/black welcome cards, custom welcome text, auto-roles |
+| Dominyx Ticket | `packages/ticket` | Ticket panels, categories, claim/priority, transcripts to log channel |
 
-Planned: Dominyx Guard (security/moderation), Dominyx Tickets, Dominyx Ping (YouTube/streamers), Dominyx HQ (web dashboard).
+Planned: Dominyx Guard (security/moderation), Dominyx Ping (YouTube/streamers), Dominyx HQ (web dashboard).
 
 ## Repo layout
 
@@ -20,14 +21,15 @@ packages/
   music/   dominyx-music — the music bot
   level/   dominyx-level — the leveling bot
   greet/   dominyx-greet — the greeting bot (fonts live in packages/greet/fonts — swap the .ttf files to rebrand)
+  ticket/  dominyx-ticket — the ticket bot
 ```
 
 ## Setup
 
 1. `npm install`
-2. Copy `.env.example` to `.env` and fill in `BOT_TOKEN`, `CLIENT_ID`, `LAVALINK_*`. (`DATABASE_URL` needed for leveling, greetings, and 24/7 mode.)
-3. Deploy commands: `npm run deploy:music` / `npm run deploy:level` / `npm run deploy:greet`
-4. Run: `npm run start:music` / `npm run start:level` / `npm run start:greet`
+2. Copy `.env.example` to `.env` and fill in `BOT_TOKEN`, `CLIENT_ID`, `LAVALINK_*`. (`DATABASE_URL` needed for leveling, greetings, 24/7 mode, and tickets.)
+3. Deploy commands: `npm run deploy:music` / `npm run deploy:level` / `npm run deploy:greet` / `npm run deploy:ticket`
+4. Run: `npm run start:music` / `npm run start:level` / `npm run start:greet` / `npm run start:ticket`
 
 ## Conventions
 

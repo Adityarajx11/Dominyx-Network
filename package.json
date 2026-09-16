@@ -13,6 +13,8 @@
     "deploy:level": "npm -w dominyx-level run deploy",
     "start:greet": "npm -w dominyx-greet start",
     "deploy:greet": "npm -w dominyx-greet run deploy",
+    "start:ticket": "npm -w dominyx-ticket start",
+    "deploy:ticket": "npm -w dominyx-ticket run deploy",
     "install:all": "npm install"
   }
 }
