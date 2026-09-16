@@ -54,8 +54,8 @@ export default async function InvitePage() {
                     <div className="pill" style={{ marginBottom: 8, color: 'var(--text-dim)' }}>
                       Will have access to:
                     </div>
-                    <ul style={{ margin: '0 0 16px', paddingLeft: 18, fontSize: 13, color: 'var(--text-dim)', display: 'flex', flexDirection: 'column', gap: 3 }}>
-                      {perms.map((p) => <li key={p}>{p}</li>)}
+                    <ul style={{ margin: '0 0 16px', paddingLeft: 0, listStyle: 'none', fontSize: 13, color: 'var(--text-dim)', display: 'flex', flexDirection: 'column', gap: 3 }}>
+                      {perms.map((p) => <li key={p}><span style={{ color: 'var(--crimson)', marginRight: 6 }}>▸</span>{p}</li>)}
                     </ul>
 
                     {url ? (
