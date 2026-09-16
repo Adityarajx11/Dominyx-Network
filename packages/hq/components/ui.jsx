@@ -12,10 +12,14 @@ export function Field({ label, hint, children }) {
 
 export function Toggle({ checked, onChange, label }) {
   return (
-    <label className="toggle">
-      <input type="checkbox" checked={!!checked} onChange={(e) => onChange(e.target.checked)} />
-      <span className="track" />
-      <span className="toggle-label">{label}</span>
+    <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', fontWeight: 600 }}>
+      <input
+        type="checkbox"
+        checked={!!checked}
+        onChange={(e) => onChange(e.target.checked)}
+        style={{ width: 18, height: 18, accentColor: '#ff1f4b', cursor: 'pointer', flexShrink: 0 }}
+      />
+      <span>{label}</span>
     </label>
   );
 }
