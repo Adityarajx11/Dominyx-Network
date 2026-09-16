@@ -46,7 +46,7 @@ module.exports = {
 
       await channel.send(sendOptions);
     } catch (err) {
-      console.error(`⚠️ Error in guildMemberAdd handler for ${member.user.tag}:`, err.message);
+      console.error(`⚠️ Error in guildMemberAdd handler for ${member.user.tag} in "${member.guild.name}":`, err.message);
     }
   },
 };
