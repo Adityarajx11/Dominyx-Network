@@ -11,6 +11,8 @@
     "deploy:music": "npm -w dominyx-music run deploy",
     "start:level": "npm -w dominyx-level start",
     "deploy:level": "npm -w dominyx-level run deploy",
+    "start:greet": "npm -w dominyx-greet start",
+    "deploy:greet": "npm -w dominyx-greet run deploy",
     "install:all": "npm install"
   }
 }
