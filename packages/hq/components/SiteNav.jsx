@@ -6,6 +6,7 @@ export function SiteNav({ user }) {
       <a className="brand" href="/">
         <span className="dot" /> DOMINYX <span className="badge">HQ</span>
       </a>
+      <a className="btn btn-ghost btn-sm" href="/">Home</a>
       <a className="btn btn-ghost btn-sm" href="/api/auth/logout">Log out ({user?.username})</a>
     </nav>
   );

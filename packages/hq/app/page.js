@@ -1,5 +1,6 @@
 import { BOTS } from '@/lib/bots';
 import { getSession } from '@/lib/auth';
+import { getInviteUrl } from '@/lib/invite';
 import './globals.css';
 
 async function readError(searchParams) {
@@ -30,10 +31,13 @@ export default async function Home({ searchParams }) {
       </nav>
 
       <header className="hero">
-        <h1>Command your Discord network.</h1>
+        <h1>
+          DOMINYX
+          <span className="accent">Command your Discord network.</span>
+        </h1>
         <p className="sub">
-          One dashboard for the whole Dominyx family — Music, Level, Greet, Ticket, Ping and Guard.
-          Configure every bot for every server, all in one place.
+          Six bots. One command center. Invite Music, Level, Greet, Ticket, Ping and Guard into any
+          server, then configure every one of them right here — no slash commands needed.
         </p>
         <div className="hero-cta">
           {session ? (
@@ -45,21 +49,34 @@ export default async function Home({ searchParams }) {
         {errorMsg && <div className="error-banner">⚠️ {errorMsg}</div>}
       </header>
 
-      <section className="section">
+      <section className="section" style={{ paddingTop: 40 }}>
         <div className="wrap">
-          <h2 className="section-title">The family</h2>
-          <p className="section-sub">Six specialists, one command center. Kick each bot into any server, then tune it right here.</p>
+          <h2 className="section-title">Meet the family</h2>
+          <p className="section-sub">Six specialists, one network — each built for a single job, tuned to perfection.</p>
           <div className="grid">
             {BOTS.map((bot) => (
-              <div key={bot.id} className="card" style={{ ['--card-color']: bot.color }}>
-                <div className="emoji">{bot.emoji}</div>
-                <div className="tag">{bot.name}</div>
+              <div key={bot.id} className="card" style={{ ['--card-color']: bot.color, display: 'flex', flexDirection: 'column' }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
+                  <div className="emoji">{bot.emoji}</div>
+                  <div className="tag">{bot.name}</div>
+                </div>
                 <h3>{bot.tagline}</h3>
                 <p>{bot.description}</p>
                 <div className="features">
                   {bot.features.map((f) => (
                     <span key={f} className="pill">{f}</span>
                   ))}
+                </div>
+                <div style={{ marginTop: 'auto' }}>
+                  <a
+                    className="btn btn-discord btn-sm"
+                    href={getInviteUrl(bot.id) || '/invite'}
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{ width: '100%', justifyContent: 'center', marginTop: 16 }}
+                  >
+                    Add to Discord
+                  </a>
                 </div>
               </div>
             ))}
