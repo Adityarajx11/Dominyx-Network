@@ -71,7 +71,7 @@ async function getBotGuilds() {
     process.env.BOT_TOKEN_TICKET,
     process.env.BOT_TOKEN_PING,
     process.env.BOT_TOKEN_GUARD,
-  ].filter(Boolean);
+  ].filter(Boolean).map((t) => t.trim());
   const guilds = new Set();
   for (const token of tokens) {
     try {
@@ -123,8 +123,9 @@ async function getBotsInGuild(guildId, token) {
   const present = {};
   const checks = Object.entries(botTokens).map(async ([botId, bToken]) => {
     if (!bToken) return;
+    const clean = bToken.trim();
     try {
-      const headers = { Authorization: `Bot ${bToken}`, 'Content-Type': 'application/json' };
+      const headers = { Authorization: `Bot ${clean}`, 'Content-Type': 'application/json' };
       const res = await fetch(`${API}/users/@me/guilds`, { headers });
       if (!res.ok) return;
       const guilds = await res.json();
@@ -145,13 +146,24 @@ const BOT_TOKEN_MAP = {
 };
 
 // Returns a bot token that is in the given guild (for reading channels/roles).
+// Tries each bot token directly against the guild — most reliable check.
 async function getGuildBotToken(guildId) {
-  const present = await getBotsInGuild(guildId);
-  if (present) {
-    for (const botId of Object.keys(present)) {
-      const t = BOT_TOKEN_MAP[botId]?.();
-      if (t) return t;
-    }
+  const botTokens = [
+    ['music', process.env.BOT_TOKEN_MUSIC],
+    ['level', process.env.BOT_TOKEN_LEVEL],
+    ['greet', process.env.BOT_TOKEN_GREET],
+    ['ticket', process.env.BOT_TOKEN_TICKET],
+    ['ping', process.env.BOT_TOKEN_PING],
+    ['guard', process.env.BOT_TOKEN_GUARD],
+  ];
+  for (const [, bToken] of botTokens) {
+    if (!bToken) continue;
+    try {
+      const res = await fetch(`${API}/guilds/${guildId}`, {
+        headers: { Authorization: `Bot ${bToken.trim()}` },
+      });
+      if (res.ok) return bToken.trim();
+    } catch {}
   }
   return botToken;
 }
