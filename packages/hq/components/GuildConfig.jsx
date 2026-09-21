@@ -20,6 +20,7 @@ export default function GuildConfig({ guildId, botsPresent = {}, inviteUrls = {}
 
   const presentBots = botsPresent ? BOTS.filter((b) => botsPresent[b.id]) : BOTS;
   const absentBots = botsPresent ? BOTS.filter((b) => !botsPresent[b.id]) : [];
+  const isPresent = (id) => !botsPresent || botsPresent[id];
 
   useEffect(() => {
     if (presentBots.length > 0 && !presentBots.find((b) => b.id === active)) {
@@ -77,30 +78,18 @@ export default function GuildConfig({ guildId, botsPresent = {}, inviteUrls = {}
       <div className="notice">
         Changes here apply <strong>instantly</strong> — the bots read their config from the database at runtime. No restart needed.
       </div>
-      <div className="config-layout">
-        <div className="tabs">
-          {presentBots.map((bot) => (
-            <button
-              key={bot.id}
-              className={`tab ${active === bot.id ? 'active' : ''}`}
-              style={{ ['--tab-color']: bot.color }}
-              onClick={() => setActive(bot.id)}
-            >
-              <span>{bot.emoji}</span> {bot.name.replace('Dominyx ', '')}
-            </button>
-          ))}
-        </div>
+      <div>
         <div className="panel glass" style={{ ['--panel-color']: BOTS.find((b) => b.id === active)?.color }}>
           {presentBots.length === 0 ? (
             <div className="empty">No Dominyx bots are in this server yet. Invite one from the home page to get started.</div>
           ) : (
             <>
-              {active === 'music' && botsPresent.music && <MusicPanel key={revision} cfg={data.configs.music} meta={meta} onRefresh={loadConfig} guildId={guildId} />}
-              {active === 'level' && botsPresent.level && <LevelPanel key={revision} cfg={data.configs.level} meta={meta} onRefresh={loadConfig} guildId={guildId} />}
-              {active === 'greet' && botsPresent.greet && <GreetPanel key={revision} cfg={data.configs.greet} meta={meta} onRefresh={loadConfig} guildId={guildId} />}
-              {active === 'ticket' && botsPresent.ticket && <TicketPanel key={revision} cfg={data.configs.ticket} meta={meta} onRefresh={loadConfig} guildId={guildId} />}
-              {active === 'ping' && botsPresent.ping && <PingPanel key={revision} cfg={data.configs.ping} meta={meta} onRefresh={loadConfig} guildId={guildId} />}
-              {active === 'guard' && botsPresent.guard && <GuardPanel key={revision} cfg={data.configs.guard} meta={meta} onRefresh={loadConfig} guildId={guildId} />}
+              {active === 'music' && isPresent('music') && <MusicPanel key={revision} cfg={data.configs.music} meta={meta} onRefresh={loadConfig} guildId={guildId} />}
+              {active === 'level' && isPresent('level') && <LevelPanel key={revision} cfg={data.configs.level} meta={meta} onRefresh={loadConfig} guildId={guildId} />}
+              {active === 'greet' && isPresent('greet') && <GreetPanel key={revision} cfg={data.configs.greet} meta={meta} onRefresh={loadConfig} guildId={guildId} />}
+              {active === 'ticket' && isPresent('ticket') && <TicketPanel key={revision} cfg={data.configs.ticket} meta={meta} onRefresh={loadConfig} guildId={guildId} />}
+              {active === 'ping' && isPresent('ping') && <PingPanel key={revision} cfg={data.configs.ping} meta={meta} onRefresh={loadConfig} guildId={guildId} />}
+              {active === 'guard' && isPresent('guard') && <GuardPanel key={revision} cfg={data.configs.guard} meta={meta} onRefresh={loadConfig} guildId={guildId} />}
             </>
           )}
           {absentBots.length > 0 && (

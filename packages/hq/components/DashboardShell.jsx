@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { BOTS } from '@/lib/bots';
 
@@ -19,6 +20,14 @@ const LINKS = [
 export default function DashboardShell({ user, children, botsPresent = null, inviteUrls = {} }) {
   const path = usePathname();
   const guildId = path.startsWith('/dashboard/') ? path.split('/')[2] : null;
+  const [openBot, setOpenBot] = useState(null);
+  useEffect(() => {
+    try {
+      setOpenBot(new URLSearchParams(window.location.search).get('bot'));
+    } catch {
+      setOpenBot(null);
+    }
+  }, [path]);
 
   return (
     <div className="dash">
@@ -49,7 +58,7 @@ export default function DashboardShell({ user, children, botsPresent = null, inv
                 href={href}
                 {...(external ? { target: '_blank', rel: 'noreferrer' } : {})}
                 title={inGuild ? `Configure ${b.name}` : `Invite ${b.name}`}
-                className="side-link side-bot"
+                className={`side-link side-bot${inGuild && openBot === b.id ? ' active' : ''}`}
               >
                 <span>{b.emoji}</span>{b.name.replace('Dominyx ', '')}
                 <span className="side-dot" style={{ background: b.color, color: b.color }} />
