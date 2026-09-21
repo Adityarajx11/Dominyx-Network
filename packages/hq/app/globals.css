@@ -148,6 +148,92 @@ a {
   box-shadow: 0 0 22px rgba(255, 31, 75, 0.35);
 }
 
+/* giant ghost typography behind the hero (TRANSCEND-style backdrop word) */
+.hero-ghost {
+  position: absolute;
+  top: 34px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 0;
+  font-size: clamp(110px, 21vw, 290px);
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  white-space: nowrap;
+  user-select: none;
+  color: transparent;
+  -webkit-text-stroke: 1px rgba(255, 255, 255, 0.07);
+  pointer-events: none;
+}
+
+/* announcement badge above the headline */
+.hero-badge {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  margin: 0 auto 22px;
+  padding: 8px 18px;
+  border-radius: 99px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  color: var(--text);
+  background: rgba(255, 31, 75, 0.08);
+  border: 1px solid rgba(255, 31, 75, 0.35);
+  box-shadow: 0 0 24px rgba(255, 31, 75, 0.18);
+  animation: fadeUp 0.7s ease both;
+}
+
+.hero-badge .pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #2ecc71;
+  box-shadow: 0 0 10px #2ecc71;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+/* honest proof row under the chips */
+.hero-stats {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 30px;
+  animation: fadeUp 0.7s 0.4s ease both;
+}
+
+.hero-stat {
+  min-width: 128px;
+  padding: 14px 20px;
+  border-radius: 16px;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid var(--border);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.hero-stat strong {
+  display: block;
+  font-size: 26px;
+  letter-spacing: -0.5px;
+  background: linear-gradient(120deg, #fff, #ff4d73);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.hero-stat span {
+  font-size: 12px;
+  color: var(--text-dim);
+  font-weight: 600;
+}
+
 .brand {
   font-weight: 800;
   font-size: 19px;

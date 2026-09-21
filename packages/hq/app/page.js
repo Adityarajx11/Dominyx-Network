@@ -35,6 +35,8 @@ export default async function Home({ searchParams }) {
 
       <header className="hero">
         <div className="hero-rings" aria-hidden="true"><span /><span /><span /></div>
+        <div className="hero-ghost" aria-hidden="true">DOMINYX</div>
+        <div className="hero-badge"><span className="pulse-dot" />6 bots live · Free during beta</div>
         <h1>
           DOMINYX
           <span className="accent">Command your Discord network.</span>
@@ -54,6 +56,12 @@ export default async function Home({ searchParams }) {
           {BOTS.map((bot) => (
             <a key={bot.id} className="hero-chip" href="#family" title={bot.name}>{bot.emoji}</a>
           ))}
+        </div>
+        <div className="hero-stats">
+          <div className="hero-stat"><strong>6</strong><span>Specialist bots</span></div>
+          <div className="hero-stat"><strong>27</strong><span>Slash commands</span></div>
+          <div className="hero-stat"><strong>1</strong><span>Command center</span></div>
+          <div className="hero-stat"><strong>0</strong><span>Setup needed</span></div>
         </div>
         {errorMsg && <div className="error-banner">⚠️ {errorMsg}</div>}
       </header>
