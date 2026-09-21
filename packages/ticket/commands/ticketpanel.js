@@ -20,8 +20,8 @@ module.exports = {
 
     const embed = new EmbedBuilder()
       .setColor(0xDC143C)
-      .setTitle('🎫 Dominyx Support Tickets')
-      .setDescription('**Rules**\n• Tickets are for support questions and reports only.\n• One ticket at a time — spamming tickets may get you removed.\n• Stay respectful. Staff can close any ticket.\n\nPick a category below and a private channel will open just for you.');
+      .setTitle(config.panel_title || '🎫 Dominyx Support Tickets')
+      .setDescription(config.panel_rules || '**Rules**\n• Tickets are for support questions and reports only.\n• One ticket at a time — spamming tickets may get you removed.\n• Stay respectful. Staff can close any ticket.\n\nPick a category below and a private channel will open just for you.');
 
     if (config.banner_url) {
       embed.setImage(config.banner_url);

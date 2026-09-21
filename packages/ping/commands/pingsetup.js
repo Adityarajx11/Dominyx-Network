@@ -22,6 +22,18 @@ module.exports = {
       sub.setName('disable')
         .setDescription('Turn off YouTube live alerts'))
     .addSubcommand(sub =>
+      sub.setName('message')
+        .setDescription('Custom alert text ({channel} {title} {url}, empty to reset)')
+        .addStringOption(opt => opt.setName('text').setDescription('Alert message template')))
+    .addSubcommand(sub =>
+      sub.setName('mentionrole')
+        .setDescription('Role pinged on every live alert (empty choice clears)')
+        .addRoleOption(opt => opt.setName('role').setDescription('Mention role')))
+    .addSubcommand(sub =>
+      sub.setName('pollminutes')
+        .setDescription('How often to check for live streams (1-60 min)')
+        .addIntegerOption(opt => opt.setName('minutes').setDescription('Minutes between checks').setRequired(true)))
+    .addSubcommand(sub =>
       sub.setName('show')
         .setDescription('Show current ping configuration')),
 
@@ -59,6 +71,33 @@ module.exports = {
       });
     }
 
+    if (sub === 'message') {
+      const text = interaction.options.getString('text');
+      await updatePingSettings(guildId, { alert_message: text || null });
+      return interaction.reply({
+        content: text ? '✅ Custom alert message set. Placeholders: `{channel}` `{title}` `{url}`.' : '☑️ Alert message reset to default.',
+        flags: MessageFlags.Ephemeral,
+      });
+    }
+
+    if (sub === 'mentionrole') {
+      const role = interaction.options.getRole('role');
+      await updatePingSettings(guildId, { mention_role_id: role ? role.id : null });
+      return interaction.reply({
+        content: role ? `✅ Will ping **${role.name}** on every live alert.` : '☑️ Mention role cleared.',
+        flags: MessageFlags.Ephemeral,
+      });
+    }
+
+    if (sub === 'pollminutes') {
+      const minutes = interaction.options.getInteger('minutes');
+      if (minutes < 1 || minutes > 60) {
+        return interaction.reply({ content: '❌ Minutes must be between 1 and 60.', flags: MessageFlags.Ephemeral });
+      }
+      await updatePingSettings(guildId, { poll_minutes: minutes });
+      return interaction.reply({ content: `✅ Checking for live streams every **${minutes} minute(s)**.`, flags: MessageFlags.Ephemeral });
+    }
+
     if (sub === 'show') {
       const settings = await getPingSettings(guildId);
       const embed = new EmbedBuilder()
@@ -70,6 +109,9 @@ module.exports = {
           { name: 'YouTube Channel ID', value: settings?.youtube_channel_id || 'Not set' },
           { name: 'Alert Channel', value: settings?.live_alert_channel_id ? `<#${settings.live_alert_channel_id}>` : 'Not set' },
           { name: 'Status', value: settings?.enabled === false ? 'Disabled' : 'Active' },
+          { name: 'Custom Message', value: settings?.alert_message || 'Default' },
+          { name: 'Mention Role', value: settings?.mention_role_id ? `<@&${settings.mention_role_id}>` : 'None' },
+          { name: 'Check Interval', value: `${settings?.poll_minutes ?? 10} minute(s)` },
         );
       return interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
     }

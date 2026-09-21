@@ -1,5 +1,6 @@
 const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
-const { createCase, logCaseToChannel } = require('../lib/modlog');
+const { createCase, logCaseToChannel, getCases } = require('../lib/modlog');
+const { getGuardSettings } = require('../lib/guardStore');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -29,6 +30,28 @@ module.exports = {
       action: 'warn', targetTag: target.tag, targetId: target.id, moderatorTag: interaction.user.tag, reason, caseNumber,
     });
 
-    return interaction.reply(`⚠️ Warned **${target.tag}**. Case #${caseNumber}. Reason: ${reason}`);
+    // Warn ladder: auto-mute / auto-ban at configured thresholds.
+    let ladderMsg = '';
+    try {
+      const settings = await getGuardSettings(interaction.guild.id);
+      const muteAt = Number.isInteger(settings?.warns_mute) ? settings.warns_mute : 3;
+      const banAt = Number.isInteger(settings?.warns_ban) ? settings.warns_ban : 5;
+      const cases = await getCases(interaction.guild.id, target.id, 50).catch(() => []);
+      const warnCount = cases.filter((c) => c.action === 'warn').length;
+      const member = await interaction.guild.members.fetch(target.id).catch(() => null);
+
+      if (member && banAt > 0 && warnCount >= banAt) {
+        await member.ban({ reason: `Warn ladder: ${warnCount} warnings` }).catch(() => {});
+        ladderMsg = ` Reached **${warnCount}** warnings — **banned** automatically.`;
+      } else if (member && muteAt > 0 && warnCount >= muteAt && settings?.mute_role_id) {
+        const muteRole = interaction.guild.roles.cache.get(settings.mute_role_id);
+        if (muteRole && !member.roles.cache.has(muteRole.id)) {
+          await member.roles.add(muteRole, `Warn ladder: ${warnCount} warnings`).catch(() => {});
+          ladderMsg = ` Reached **${warnCount}** warnings — **muted** automatically.`;
+        }
+      }
+    } catch {}
+
+    return interaction.reply(`⚠️ Warned **${target.tag}**. Case #${caseNumber}. Reason: ${reason}.${ladderMsg}`);
   },
 };

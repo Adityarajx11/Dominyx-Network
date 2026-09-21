@@ -3,16 +3,19 @@ const path = require('path');
 const { Client, GatewayIntentBits, MessageFlags } = require('discord.js');
 
 const { loadCommands, loadEvents } = require('@dominyx/core');
+const { startAutoClose } = require('./lib/autoClose');
 
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
     GatewayIntentBits.GuildMembers,
+    GatewayIntentBits.GuildMessages,
   ],
 });
 
 loadCommands(client, path.join(__dirname, 'commands'));
 loadEvents(client, path.join(__dirname, 'events'));
+startAutoClose(client);
 
 client.on('interactionCreate', async (interaction) => {
   if (!interaction.isChatInputCommand()) return;

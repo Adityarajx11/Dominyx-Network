@@ -12,6 +12,11 @@ async function initGreetSettings() {
       updated_at TIMESTAMP DEFAULT NOW()
     );
   `);
+  await pool.query(`ALTER TABLE greet_settings ADD COLUMN IF NOT EXISTS goodbye_channel_id TEXT;`);
+  await pool.query(`ALTER TABLE greet_settings ADD COLUMN IF NOT EXISTS goodbye_message TEXT;`);
+  await pool.query(`ALTER TABLE greet_settings ADD COLUMN IF NOT EXISTS dm_welcome BOOLEAN DEFAULT false;`);
+  await pool.query(`ALTER TABLE greet_settings ADD COLUMN IF NOT EXISTS card_theme TEXT DEFAULT 'crimson';`);
+  await pool.query(`ALTER TABLE greet_settings ADD COLUMN IF NOT EXISTS greet_bots BOOLEAN DEFAULT false;`);
   console.log('👋 Greet settings table ready.');
 }
 
@@ -28,6 +33,11 @@ async function getGreetSettings(guildId) {
       welcomeMessage: row.welcome_message,
       autoRoleId: row.auto_role_id,
       cardEnabled: row.card_enabled,
+      goodbyeChannelId: row.goodbye_channel_id,
+      goodbyeMessage: row.goodbye_message,
+      dmWelcome: row.dm_welcome,
+      cardTheme: row.card_theme || 'crimson',
+      greetBots: row.greet_bots,
     };
   } catch (err) {
     console.error('Failed to fetch greet settings:', err.message);
@@ -41,6 +51,11 @@ async function updateGreetSettings(guildId, patch) {
     welcomeMessage: 'welcome_message',
     autoRoleId: 'auto_role_id',
     cardEnabled: 'card_enabled',
+    goodbyeChannelId: 'goodbye_channel_id',
+    goodbyeMessage: 'goodbye_message',
+    dmWelcome: 'dm_welcome',
+    cardTheme: 'card_theme',
+    greetBots: 'greet_bots',
   };
 
   const keys = Object.keys(patch).filter(k => mappings[k]);

@@ -11,6 +11,16 @@ async function initGuardTables() {
     );
   `);
 
+  await pool.query(`ALTER TABLE guard_settings ADD COLUMN IF NOT EXISTS automod_spam BOOLEAN DEFAULT false;`);
+  await pool.query(`ALTER TABLE guard_settings ADD COLUMN IF NOT EXISTS spam_threshold INTEGER DEFAULT 5;`);
+  await pool.query(`ALTER TABLE guard_settings ADD COLUMN IF NOT EXISTS spam_seconds INTEGER DEFAULT 10;`);
+  await pool.query(`ALTER TABLE guard_settings ADD COLUMN IF NOT EXISTS automod_links BOOLEAN DEFAULT false;`);
+  await pool.query(`ALTER TABLE guard_settings ADD COLUMN IF NOT EXISTS automod_caps BOOLEAN DEFAULT false;`);
+  await pool.query(`ALTER TABLE guard_settings ADD COLUMN IF NOT EXISTS caps_threshold INTEGER DEFAULT 70;`);
+  await pool.query(`ALTER TABLE guard_settings ADD COLUMN IF NOT EXISTS mute_role_id TEXT;`);
+  await pool.query(`ALTER TABLE guard_settings ADD COLUMN IF NOT EXISTS warns_mute INTEGER DEFAULT 3;`);
+  await pool.query(`ALTER TABLE guard_settings ADD COLUMN IF NOT EXISTS warns_ban INTEGER DEFAULT 5;`);
+
   await pool.query(`
     CREATE TABLE IF NOT EXISTS guild_case_counters (
       guild_id TEXT PRIMARY KEY,
@@ -53,7 +63,12 @@ async function getGuardSettings(guildId) {
 }
 
 async function updateGuardSettings(guildId, patch) {
-  const allowed = ['modlog_channel_id', 'self_role_categories'];
+  const allowed = [
+    'modlog_channel_id', 'self_role_categories',
+    'automod_spam', 'spam_threshold', 'spam_seconds',
+    'automod_links', 'automod_caps', 'caps_threshold',
+    'mute_role_id', 'warns_mute', 'warns_ban',
+  ];
   const keys = Object.keys(patch).filter(k => allowed.includes(k));
   if (keys.length === 0) return getGuardSettings(guildId);
 

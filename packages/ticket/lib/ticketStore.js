@@ -12,6 +12,10 @@ async function initTicketTables() {
     );
   `);
   await pool.query(`ALTER TABLE ticket_config ADD COLUMN IF NOT EXISTS banner_url TEXT;`);
+  await pool.query(`ALTER TABLE ticket_config ADD COLUMN IF NOT EXISTS inactive_close_hours INTEGER DEFAULT 0;`);
+  await pool.query(`ALTER TABLE ticket_config ADD COLUMN IF NOT EXISTS dm_close BOOLEAN DEFAULT false;`);
+  await pool.query(`ALTER TABLE ticket_config ADD COLUMN IF NOT EXISTS panel_title TEXT;`);
+  await pool.query(`ALTER TABLE ticket_config ADD COLUMN IF NOT EXISTS panel_rules TEXT;`);
   await pool.query(`
     CREATE TABLE IF NOT EXISTS tickets (
       id SERIAL PRIMARY KEY,
@@ -26,6 +30,7 @@ async function initTicketTables() {
       closed_at TIMESTAMP
     );
   `);
+  await pool.query(`ALTER TABLE tickets ADD COLUMN IF NOT EXISTS last_activity TIMESTAMPTZ DEFAULT NOW();`);
   await pool.query(`
     CREATE TABLE IF NOT EXISTS ticket_transcripts (
       id SERIAL PRIMARY KEY,
@@ -43,7 +48,7 @@ async function getConfig(guildId) {
 }
 
 async function setConfig(guildId, fields = {}) {
-  const allowed = ['category_channel_id', 'log_channel_id', 'staff_role_id', 'max_tickets_per_user', 'categories', 'banner_url'];
+  const allowed = ['category_channel_id', 'log_channel_id', 'staff_role_id', 'max_tickets_per_user', 'categories', 'banner_url', 'inactive_close_hours', 'dm_close', 'panel_title', 'panel_rules'];
   const keys = Object.keys(fields).filter(k => allowed.includes(k));
   if (keys.length === 0) return getConfig(guildId);
 
@@ -83,7 +88,7 @@ async function getTicketByChannel(channelId) {
 
 async function claimTicket(ticketId, staffUserId) {
   const res = await pool.query(
-    `UPDATE tickets SET claimed_by = $2, status = 'claimed' WHERE id = $1 RETURNING *`,
+    `UPDATE tickets SET claimed_by = $2, status = 'claimed', last_activity = NOW() WHERE id = $1 RETURNING *`,
     [ticketId, staffUserId]
   );
   return res.rows[0] || null;
@@ -91,10 +96,26 @@ async function claimTicket(ticketId, staffUserId) {
 
 async function setPriority(ticketId, priority) {
   const res = await pool.query(
-    `UPDATE tickets SET priority = $2 WHERE id = $1 RETURNING *`,
+    `UPDATE tickets SET priority = $2, last_activity = NOW() WHERE id = $1 RETURNING *`,
     [ticketId, priority]
   );
   return res.rows[0] || null;
+}
+
+async function touchTicketActivity(ticketId) {
+  await pool.query(`UPDATE tickets SET last_activity = NOW() WHERE id = $1`, [ticketId]).catch(() => {});
+}
+
+async function findStaleTickets() {
+  const res = await pool.query(
+    `SELECT t.*, c.inactive_close_hours, c.dm_close, c.log_channel_id
+     FROM tickets t
+     JOIN ticket_config c ON c.guild_id = t.guild_id
+     WHERE t.status IN ('open', 'claimed')
+       AND COALESCE(c.inactive_close_hours, 0) > 0
+       AND t.last_activity < NOW() - (COALESCE(c.inactive_close_hours, 0) || ' hours')::interval`
+  ).catch(() => ({ rows: [] }));
+  return res.rows;
 }
 
 async function closeTicket(ticketId) {
@@ -123,4 +144,6 @@ module.exports = {
   setPriority,
   closeTicket,
   saveTranscript,
+  touchTicketActivity,
+  findStaleTickets,
 };

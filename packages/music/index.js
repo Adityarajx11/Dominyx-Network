@@ -4,6 +4,9 @@ const { Client, GatewayIntentBits, MessageFlags } = require('discord.js');
 
 const { loadCommands, loadEvents } = require('@dominyx/core');
 const { attachLavalink, getManager } = require('./lib/lavalink');
+const { requireDj } = require('./lib/settings');
+
+const DJ_GATED_COMMANDS = new Set(['play', 'pause', 'resume', 'skip', 'stop', 'loop', 'shuffle', 'volume', '247']);
 
 const client = new Client({
   intents: [
@@ -24,6 +27,10 @@ client.on('interactionCreate', async (interaction) => {
     if (!command) return;
 
     try {
+      if (DJ_GATED_COMMANDS.has(interaction.commandName)) {
+        const allowed = await requireDj(interaction);
+        if (!allowed) return;
+      }
       await command.execute(interaction, client);
     } catch (err) {
       console.error(`Error running /${interaction.commandName}:`, err);
@@ -37,6 +44,8 @@ client.on('interactionCreate', async (interaction) => {
   if (interaction.isButton() && interaction.customId.startsWith('music_')) {
     const { handleMusicButton } = require('./lib/buttons');
     try {
+      const allowed = await requireDj(interaction);
+      if (!allowed) return;
       await handleMusicButton(interaction);
     } catch (err) {
       console.error('Music button error:', err);

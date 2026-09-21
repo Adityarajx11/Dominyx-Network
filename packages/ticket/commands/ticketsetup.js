@@ -42,6 +42,25 @@ module.exports = {
         .setDescription('Set the banner image for the ticket panel')
         .addStringOption(opt => opt.setName('url').setDescription('Image URL').setRequired(true)))
     .addSubcommand(sub =>
+      sub.setName('removebanner')
+        .setDescription('Remove the ticket panel banner image'))
+    .addSubcommand(sub =>
+      sub.setName('inactivehours')
+        .setDescription('Auto-close tickets idle this long (0 = off)')
+        .addIntegerOption(opt => opt.setName('hours').setDescription('Hours of inactivity (0-720)').setRequired(true)))
+    .addSubcommand(sub =>
+      sub.setName('dmclose')
+        .setDescription('DM the creator a notice when their ticket closes')
+        .addBooleanOption(opt => opt.setName('enabled').setDescription('On or off').setRequired(true)))
+    .addSubcommand(sub =>
+      sub.setName('paneltitle')
+        .setDescription('Custom title for the ticket panel embed')
+        .addStringOption(opt => opt.setName('title').setDescription('Panel title (empty to reset)')))
+    .addSubcommand(sub =>
+      sub.setName('panelrules')
+        .setDescription('Custom rules text for the ticket panel embed')
+        .addStringOption(opt => opt.setName('rules').setDescription('Rules text (empty to reset)')))
+    .addSubcommand(sub =>
       sub.setName('view')
         .setDescription('View current ticket configuration')),
 
@@ -101,8 +120,41 @@ module.exports = {
 
     if (sub === 'addbanner') {
       const url = interaction.options.getString('url');
+      if (!/^https?:\/\/.+/i.test(url)) {
+        return reply('❌ That doesn\'t look like an image URL. It must start with http:// or https://.');
+      }
       await setConfig(guildId, { banner_url: url });
       return reply('✅ Banner image set.');
+    }
+
+    if (sub === 'removebanner') {
+      await setConfig(guildId, { banner_url: null });
+      return reply('☑️ Banner image removed.');
+    }
+
+    if (sub === 'inactivehours') {
+      const hours = interaction.options.getInteger('hours');
+      if (hours < 0 || hours > 720) return reply('❌ Hours must be between 0 and 720 (0 = off).');
+      await setConfig(guildId, { inactive_close_hours: hours });
+      return reply(hours === 0 ? '☑️ Inactivity auto-close **disabled**.' : `✅ Tickets idle for **${hours}h** will auto-close.`);
+    }
+
+    if (sub === 'dmclose') {
+      const enabled = interaction.options.getBoolean('enabled');
+      await setConfig(guildId, { dm_close: enabled });
+      return reply(enabled ? '✅ Creators will be DM\u2019d when their ticket closes.' : '☑️ Close DMs **disabled**.');
+    }
+
+    if (sub === 'paneltitle') {
+      const title = interaction.options.getString('title');
+      await setConfig(guildId, { panel_title: title || null });
+      return reply(title ? '✅ Panel title set.' : '☑️ Panel title reset to default.');
+    }
+
+    if (sub === 'panelrules') {
+      const rules = interaction.options.getString('rules');
+      await setConfig(guildId, { panel_rules: rules || null });
+      return reply(rules ? '✅ Panel rules set.' : '☑️ Panel rules reset to default.');
     }
 
     if (sub === 'view') {
@@ -118,6 +170,9 @@ module.exports = {
           { name: 'Staff Role', value: cfg.staff_role_id ? `<@&${cfg.staff_role_id}>` : 'Not set', inline: true },
           { name: 'Max Tickets Per User', value: String(cfg.max_tickets_per_user || 1), inline: true },
           { name: 'Banner URL', value: cfg.banner_url ? `[View](${cfg.banner_url})` : 'Not set', inline: true },
+          { name: 'Auto-close After', value: cfg.inactive_close_hours ? `${cfg.inactive_close_hours}h idle` : 'Off', inline: true },
+          { name: 'DM On Close', value: cfg.dm_close ? 'On' : 'Off', inline: true },
+          { name: 'Panel Title', value: cfg.panel_title || 'Default', inline: true },
           { name: 'Categories', value: (cfg.categories || []).map(c => `${c.emoji ? c.emoji + ' ' : ''}${c.label}`).join('\n') || 'None configured' },
         );
       return interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });

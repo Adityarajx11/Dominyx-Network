@@ -173,6 +173,15 @@ module.exports = {
         await saveTranscript(ticket.id, transcript);
         await closeTicket(ticket.id);
 
+        if (cfg.dm_close) {
+          const creator = await interaction.client.users.fetch(ticket.user_id).catch(() => null);
+          if (creator) {
+            await creator.send(
+              `🗑️ Your ticket in **${interaction.guild.name}** was closed by <@${userId}>. Open a new one if you still need help.`
+            ).catch(() => {});
+          }
+        }
+
         if (cfg.log_channel_id) {
           const logChannel = await interaction.guild.channels.fetch(cfg.log_channel_id).catch(() => null);
           if (logChannel) {

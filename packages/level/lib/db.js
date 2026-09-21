@@ -29,6 +29,13 @@ async function initLevelDatabase() {
     );
   `);
 
+  await pool.query(`ALTER TABLE level_config ADD COLUMN IF NOT EXISTS xp_min INTEGER DEFAULT 15;`);
+  await pool.query(`ALTER TABLE level_config ADD COLUMN IF NOT EXISTS xp_max INTEGER DEFAULT 25;`);
+  await pool.query(`ALTER TABLE level_config ADD COLUMN IF NOT EXISTS cooldown_seconds INTEGER DEFAULT 60;`);
+  await pool.query(`ALTER TABLE level_config ADD COLUMN IF NOT EXISTS ignored_channels JSONB DEFAULT '[]';`);
+  await pool.query(`ALTER TABLE level_config ADD COLUMN IF NOT EXISTS ignored_roles JSONB DEFAULT '[]';`);
+  await pool.query(`ALTER TABLE level_config ADD COLUMN IF NOT EXISTS role_stack BOOLEAN DEFAULT true;`);
+
   console.log('🗄️  Level tables ready.');
 }
 

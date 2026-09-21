@@ -156,9 +156,23 @@ function PanelHeader({ botId }) {
 }
 
 /* ---------------- Music ---------------- */
-function MusicPanel({ cfg, onRefresh, guildId }) {
+function MusicPanel({ cfg, meta, onRefresh, guildId }) {
   const { push, state } = usePusher(guildId, onRefresh);
   const [stay247, setStay247] = useState(cfg.stay247);
+  const [defaultVolume, setDefaultVolume] = useState(cfg.defaultVolume ?? 100);
+  const [djRoleId, setDjRoleId] = useState(cfg.djRoleId || '');
+  const [maxQueue, setMaxQueue] = useState(cfg.maxQueue ?? 50);
+  const [leaveTimeoutMinutes, setLeaveTimeoutMinutes] = useState(cfg.leaveTimeoutMinutes ?? 5);
+  const [announceChannelId, setAnnounceChannelId] = useState(cfg.announceChannelId || '');
+
+  const save = () => push('music', 'settings', {
+    stay247,
+    defaultVolume: Math.min(200, Math.max(0, Number(defaultVolume) || 100)),
+    djRoleId: djRoleId || null,
+    maxQueue: Math.min(500, Math.max(1, Number(maxQueue) || 50)),
+    leaveTimeoutMinutes: Math.min(120, Math.max(1, Number(leaveTimeoutMinutes) || 5)),
+    announceChannelId: announceChannelId || null,
+  });
 
   return (
     <div>
@@ -166,7 +180,26 @@ function MusicPanel({ cfg, onRefresh, guildId }) {
       <Field hint="Keeps the bot in your voice channel 24/7 and resumes playing the queue after downtime.">
         <Toggle checked={stay247} onChange={setStay247} label="Enable 24/7 mode" />
       </Field>
-      <SaveBar state={state} onSave={() => push('music', 'settings', { stay247 })} />
+      <div className="form-row">
+        <Field label="Default volume" hint="0–200. Applied to every new session.">
+          <input type="number" min="0" max="200" value={defaultVolume} onChange={(e) => setDefaultVolume(e.target.value)} />
+        </Field>
+        <Field label="Max queue size" hint="1–500 songs.">
+          <input type="number" min="1" max="500" value={maxQueue} onChange={(e) => setMaxQueue(e.target.value)} />
+        </Field>
+      </div>
+      <div className="form-row">
+        <Field label="DJ role" hint="Only this role (+ admins) can control music. Empty = everyone.">
+          <Select value={djRoleId} onChange={setDjRoleId} options={meta.roles} placeholder="No DJ role (everyone)" />
+        </Field>
+        <Field label="Announce channel" hint="Now-playing posts go here. Empty = command channel.">
+          <Select value={announceChannelId} onChange={setAnnounceChannelId} options={meta.textChannels} placeholder="Command channel (default)" />
+        </Field>
+      </div>
+      <Field label="Empty-queue leave timeout (minutes)" hint="How long to wait before leaving voice. 24/7 mode ignores this.">
+        <input type="number" min="1" max="120" value={leaveTimeoutMinutes} onChange={(e) => setLeaveTimeoutMinutes(e.target.value)} />
+      </Field>
+      <SaveBar state={state} onSave={save} />
     </div>
   );
 }
@@ -176,8 +209,27 @@ function LevelPanel({ cfg, meta, onRefresh, guildId }) {
   const { push, state } = usePusher(guildId, onRefresh);
   const [channelId, setChannelId] = useState(cfg.channel_id || '');
   const [messageTemplate, setMessageTemplate] = useState(cfg.message_template || '');
+  const [xpMin, setXpMin] = useState(cfg.xp_min ?? 15);
+  const [xpMax, setXpMax] = useState(cfg.xp_max ?? 25);
+  const [cooldownSeconds, setCooldownSeconds] = useState(cfg.cooldown_seconds ?? 60);
+  const [roleStack, setRoleStack] = useState(cfg.role_stack ?? true);
+  const [ignoredChannels, setIgnoredChannels] = useState(cfg.ignored_channels || []);
+  const [ignoredRoles, setIgnoredRoles] = useState(cfg.ignored_roles || []);
   const [newLevel, setNewLevel] = useState('');
   const [newRole, setNewRole] = useState('');
+  const [newIgnoredChannel, setNewIgnoredChannel] = useState('');
+  const [newIgnoredRole, setNewIgnoredRole] = useState('');
+
+  const saveSettings = () => push('level', 'settings', {
+    channelId: channelId || null,
+    messageTemplate,
+    xpMin: Math.max(1, Number(xpMin) || 15),
+    xpMax: Math.max(Number(xpMin) || 15, Number(xpMax) || 25),
+    cooldownSeconds: Math.max(0, Number(cooldownSeconds) || 0),
+    ignoredChannels,
+    ignoredRoles,
+    roleStack,
+  });
 
   return (
     <div>
@@ -190,7 +242,23 @@ function LevelPanel({ cfg, meta, onRefresh, guildId }) {
           <textarea value={messageTemplate} onChange={(e) => setMessageTemplate(e.target.value)} />
         </Field>
       </div>
-      <SaveBar state={state} onSave={() => push('level', 'settings', { channelId: channelId || null, messageTemplate })} />
+      <div className="form-row">
+        <Field label="XP per message (min)" hint="Random XP rolls between min and max.">
+          <input type="number" min="1" value={xpMin} onChange={(e) => setXpMin(e.target.value)} />
+        </Field>
+        <Field label="XP per message (max)">
+          <input type="number" min="1" value={xpMax} onChange={(e) => setXpMax(e.target.value)} />
+        </Field>
+      </div>
+      <div className="form-row">
+        <Field label="Cooldown (seconds)" hint="0 = no cooldown.">
+          <input type="number" min="0" value={cooldownSeconds} onChange={(e) => setCooldownSeconds(e.target.value)} />
+        </Field>
+        <Field hint="Off = keep only the highest earned role.">
+          <Toggle checked={roleStack} onChange={setRoleStack} label="Stack level roles" />
+        </Field>
+      </div>
+      <SaveBar state={state} onSave={saveSettings} />
 
       <h3 style={{ marginTop: 32 }}>Level roles</h3>
       <div className="rows">
@@ -225,6 +293,70 @@ function LevelPanel({ cfg, meta, onRefresh, guildId }) {
           Add level role
         </button>
       </div>
+
+      <h3 style={{ marginTop: 32 }}>No-XP channels</h3>
+      <div className="rows">
+        {ignoredChannels.length === 0 && <div className="empty">Every channel earns XP.</div>}
+        {ignoredChannels.map((id) => (
+          <div key={id} className="row-item">
+            <div>{meta.channelNames[id] || 'Unknown channel'}</div>
+            <div className="row-actions">
+              <button className="btn btn-danger btn-sm" onClick={() => { const next = ignoredChannels.filter((c) => c !== id); setIgnoredChannels(next); push('level', 'settings', { ignoredChannels: next }); }}>Remove</button>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="form-row" style={{ marginTop: 12 }}>
+        <Field label="Channel">
+          <Select value={newIgnoredChannel} onChange={setNewIgnoredChannel} options={meta.textChannels} placeholder="Pick a channel" />
+        </Field>
+      </div>
+      <div className="save-bar">
+        <button
+          className="btn btn-primary"
+          disabled={!newIgnoredChannel || ignoredChannels.includes(newIgnoredChannel)}
+          onClick={() => {
+            const next = [...ignoredChannels, newIgnoredChannel];
+            setIgnoredChannels(next);
+            push('level', 'settings', { ignoredChannels: next });
+            setNewIgnoredChannel('');
+          }}
+        >
+          Ignore channel
+        </button>
+      </div>
+
+      <h3 style={{ marginTop: 32 }}>No-XP roles</h3>
+      <div className="rows">
+        {ignoredRoles.length === 0 && <div className="empty">Every role earns XP.</div>}
+        {ignoredRoles.map((id) => (
+          <div key={id} className="row-item">
+            <div>{meta.roleNames[id] || 'Unknown role'}</div>
+            <div className="row-actions">
+              <button className="btn btn-danger btn-sm" onClick={() => { const next = ignoredRoles.filter((r) => r !== id); setIgnoredRoles(next); push('level', 'settings', { ignoredRoles: next }); }}>Remove</button>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="form-row" style={{ marginTop: 12 }}>
+        <Field label="Role">
+          <Select value={newIgnoredRole} onChange={setNewIgnoredRole} options={meta.roles} placeholder="Pick a role" />
+        </Field>
+      </div>
+      <div className="save-bar">
+        <button
+          className="btn btn-primary"
+          disabled={!newIgnoredRole || ignoredRoles.includes(newIgnoredRole)}
+          onClick={() => {
+            const next = [...ignoredRoles, newIgnoredRole];
+            setIgnoredRoles(next);
+            push('level', 'settings', { ignoredRoles: next });
+            setNewIgnoredRole('');
+          }}
+        >
+          Ignore role
+        </button>
+      </div>
     </div>
   );
 }
@@ -236,6 +368,23 @@ function GreetPanel({ cfg, meta, onRefresh, guildId }) {
   const [welcomeMessage, setWelcomeMessage] = useState(cfg.welcome_message || '');
   const [autoRoleId, setAutoRoleId] = useState(cfg.auto_role_id || '');
   const [cardEnabled, setCardEnabled] = useState(cfg.card_enabled);
+  const [goodbyeChannelId, setGoodbyeChannelId] = useState(cfg.goodbye_channel_id || '');
+  const [goodbyeMessage, setGoodbyeMessage] = useState(cfg.goodbye_message || '');
+  const [dmWelcome, setDmWelcome] = useState(cfg.dm_welcome ?? false);
+  const [cardTheme, setCardTheme] = useState(cfg.card_theme || 'crimson');
+  const [greetBots, setGreetBots] = useState(cfg.greet_bots ?? false);
+
+  const save = () => push('greet', 'settings', {
+    welcomeChannelId: welcomeChannelId || null,
+    welcomeMessage,
+    autoRoleId: autoRoleId || null,
+    cardEnabled,
+    goodbyeChannelId: goodbyeChannelId || null,
+    goodbyeMessage,
+    dmWelcome,
+    cardTheme,
+    greetBots,
+  });
 
   return (
     <div>
@@ -251,13 +400,37 @@ function GreetPanel({ cfg, meta, onRefresh, guildId }) {
       <Field label="Welcome message" hint="Placeholders: {user}, {server}, {membercount}">
         <textarea value={welcomeMessage} onChange={(e) => setWelcomeMessage(e.target.value)} />
       </Field>
-      <Field>
-        <Toggle checked={cardEnabled} onChange={setCardEnabled} label="Show the crimson welcome card" />
+      <div className="form-row">
+        <Field label="Card theme">
+          <Select
+            value={cardTheme}
+            onChange={setCardTheme}
+            options={[
+              { value: 'crimson', label: 'Crimson' },
+              { value: 'gold', label: 'Gold' },
+              { value: 'violet', label: 'Violet' },
+              { value: 'ocean', label: 'Ocean' },
+            ]}
+            placeholder="Crimson"
+          />
+        </Field>
+        <Field label="Goodbye channel" hint="Farewell posts go here. Empty = off.">
+          <Select value={goodbyeChannelId} onChange={setGoodbyeChannelId} options={meta.textChannels} placeholder="Not set" />
+        </Field>
+      </div>
+      <Field label="Goodbye message" hint="Placeholders: {user}, {server}, {membercount}">
+        <textarea value={goodbyeMessage} onChange={(e) => setGoodbyeMessage(e.target.value)} />
       </Field>
-      <SaveBar
-        state={state}
-        onSave={() => push('greet', 'settings', { welcomeChannelId: welcomeChannelId || null, welcomeMessage, autoRoleId: autoRoleId || null, cardEnabled })}
-      />
+      <Field>
+        <Toggle checked={cardEnabled} onChange={setCardEnabled} label="Show the welcome card" />
+      </Field>
+      <Field hint="Sends the welcome text straight to the member's DMs too.">
+        <Toggle checked={dmWelcome} onChange={setDmWelcome} label="DM welcome message" />
+      </Field>
+      <Field hint="Bots always get the auto-role; this also gives them messages and cards.">
+        <Toggle checked={greetBots} onChange={setGreetBots} label="Greet bots too" />
+      </Field>
+      <SaveBar state={state} onSave={save} />
     </div>
   );
 }
@@ -270,6 +443,10 @@ function TicketPanel({ cfg, meta, onRefresh, guildId }) {
   const [staffRoleId, setStaffRoleId] = useState(cfg.staff_role_id || '');
   const [maxTickets, setMaxTickets] = useState(cfg.max_tickets_per_user);
   const [bannerUrl, setBannerUrl] = useState(cfg.banner_url || '');
+  const [inactiveCloseHours, setInactiveCloseHours] = useState(cfg.inactive_close_hours ?? 0);
+  const [dmClose, setDmClose] = useState(cfg.dm_close ?? false);
+  const [panelTitle, setPanelTitle] = useState(cfg.panel_title || '');
+  const [panelRules, setPanelRules] = useState(cfg.panel_rules || '');
   const [label, setLabel] = useState('');
   const [emoji, setEmoji] = useState('');
   const [description, setDescription] = useState('');
@@ -293,8 +470,22 @@ function TicketPanel({ cfg, meta, onRefresh, guildId }) {
           <input type="number" min="1" value={maxTickets} onChange={(e) => setMaxTickets(Number(e.target.value))} />
         </Field>
       </div>
-      <Field label="Panel banner URL" hint="Image shown at the top of the ticket panel.">
+      <Field label="Panel banner URL" hint="Image shown at the top of the ticket panel. Must start with http(s)://.">
         <input type="text" value={bannerUrl} onChange={(e) => setBannerUrl(e.target.value)} placeholder="https://…" />
+      </Field>
+      <div className="form-row">
+        <Field label="Panel title" hint="Empty = default title.">
+          <input type="text" value={panelTitle} onChange={(e) => setPanelTitle(e.target.value)} placeholder="🎫 Dominyx Support Tickets" />
+        </Field>
+        <Field label="Auto-close after (hours idle)" hint="0 = never auto-close.">
+          <input type="number" min="0" max="720" value={inactiveCloseHours} onChange={(e) => setInactiveCloseHours(e.target.value)} />
+        </Field>
+      </div>
+      <Field label="Panel rules text" hint="Empty = default rules.">
+        <textarea value={panelRules} onChange={(e) => setPanelRules(e.target.value)} />
+      </Field>
+      <Field hint="DMs the ticket creator when their ticket closes.">
+        <Toggle checked={dmClose} onChange={setDmClose} label="DM on close" />
       </Field>
       <SaveBar
         state={state}
@@ -303,7 +494,11 @@ function TicketPanel({ cfg, meta, onRefresh, guildId }) {
           logChannelId: logChannelId || null,
           staffRoleId: staffRoleId || null,
           maxTickets,
-          bannerUrl: bannerUrl || null,
+          bannerUrl: /^https?:\/\/.+/i.test(bannerUrl) ? bannerUrl : null,
+          inactiveCloseHours: Math.min(720, Math.max(0, Number(inactiveCloseHours) || 0)),
+          dmClose,
+          panelTitle: panelTitle || null,
+          panelRules: panelRules || null,
         })}
       />
 
@@ -352,6 +547,9 @@ function PingPanel({ cfg, meta, onRefresh, guildId }) {
   const [youtubeChannelId, setYoutubeChannelId] = useState(cfg.youtube_channel_id || '');
   const [alertChannelId, setAlertChannelId] = useState(cfg.live_alert_channel_id || '');
   const [enabled, setEnabled] = useState(cfg.enabled);
+  const [alertMessage, setAlertMessage] = useState(cfg.alert_message || '');
+  const [mentionRoleId, setMentionRoleId] = useState(cfg.mention_role_id || '');
+  const [pollMinutes, setPollMinutes] = useState(cfg.poll_minutes ?? 10);
 
   return (
     <div>
@@ -364,12 +562,30 @@ function PingPanel({ cfg, meta, onRefresh, guildId }) {
           <Select value={alertChannelId} onChange={setAlertChannelId} options={meta.textChannels} placeholder="Not set" />
         </Field>
       </div>
+      <Field label="Custom alert message" hint="Placeholders: {channel}, {title}, {url}. Empty = default.">
+        <textarea value={alertMessage} onChange={(e) => setAlertMessage(e.target.value)} placeholder="🔴 **{channel}** is live now! {url}" />
+      </Field>
+      <div className="form-row">
+        <Field label="Mention role" hint="Pinged on every live alert.">
+          <Select value={mentionRoleId} onChange={setMentionRoleId} options={meta.roles} placeholder="No mention" />
+        </Field>
+        <Field label="Check every (minutes)" hint="1–60.">
+          <input type="number" min="1" max="60" value={pollMinutes} onChange={(e) => setPollMinutes(e.target.value)} />
+        </Field>
+      </div>
       <Field>
         <Toggle checked={enabled} onChange={setEnabled} label="Live alerts enabled" />
       </Field>
       <SaveBar
         state={state}
-        onSave={() => push('ping', 'settings', { youtubeChannelId: youtubeChannelId || null, alertChannelId: alertChannelId || null, enabled })}
+        onSave={() => push('ping', 'settings', {
+          youtubeChannelId: youtubeChannelId || null,
+          alertChannelId: alertChannelId || null,
+          enabled,
+          alertMessage: alertMessage || null,
+          mentionRoleId: mentionRoleId || null,
+          pollMinutes: Math.min(60, Math.max(1, Number(pollMinutes) || 10)),
+        })}
       />
     </div>
   );
@@ -381,8 +597,30 @@ function GuardPanel({ cfg, meta, onRefresh, guildId }) {
   const [modlogChannelId, setModlogChannelId] = useState(cfg.modlog_channel_id || '');
   const [category, setCategory] = useState('');
   const [roleId, setRoleId] = useState('');
+  const [automodSpam, setAutomodSpam] = useState(cfg.automod_spam ?? false);
+  const [spamThreshold, setSpamThreshold] = useState(cfg.spam_threshold ?? 5);
+  const [spamSeconds, setSpamSeconds] = useState(cfg.spam_seconds ?? 10);
+  const [automodLinks, setAutomodLinks] = useState(cfg.automod_links ?? false);
+  const [automodCaps, setAutomodCaps] = useState(cfg.automod_caps ?? false);
+  const [capsThreshold, setCapsThreshold] = useState(cfg.caps_threshold ?? 70);
+  const [muteRoleId, setMuteRoleId] = useState(cfg.mute_role_id || '');
+  const [warnsMute, setWarnsMute] = useState(cfg.warns_mute ?? 3);
+  const [warnsBan, setWarnsBan] = useState(cfg.warns_ban ?? 5);
 
   const categories = cfg.self_role_categories || {};
+
+  const saveAutomod = () => push('guard', 'settings', {
+    modlogChannelId: modlogChannelId || null,
+    automodSpam,
+    spamThreshold: Math.max(2, Number(spamThreshold) || 5),
+    spamSeconds: Math.min(120, Math.max(5, Number(spamSeconds) || 10)),
+    automodLinks,
+    automodCaps,
+    capsThreshold: Math.min(100, Math.max(10, Number(capsThreshold) || 70)),
+    muteRoleId: muteRoleId || null,
+    warnsMute: Math.max(1, Number(warnsMute) || 3),
+    warnsBan: Math.max(1, Number(warnsBan) || 5),
+  });
 
   return (
     <div>
@@ -390,7 +628,42 @@ function GuardPanel({ cfg, meta, onRefresh, guildId }) {
       <Field label="Mod-log channel" hint="Case records for bans, kicks and warns post here.">
         <Select value={modlogChannelId} onChange={setModlogChannelId} options={meta.textChannels} placeholder="Not set" />
       </Field>
-      <SaveBar state={state} onSave={() => push('guard', 'settings', { modlogChannelId: modlogChannelId || null })} />
+
+      <h3 style={{ marginTop: 32 }}>Automod</h3>
+      <Field hint="Delete + warn on spam bursts. Needs Message Content intent on the bot.">
+        <Toggle checked={automodSpam} onChange={setAutomodSpam} label="Anti-spam" />
+      </Field>
+      <div className="form-row">
+        <Field label="Spam messages" hint="Messages inside the window that trigger.">
+          <input type="number" min="2" value={spamThreshold} onChange={(e) => setSpamThreshold(e.target.value)} />
+        </Field>
+        <Field label="Window (seconds)" hint="5–120.">
+          <input type="number" min="5" max="120" value={spamSeconds} onChange={(e) => setSpamSeconds(e.target.value)} />
+        </Field>
+      </div>
+      <Field hint="Delete messages containing links. Staff (Manage Messages) are exempt.">
+        <Toggle checked={automodLinks} onChange={setAutomodLinks} label="Block links" />
+      </Field>
+      <Field hint="Delete messages that are mostly CAPS.">
+        <Toggle checked={automodCaps} onChange={setAutomodCaps} label="Block caps" />
+      </Field>
+      <Field label="Caps threshold (%)" hint="10–100. Messages with 10+ letters only.">
+        <input type="number" min="10" max="100" value={capsThreshold} onChange={(e) => setCapsThreshold(e.target.value)} />
+      </Field>
+
+      <h3 style={{ marginTop: 32 }}>Warn ladder</h3>
+      <div className="form-row">
+        <Field label="Mute role" hint="Given automatically at the mute threshold.">
+          <Select value={muteRoleId} onChange={setMuteRoleId} options={meta.roles} placeholder="No mute role" />
+        </Field>
+        <Field label="Warns → mute" hint="0 disables this step.">
+          <input type="number" min="0" value={warnsMute} onChange={(e) => setWarnsMute(e.target.value)} />
+        </Field>
+      </div>
+      <Field label="Warns → ban" hint="0 disables this step.">
+        <input type="number" min="0" value={warnsBan} onChange={(e) => setWarnsBan(e.target.value)} />
+      </Field>
+      <SaveBar state={state} onSave={saveAutomod} />
 
       <h3 style={{ marginTop: 32 }}>Self-assignable roles</h3>
       {Object.keys(categories).length === 0 && <div className="empty">No self-role categories yet.</div>}

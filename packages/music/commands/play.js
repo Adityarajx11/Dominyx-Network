@@ -1,5 +1,6 @@
 const { SlashCommandBuilder, MessageFlags } = require('discord.js');
 const { getOrCreatePlayer, searchTrack } = require('../lib/lavalink');
+const { getMusicSettings } = require('../lib/settings');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -18,6 +19,7 @@ module.exports = {
 
     await interaction.deferReply();
 
+    const settings = await getMusicSettings(interaction.guild.id);
     const query = interaction.options.getString('song');
     const track = await searchTrack(query, interaction.user.tag);
 
@@ -25,8 +27,12 @@ module.exports = {
       return interaction.editReply('❌ Couldn\'t find that song.');
     }
 
-    const player = getOrCreatePlayer(interaction);
+    const player = getOrCreatePlayer(interaction, { volume: settings.defaultVolume });
     if (!player.connected) await player.connect();
+
+    if (player.queue.tracks.length >= settings.maxQueue) {
+      return interaction.editReply(`🚫 Queue is full (max ${settings.maxQueue} songs). Use \`/skip\` or \`/stop\` to make room.`);
+    }
 
     player.queue.add(track);
 

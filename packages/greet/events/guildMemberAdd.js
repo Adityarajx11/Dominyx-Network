@@ -10,6 +10,7 @@ module.exports = {
     try {
       const guildId = member.guild.id;
       const settings = await getGreetSettings(guildId);
+      const isBot = member.user.bot;
 
       if (settings.autoRoleId) {
         try {
@@ -18,6 +19,19 @@ module.exports = {
         } catch (err) {
           console.warn(`⚠️ Could not assign auto-role to ${member.user.tag}:`, err.message);
         }
+      }
+
+      // Bots only get the auto-role unless greetings are enabled for them.
+      if (isBot && !settings.greetBots) return;
+
+      if (settings.dmWelcome && !isBot) {
+        const template = settings.welcomeMessage || DEFAULT_TEMPLATE;
+        const dmText = template
+          .replaceAll('{user}', member.user.username)
+          .replaceAll('{username}', member.user.username)
+          .replaceAll('{server}', member.guild.name)
+          .replaceAll('{membercount}', String(member.guild.memberCount));
+        await member.send(dmText).catch(() => {});
       }
 
       if (!settings.welcomeChannelId) return;
@@ -36,7 +50,7 @@ module.exports = {
 
       if (settings.cardEnabled !== false) {
         try {
-          const imageBuffer = await generateWelcomeCard(member);
+          const imageBuffer = await generateWelcomeCard(member, settings.cardTheme || 'crimson');
           const attachment = new AttachmentBuilder(imageBuffer, { name: 'welcome.png' });
           sendOptions.files = [attachment];
         } catch (err) {

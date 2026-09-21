@@ -57,14 +57,21 @@ function attachLavalink(client) {
     console.log(`🔄 Lavalink node "${node.id}" reconnecting…`);
   });
 
-  manager.on('trackStart', (player, track) => {
+  manager.on('trackStart', async (player, track) => {
     const existingTimer = leaveTimers.get(player.guildId);
     if (existingTimer) {
       clearTimeout(existingTimer);
       leaveTimers.delete(player.guildId);
     }
 
-    const channel = client.channels.cache.get(player.textChannelId);
+    let channel = client.channels.cache.get(player.textChannelId);
+    try {
+      const { getMusicSettings } = require('./settings');
+      const settings = await getMusicSettings(player.guildId);
+      if (settings.announceChannelId) {
+        channel = client.channels.cache.get(settings.announceChannelId) || channel;
+      }
+    } catch {}
     if (!channel) return;
 
     const { buildControlRow, buildNowPlayingEmbed } = require('./buttons');
@@ -75,16 +82,23 @@ function attachLavalink(client) {
     }).catch(() => {});
   });
 
-  manager.on('queueEnd', (player) => {
+  manager.on('queueEnd', async (player) => {
     const channel = client.channels.cache.get(player.textChannelId);
     channel?.send('📭 Queue finished. Add more with `/play`.').catch(() => {});
 
-    if (!get247(player.guildId)) {
-      const timer = setTimeout(() => {
-        channel?.send('👋 Leaving voice — queue empty for 5 minutes. Use `/247` to keep me connected permanently.').catch(() => {});
+    let stay247 = false;
+    let timeoutMinutes = 5;
+    try {
+      const { getMusicSettings } = require('./settings');
+      const settings = await getMusicSettings(player.guildId);
+      stay247 = settings.stay247;
+      timeoutMinutes = settings.leaveTimeoutMinutes;
+    } catch {}
+    if (!stay247) {      const timer = setTimeout(() => {
+        channel?.send(`👋 Leaving voice — queue empty for ${timeoutMinutes} minute(s). Use \`/247\` to keep me connected permanently.`).catch(() => {});
         player.destroy().catch(() => {});
         leaveTimers.delete(player.guildId);
-      }, 5 * 60 * 1000);
+      }, timeoutMinutes * 60 * 1000);
       leaveTimers.set(player.guildId, timer);
     }
   });
@@ -120,7 +134,7 @@ async function searchTrack(query, requestUser) {
   return track;
 }
 
-function getOrCreatePlayer(interaction) {
+function getOrCreatePlayer(interaction, opts = {}) {
   const voiceChannel = interaction.member.voice.channel;
   let player = manager.getPlayer(interaction.guild.id);
 
@@ -130,6 +144,7 @@ function getOrCreatePlayer(interaction) {
       voiceChannelId: voiceChannel.id,
       textChannelId: interaction.channel.id,
       selfDeaf: true,
+      ...(Number.isInteger(opts.volume) ? { volume: opts.volume } : {}),
     });
   }
 
