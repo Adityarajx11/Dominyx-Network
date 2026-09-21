@@ -1,5 +1,5 @@
-const { getGuardSettings } = require('./guardStore');
-const { createCase, logCaseToChannel } = require('./modlog');
+const { getGuardSettings } = require('../lib/guardStore');
+const { createCase, logCaseToChannel } = require('../lib/modlog');
 
 const LINK_RE = /https?:\/\/|discord\.gg\/|discord\.com\/invite\//i;
 
