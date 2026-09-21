@@ -5,14 +5,31 @@ let manager;
 const leaveTimers = new Map();
 
 function attachLavalink(client) {
+  const lavalinkHost = process.env.LAVALINK_HOST;
+  const lavalinkPassword = process.env.LAVALINK_PASSWORD;
+  const lavalinkPort = Number(process.env.LAVALINK_PORT || 443);
+  const lavalinkSecure = process.env.LAVALINK_SECURE === 'true';
+
+  const missing = [!lavalinkHost && 'LAVALINK_HOST', !lavalinkPassword && 'LAVALINK_PASSWORD'].filter(Boolean);
+  if (missing.length > 0) {
+    console.error(
+      `❌ Lavalink misconfigured — missing ${missing.join(' and ')}. ` +
+        'The node can never connect; /play will fail with "No Lavalink node connected" until these env vars are set.'
+    );
+  } else {
+    console.log(
+      `🎧 Lavalink node "main" configured → ${lavalinkSecure ? 'wss' : 'ws'}://${lavalinkHost}:${lavalinkPort} (connecting on ready…)`
+    );
+  }
+
   manager = new LavalinkManager({
     nodes: [
       {
         id: 'main',
-        host: process.env.LAVALINK_HOST,
-        port: Number(process.env.LAVALINK_PORT || 443),
-        authorization: process.env.LAVALINK_PASSWORD,
-        secure: process.env.LAVALINK_SECURE === 'true',
+        host: lavalinkHost,
+        port: lavalinkPort,
+        authorization: lavalinkPassword,
+        secure: lavalinkSecure,
       },
     ],
     sendToShard: (guildId, payload) => client.guilds.cache.get(guildId)?.shard?.send(payload),
@@ -32,6 +49,12 @@ function attachLavalink(client) {
   });
   manager.nodeManager.on('error', (node, error) => {
     console.error(`⚠️ Lavalink node "${node.id}" error:`, error?.message || error);
+  });
+  manager.nodeManager.on('disconnect', (node, reason) => {
+    console.warn(`🔌 Lavalink node "${node.id}" disconnected:`, reason?.message || reason || 'unknown reason');
+  });
+  manager.nodeManager.on('reconnecting', (node) => {
+    console.log(`🔄 Lavalink node "${node.id}" reconnecting…`);
   });
 
   manager.on('trackStart', (player, track) => {
