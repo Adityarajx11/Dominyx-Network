@@ -8,18 +8,20 @@ export default async function DashboardPage() {
   const data = await getAuthedData();
   if (!data) redirect('/');
 
-  // botId -> first manageable guild that bot is in (for sidebar routing).
-  let botHome = {};
+  // botId -> manageable guilds holding it (for sidebar routing).
+  let botServers = {};
   try {
     const botMap = await getBotGuildMap();
     for (const [botId, guildSet] of Object.entries(botMap)) {
-      const hit = data.manageable.find((g) => guildSet.has(g.id));
-      if (hit) botHome[botId] = hit.id;
+      const hits = data.manageable
+        .filter((g) => guildSet.has(g.id))
+        .map((g) => ({ id: g.id, name: g.name }));
+      if (hits.length > 0) botServers[botId] = hits;
     }
   } catch {}
 
   return (
-    <DashboardShell user={data.user} botHome={botHome}>
+    <DashboardShell user={data.user} botServers={botServers}>
       <div className="page-head">
         <GuildPicker guilds={data.manageable.map((g) => ({
           id: g.id,

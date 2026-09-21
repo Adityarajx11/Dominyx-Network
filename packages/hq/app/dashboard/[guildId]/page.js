@@ -1,7 +1,7 @@
 import { requireGuildAccess } from '@/lib/auth';
 import DashboardShell from '@/components/DashboardShell';
 import GuildConfig from '@/components/GuildConfig';
-import { getBotsInGuild } from '@/lib/discord';
+import { getBotsInGuild, getBotGuildMap } from '@/lib/discord';
 import { BOTS } from '@/lib/bots';
 import { getInviteUrl } from '@/lib/invite';
 
@@ -19,9 +19,20 @@ export default async function GuildPage({ params, searchParams }) {
   }
 
   let botsPresent = null;
+  let botServers = {};
   if (access.token && access.guild) {
     try {
       botsPresent = await getBotsInGuild(guildId, access.token);
+    } catch {}
+    try {
+      const botMap = await getBotGuildMap();
+      const manageable = access.manageable || [];
+      for (const [botId, guildSet] of Object.entries(botMap)) {
+        const hits = manageable
+          .filter((g) => guildSet.has(g.id))
+          .map((g) => ({ id: g.id, name: g.name }));
+        if (hits.length > 0) botServers[botId] = hits;
+      }
     } catch {}
   }
 
@@ -31,7 +42,7 @@ export default async function GuildPage({ params, searchParams }) {
   }
 
   return (
-    <DashboardShell user={access.user || { username: '—' }} botsPresent={botsPresent} inviteUrls={inviteUrls}>
+    <DashboardShell user={access.user || { username: '—' }} botsPresent={botsPresent} inviteUrls={inviteUrls} botServers={botServers}>
       <div className="page-head">
         <div className="crumbs">
           <a href="/dashboard" style={{ color: 'var(--violet)' }}>← Back to servers</a>

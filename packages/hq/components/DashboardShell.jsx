@@ -17,10 +17,11 @@ const LINKS = [
   { href: '/invite', label: 'Invite bots', icon: '＋' },
 ];
 
-export default function DashboardShell({ user, children, botsPresent = null, inviteUrls = {}, botHome = {} }) {
+export default function DashboardShell({ user, children, botsPresent = null, inviteUrls = {}, botServers = {} }) {
   const path = usePathname();
   const guildId = path.startsWith('/dashboard/') ? path.split('/')[2] : null;
   const [openBot, setOpenBot] = useState(null);
+  const [expanded, setExpanded] = useState(null);
   useEffect(() => {
     try {
       setOpenBot(new URLSearchParams(window.location.search).get('bot'));
@@ -47,8 +48,9 @@ export default function DashboardShell({ user, children, botsPresent = null, inv
         <div className="side-label">BOTS</div>
         <nav className="side-nav side-bots">
           {BOTS.map((b) => {
+            const servers = botServers[b.id] || [];
             // Server open: present (or unknown) -> its config tab; absent -> invite.
-            // No server open: jump to the server that has it; nowhere -> invite page.
+            // No server open: 1 home -> jump there; several -> pick from submenu; none -> invite page.
             let href = '/invite';
             let external = false;
             if (guildId) {
@@ -58,21 +60,46 @@ export default function DashboardShell({ user, children, botsPresent = null, inv
                 href = inviteUrls[b.id] || '/invite';
                 external = href !== '/invite';
               }
-            } else if (botHome[b.id]) {
-              href = `/dashboard/${botHome[b.id]}?bot=${b.id}`;
+            } else if (servers.length === 1) {
+              href = `/dashboard/${servers[0].id}?bot=${b.id}`;
             }
             const configuring = !!guildId && !external;
+            const showPicker = !guildId && servers.length > 1;
+            const isOpen = expanded === b.id;
             return (
-              <a
-                key={b.id}
-                href={href}
-                {...(external ? { target: '_blank', rel: 'noreferrer' } : {})}
-                title={configuring ? `Configure ${b.name}` : (botHome[b.id] || guildId ? `Open ${b.name}` : `Invite ${b.name}`)}
-                className={`side-link side-bot${configuring && openBot === b.id ? ' active' : ''}`}
-              >
-                <span>{b.emoji}</span>{b.name.replace('Dominyx ', '')}
-                <span className="side-dot" style={{ background: b.color, color: b.color }} />
-              </a>
+              <div key={b.id}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <a
+                    href={showPicker ? undefined : href}
+                    onClick={showPicker ? (e) => { e.preventDefault(); setExpanded(isOpen ? null : b.id); } : undefined}
+                    {...(external ? { target: '_blank', rel: 'noreferrer' } : {})}
+                    title={configuring ? `Configure ${b.name}` : (servers.length > 0 || guildId ? `Open ${b.name}` : `Invite ${b.name}`)}
+                    className={`side-link side-bot${configuring && openBot === b.id ? ' active' : ''}`}
+                    style={{ flex: 1, minWidth: 0 }}
+                  >
+                    <span>{b.emoji}</span>{b.name.replace('Dominyx ', '')}
+                    <span className="side-dot" style={{ background: b.color, color: b.color }} />
+                  </a>
+                  {showPicker && (
+                    <button
+                      className="side-caret"
+                      aria-label={`Choose server for ${b.name}`}
+                      onClick={() => setExpanded(isOpen ? null : b.id)}
+                    >
+                      {isOpen ? '▾' : '▸'}
+                    </button>
+                  )}
+                </div>
+                {showPicker && isOpen && (
+                  <div className="side-sub">
+                    {servers.map((s) => (
+                      <a key={s.id} href={`/dashboard/${s.id}?bot=${b.id}`} className="side-link side-server">
+                        {s.name}
+                      </a>
+                    ))}
+                  </div>
+                )}
+              </div>
             );
           })}
         </nav>

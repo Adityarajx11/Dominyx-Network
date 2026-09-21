@@ -44,7 +44,7 @@ async function requireGuildAccess(guildId) {
     throw err;
   }
   const hasBot = data.botGuilds.has(guildId);
-  return { user: data.user, guild, hasBot, token: data.token };
+  return { user: data.user, guild, hasBot, token: data.token, manageable: data.manageable };
 }
 
 module.exports = { getSession, getAuthedData, requireApiAuth, requireGuildAccess };
