@@ -26,7 +26,6 @@ function oauthAuthorizeUrl(state) {
     response_type: 'code',
     redirect_uri: redirectUri,
     scope: 'identify guilds',
-    prompt: 'none',
   });
   if (state) params.set('state', state);
   return `https://discord.com/api/oauth2/authorize?${params.toString()}`;

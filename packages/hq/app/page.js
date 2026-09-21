@@ -1,13 +1,14 @@
 import { BOTS } from '@/lib/bots';
 import { getSession } from '@/lib/auth';
 import { getInviteUrl } from '@/lib/invite';
+import LoginButton from '@/components/LoginButton';
 
 async function readError(searchParams) {
   const error = searchParams?.error || null;
   if (!error) return null;
   return {
     denied: 'Login was cancelled. You can try again whenever you are ready.',
-    invalid: 'That login link was invalid or expired. Try again.',
+    invalid: 'That login attempt expired (usually from clicking Login twice). Please try again, one click.',
     failed: 'Something went wrong during login. Try again.',
   }[error] || 'Something went wrong. Try again.';
 }
@@ -25,7 +26,7 @@ export default async function Home({ searchParams }) {
         {session ? (
           <a className="btn btn-primary btn-sm" href="/dashboard">Open Dashboard</a>
         ) : (
-          <a className="btn btn-discord btn-sm" href="/api/auth/login">Login with Discord</a>
+          <LoginButton className="btn btn-discord btn-sm">Login with Discord</LoginButton>
         )}
       </nav>
 
@@ -42,7 +43,7 @@ export default async function Home({ searchParams }) {
           {session ? (
             <a className="btn btn-primary" href="/dashboard">Open Dashboard</a>
           ) : (
-            <a className="btn btn-discord" href="/api/auth/login">Login with Discord</a>
+            <LoginButton className="btn btn-discord">Login with Discord</LoginButton>
           )}
         </div>
         {errorMsg && <div className="error-banner">⚠️ {errorMsg}</div>}
