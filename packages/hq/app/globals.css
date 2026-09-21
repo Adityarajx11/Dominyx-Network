@@ -94,6 +94,15 @@ a {
   50% { opacity: 1; transform: translate(-50%, 0) scale(1.04); }
 }
 
+/* living red WebGL background behind the hero content */
+.hero-auralis {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.85;
+}
+
 /* concentric glow rings behind the hero headline */
 .hero-rings {
   position: absolute;

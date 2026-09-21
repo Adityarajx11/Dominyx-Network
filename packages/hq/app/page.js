@@ -3,6 +3,7 @@ import { getSession } from '@/lib/auth';
 import { getInviteUrl } from '@/lib/invite';
 import LoginButton from '@/components/LoginButton';
 import RevealScope from '@/components/RevealScope';
+import Auralis from '@/components/Auralis';
 
 async function readError(searchParams) {
   const error = searchParams?.error || null;
@@ -36,6 +37,7 @@ export default async function Home({ searchParams }) {
       </nav>
 
       <header className="hero">
+        <Auralis className="hero-auralis" speed={0.35} grain={0.5} />
         <div className="hero-rings" aria-hidden="true"><span /><span /><span /></div>
         <div className="hero-ghost" aria-hidden="true">DOMINYX</div>
         <div className="hero-badge"><span className="pulse-dot" />6 bots live · Free during beta</div>
