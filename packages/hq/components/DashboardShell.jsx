@@ -17,7 +17,7 @@ const LINKS = [
   { href: '/invite', label: 'Invite bots', icon: '＋' },
 ];
 
-export default function DashboardShell({ user, children, botsPresent = null, inviteUrls = {}, botServers = {} }) {
+export default function DashboardShell({ user, children, botsPresent = null, inviteUrls = {}, servers = [] }) {
   const path = usePathname();
   const guildId = path.startsWith('/dashboard/') ? path.split('/')[2] : null;
   const [openBot, setOpenBot] = useState(null);
@@ -48,39 +48,26 @@ export default function DashboardShell({ user, children, botsPresent = null, inv
         <div className="side-label">BOTS</div>
         <nav className="side-nav side-bots">
           {BOTS.map((b) => {
-            const servers = botServers[b.id] || [];
-            // Server open: present (or unknown) -> its config tab; absent -> invite.
-            // No server open: 1 home -> jump there; several -> pick from submenu; none -> invite page.
-            let href = '/invite';
-            let external = false;
-            if (guildId) {
-              if (botsPresent == null || botsPresent[b.id]) {
-                href = `/dashboard/${guildId}?bot=${b.id}`;
-              } else {
-                href = inviteUrls[b.id] || '/invite';
-                external = href !== '/invite';
-              }
-            } else if (servers.length === 1) {
-              href = `/dashboard/${servers[0].id}?bot=${b.id}`;
-            }
-            const configuring = !!guildId && !external;
-            const showPicker = !guildId && servers.length > 1;
+            // Every bot gets a picker with all manageable servers.
+            // Picking one opens that server straight into this bot's config
+            // (or its invite state when the bot isn't there yet).
+            const hasServers = servers.length > 0;
             const isOpen = expanded === b.id;
+            const configuring = !!guildId && openBot === b.id;
             return (
               <div key={b.id}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                   <a
-                    href={showPicker ? undefined : href}
-                    onClick={showPicker ? (e) => { e.preventDefault(); setExpanded(isOpen ? null : b.id); } : undefined}
-                    {...(external ? { target: '_blank', rel: 'noreferrer' } : {})}
-                    title={configuring ? `Configure ${b.name}` : (servers.length > 0 || guildId ? `Open ${b.name}` : `Invite ${b.name}`)}
-                    className={`side-link side-bot${configuring && openBot === b.id ? ' active' : ''}`}
+                    href={hasServers ? undefined : '/invite'}
+                    onClick={hasServers ? (e) => { e.preventDefault(); setExpanded(isOpen ? null : b.id); } : undefined}
+                    title={hasServers ? `Choose server for ${b.name}` : `Invite ${b.name}`}
+                    className={`side-link side-bot${configuring ? ' active' : ''}`}
                     style={{ flex: 1, minWidth: 0 }}
                   >
                     <span>{b.emoji}</span>{b.name.replace('Dominyx ', '')}
                     <span className="side-dot" style={{ background: b.color, color: b.color }} />
                   </a>
-                  {showPicker && (
+                  {hasServers && (
                     <button
                       className="side-caret"
                       aria-label={`Choose server for ${b.name}`}
@@ -90,10 +77,14 @@ export default function DashboardShell({ user, children, botsPresent = null, inv
                     </button>
                   )}
                 </div>
-                {showPicker && isOpen && (
+                {hasServers && isOpen && (
                   <div className="side-sub">
                     {servers.map((s) => (
-                      <a key={s.id} href={`/dashboard/${s.id}?bot=${b.id}`} className="side-link side-server">
+                      <a
+                        key={s.id}
+                        href={`/dashboard/${s.id}?bot=${b.id}`}
+                        className={`side-link side-server${guildId === s.id ? ' active' : ''}`}
+                      >
                         {s.name}
                       </a>
                     ))}

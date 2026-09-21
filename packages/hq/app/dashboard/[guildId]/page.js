@@ -41,8 +41,10 @@ export default async function GuildPage({ params, searchParams }) {
     inviteUrls[bot.id] = getInviteUrl(bot.id);
   }
 
+  const servers = (access.manageable || []).map((g) => ({ id: g.id, name: g.name }));
+
   return (
-    <DashboardShell user={access.user || { username: '—' }} botsPresent={botsPresent} inviteUrls={inviteUrls} botServers={botServers}>
+    <DashboardShell user={access.user || { username: '—' }} botsPresent={botsPresent} inviteUrls={inviteUrls} servers={servers}>
       <div className="page-head">
         <div className="crumbs">
           <a href="/dashboard" style={{ color: 'var(--violet)' }}>← Back to servers</a>
