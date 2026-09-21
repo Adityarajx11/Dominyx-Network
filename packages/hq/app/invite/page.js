@@ -1,5 +1,5 @@
 import { BOTS } from '@/lib/bots';
-import { getInviteUrl, getPermissionLabels } from '@/lib/invite';
+import { getInviteUrl } from '@/lib/invite';
 
 export const dynamic = 'force-dynamic';
 
@@ -34,9 +34,9 @@ export default async function InvitePage() {
           <div className="grid">
             {BOTS.map((bot) => {
               const url = getInviteUrl(bot.id);
-              const perms = getPermissionLabels(bot.id);
               return (
-                <div key={bot.id} className="card" style={{ ['--card-color']: bot.color, display: 'flex', flexDirection: 'column' }}>
+                <div key={bot.id} className="card-halo" style={{ ['--card-color']: bot.color }}>
+                <div className="card" style={{ display: 'flex', flexDirection: 'column' }}>
                   <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
                     <div className="emoji">{bot.emoji}</div>
                     <div className="tag">{bot.name}</div>
@@ -51,13 +51,6 @@ export default async function InvitePage() {
                   </div>
 
                   <div style={{ marginTop: 'auto' }}>
-                    <div className="pill" style={{ marginBottom: 8, color: 'var(--text-dim)' }}>
-                      Will have access to:
-                    </div>
-                    <ul style={{ margin: '0 0 16px', paddingLeft: 0, listStyle: 'none', fontSize: 13, color: 'var(--text-dim)', display: 'flex', flexDirection: 'column', gap: 3 }}>
-                      {perms.map((p) => <li key={p}><span style={{ color: 'var(--crimson)', marginRight: 6 }}>▸</span>{p}</li>)}
-                    </ul>
-
                     {url ? (
                       <a className="btn btn-discord" href={url} target="_blank" rel="noreferrer" style={{ width: '100%', justifyContent: 'center' }}>
                         Add to Discord
@@ -68,6 +61,7 @@ export default async function InvitePage() {
                       </div>
                     )}
                   </div>
+                </div>
                 </div>
               );
             })}

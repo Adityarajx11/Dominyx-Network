@@ -632,7 +632,7 @@ a {
   padding: 24px 0 64px;
 }
 
-@media (max-width: 760px) {
+@media (max-width: 1024px) {
   .config-layout {
     grid-template-columns: 1fr;
   }
@@ -695,14 +695,25 @@ a {
   pointer-events: none;
 }
 
+.config-layout > * {
+  min-width: 0;
+}
+
 .panel-hero {
   position: relative;
   display: flex;
+  flex-wrap: wrap;
   gap: 16px;
   align-items: flex-start;
   padding-bottom: 20px;
   margin-bottom: 20px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  min-width: 0;
+}
+
+.panel-hero > div {
+  min-width: 0;
+  flex: 1 1 220px;
 }
 
 .panel-emoji {
