@@ -163,7 +163,30 @@ a {
   user-select: none;
   color: transparent;
   -webkit-text-stroke: 1px rgba(255, 255, 255, 0.07);
+  -webkit-mask-image: linear-gradient(to bottom, #000 52%, transparent 98%);
+  mask-image: linear-gradient(to bottom, #000 52%, transparent 98%);
   pointer-events: none;
+}
+
+/* glowing divider that melts hero into the next section */
+.glow-line {
+  height: 1px;
+  max-width: 1140px;
+  margin: 4px auto 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 31, 75, 0.55), rgba(167, 139, 250, 0.4), transparent);
+  box-shadow: 0 0 26px rgba(255, 31, 75, 0.35);
+}
+
+/* scroll-reveal (paired with <RevealScope />) */
+[data-reveal] {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 0.7s ease, transform 0.7s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+[data-reveal].is-visible {
+  opacity: 1;
+  transform: none;
 }
 
 /* announcement badge above the headline */
@@ -1084,6 +1107,10 @@ textarea {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+  [data-reveal] {
+    opacity: 1 !important;
+    transform: none !important;
   }
 }
 

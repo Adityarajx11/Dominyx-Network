@@ -2,6 +2,7 @@ import { BOTS } from '@/lib/bots';
 import { getSession } from '@/lib/auth';
 import { getInviteUrl } from '@/lib/invite';
 import LoginButton from '@/components/LoginButton';
+import RevealScope from '@/components/RevealScope';
 
 async function readError(searchParams) {
   const error = searchParams?.error || null;
@@ -19,6 +20,7 @@ export default async function Home({ searchParams }) {
 
   return (
     <>
+      <RevealScope />
       <nav className="nav">
         <div className="brand">
           <span className="dot" /> DOMINYX <span className="badge">HQ</span>
@@ -65,9 +67,10 @@ export default async function Home({ searchParams }) {
         </div>
         {errorMsg && <div className="error-banner">⚠️ {errorMsg}</div>}
       </header>
+      <div className="glow-line" aria-hidden="true" />
 
       <section className="section" id="family" style={{ paddingTop: 40 }}>
-        <div className="wrap">
+        <div className="wrap" data-reveal>
           <h2 className="section-title">Meet the family</h2>
           <p className="section-sub">Six specialists, one network — each built for a single job, tuned to perfection.</p>
           <div className="grid">
@@ -104,7 +107,7 @@ export default async function Home({ searchParams }) {
       </section>
 
       <section className="section">
-        <div className="wrap">
+        <div className="wrap" data-reveal>
           <div className="notice">
             <strong>Never run a slash command again.</strong> Welcome channels, ticket panels, level roles, 24/7 music, live alerts and moderator settings — all editable from Dominyx HQ.
           </div>
@@ -112,7 +115,7 @@ export default async function Home({ searchParams }) {
       </section>
 
       <section className="section">
-        <div className="wrap">
+        <div className="wrap" data-reveal>
           <div className="cta-panel">
             <h2>Ready to command your server?</h2>
             <p>Invite the family, open your dashboard, and configure every bot in minutes — free while in beta.</p>
