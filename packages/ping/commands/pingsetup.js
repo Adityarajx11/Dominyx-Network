@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, PermissionFlagsBits, ChannelType, EmbedBuilder } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, ChannelType, EmbedBuilder, MessageFlags } = require('discord.js');
 const { getPingSettings, updatePingSettings } = require('../lib/pingStore');
 
 module.exports = {
@@ -71,7 +71,7 @@ module.exports = {
           { name: 'Alert Channel', value: settings?.live_alert_channel_id ? `<#${settings.live_alert_channel_id}>` : 'Not set' },
           { name: 'Status', value: settings?.enabled === false ? 'Disabled' : 'Active' },
         );
-      return interaction.reply({ embeds: [embed], ephemeral: true });
+      return interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
     }
   },
 };

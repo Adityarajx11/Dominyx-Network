@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, MessageFlags } = require('discord.js');
 const { getUserXp } = require('../lib/db');
 const { xpForLevel } = require('../lib/leveling');
 
@@ -13,7 +13,7 @@ module.exports = {
     const data = await getUserXp(interaction.guild.id, target.id);
 
     if (!data) {
-      return interaction.reply({ content: `📭 **${target.tag}** hasn't earned any XP yet.`, ephemeral: true });
+      return interaction.reply({ content: `📭 **${target.tag}** hasn't earned any XP yet.`, flags: MessageFlags.Ephemeral });
     }
 
     const needed = xpForLevel(data.level);

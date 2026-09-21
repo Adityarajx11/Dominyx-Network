@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, MessageFlags } = require('discord.js');
 const { getManager } = require('../lib/lavalink');
 
 module.exports = {
@@ -9,7 +9,7 @@ module.exports = {
   async execute(interaction) {
     const player = getManager().getPlayer(interaction.guild.id);
     if (!player || (!player.queue.current && player.queue.tracks.length === 0)) {
-      return interaction.reply({ content: '📭 The queue is empty.', ephemeral: true });
+      return interaction.reply({ content: '📭 The queue is empty.', flags: MessageFlags.Ephemeral });
     }
 
     const lines = [];

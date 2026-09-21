@@ -1,4 +1,4 @@
-const { SlashCommandBuilder } = require('discord.js');
+const { SlashCommandBuilder, MessageFlags } = require('discord.js');
 const { getOrCreatePlayer, searchTrack } = require('../lib/lavalink');
 
 module.exports = {
@@ -13,7 +13,7 @@ module.exports = {
   async execute(interaction) {
     const voiceChannel = interaction.member.voice.channel;
     if (!voiceChannel) {
-      return interaction.reply({ content: '🚫 Join a voice channel first.', ephemeral: true });
+      return interaction.reply({ content: '🚫 Join a voice channel first.', flags: MessageFlags.Ephemeral });
     }
 
     await interaction.deferReply();

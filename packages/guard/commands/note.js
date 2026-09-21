@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, MessageFlags } = require('discord.js');
 const { addNote, getNotes } = require('../lib/modlog');
 
 module.exports = {
@@ -23,13 +23,13 @@ module.exports = {
     if (sub === 'add') {
       const note = interaction.options.getString('note');
       await addNote(interaction.guild.id, target.id, note, interaction.user.tag);
-      return interaction.reply({ content: `📝 Note added for **${target.tag}**.`, ephemeral: true });
+      return interaction.reply({ content: `📝 Note added for **${target.tag}**.`, flags: MessageFlags.Ephemeral });
     }
 
     if (sub === 'show') {
       const notes = await getNotes(interaction.guild.id, target.id);
       if (notes.length === 0) {
-        return interaction.reply({ content: `📭 No notes for **${target.tag}**.`, ephemeral: true });
+        return interaction.reply({ content: `📭 No notes for **${target.tag}**.`, flags: MessageFlags.Ephemeral });
       }
 
       const text = notes.map(n =>
@@ -42,7 +42,7 @@ module.exports = {
         .setDescription(text.slice(0, 4000))
         .setFooter({ text: 'Dominyx • Guard' });
 
-      return interaction.reply({ embeds: [embed], ephemeral: true });
+      return interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
     }
   },
 };

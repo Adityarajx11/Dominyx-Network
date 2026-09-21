@@ -1,4 +1,4 @@
-const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } = require('discord.js');
+const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, MessageFlags } = require('discord.js');
 const { getManager } = require('./lavalink');
 
 const ICONS = {
@@ -64,7 +64,7 @@ async function handleMusicButton(interaction) {
   const player = getManager().getPlayer(interaction.guild.id);
 
   if (!player) {
-    return interaction.reply({ content: '🚫 Nothing is playing anymore.', ephemeral: true });
+    return interaction.reply({ content: '🚫 Nothing is playing anymore.', flags: MessageFlags.Ephemeral });
   }
 
   const id = interaction.customId;
@@ -84,17 +84,17 @@ async function handleMusicButton(interaction) {
   }
 
   if (id === 'music_skip') {
-    if (!track) return interaction.reply({ content: '🚫 Nothing to skip.', ephemeral: true });
+    if (!track) return interaction.reply({ content: '🚫 Nothing to skip.', flags: MessageFlags.Ephemeral });
     await player.skip();
-    return interaction.reply({ content: '⏭️ Skipped.', ephemeral: true });
+    return interaction.reply({ content: '⏭️ Skipped.', flags: MessageFlags.Ephemeral });
   }
 
   if (id === 'music_previous') {
     const prev = player.queue.previous?.[0];
-    if (!prev) return interaction.reply({ content: '🚫 No previous song.', ephemeral: true });
+    if (!prev) return interaction.reply({ content: '🚫 No previous song.', flags: MessageFlags.Ephemeral });
     player.queue.tracks.unshift(prev);
     await player.skip();
-    return interaction.reply({ content: '⏮️ Playing previous song.', ephemeral: true });
+    return interaction.reply({ content: '⏮️ Playing previous song.', flags: MessageFlags.Ephemeral });
   }
 
   if (id === 'music_stop') {
@@ -105,10 +105,10 @@ async function handleMusicButton(interaction) {
 
   if (id === 'music_shuffle') {
     if (player.queue.tracks.length < 2) {
-      return interaction.reply({ content: '🚫 Not enough songs to shuffle.', ephemeral: true });
+      return interaction.reply({ content: '🚫 Not enough songs to shuffle.', flags: MessageFlags.Ephemeral });
     }
     await player.queue.shuffle();
-    return interaction.reply({ content: '🔀 Queue shuffled.', ephemeral: true });
+    return interaction.reply({ content: '🔀 Queue shuffled.', flags: MessageFlags.Ephemeral });
   }
 
   if (id === 'music_loop') {
@@ -131,17 +131,17 @@ async function handleMusicButton(interaction) {
   }
 
   if (id === 'music_seekforward') {
-    if (!track) return interaction.reply({ content: '🚫 Nothing playing.', ephemeral: true });
+    if (!track) return interaction.reply({ content: '🚫 Nothing playing.', flags: MessageFlags.Ephemeral });
     const newPos = Math.min(track.info.duration || Infinity, (player.position || 0) + 10000);
     await player.seek(newPos);
-    return interaction.reply({ content: '⏩ Skipped forward 10s.', ephemeral: true });
+    return interaction.reply({ content: '⏩ Skipped forward 10s.', flags: MessageFlags.Ephemeral });
   }
 
   if (id === 'music_seekback') {
-    if (!track) return interaction.reply({ content: '🚫 Nothing playing.', ephemeral: true });
+    if (!track) return interaction.reply({ content: '🚫 Nothing playing.', flags: MessageFlags.Ephemeral });
     const newPos = Math.max(0, (player.position || 0) - 10000);
     await player.seek(newPos);
-    return interaction.reply({ content: '⏪ Rewound 10s.', ephemeral: true });
+    return interaction.reply({ content: '⏪ Rewound 10s.', flags: MessageFlags.Ephemeral });
   }
 }
 

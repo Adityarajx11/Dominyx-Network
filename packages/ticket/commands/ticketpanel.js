@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, StringSelectMenuBuilder, ActionRowBuilder } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, StringSelectMenuBuilder, ActionRowBuilder, MessageFlags } = require('discord.js');
 const { getConfig } = require('../lib/ticketStore');
 
 module.exports = {
@@ -14,7 +14,7 @@ module.exports = {
     if (!config || !config.categories || config.categories.length === 0) {
       return interaction.reply({
         content: '❌ No ticket categories configured yet. Run /ticketsetup addcategory first.',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
 

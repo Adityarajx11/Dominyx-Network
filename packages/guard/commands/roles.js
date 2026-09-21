@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, StringSelectMenuBuilder, ActionRowBuilder } = require('discord.js');
+const { SlashCommandBuilder, StringSelectMenuBuilder, ActionRowBuilder, MessageFlags } = require('discord.js');
 const { getGuardSettings } = require('../lib/guardStore');
 
 module.exports = {
@@ -12,7 +12,7 @@ module.exports = {
     const categoryNames = Object.keys(categories);
 
     if (categoryNames.length === 0) {
-      return interaction.reply({ content: '📭 No self-assignable roles have been set up yet.', ephemeral: true });
+      return interaction.reply({ content: '📭 No self-assignable roles have been set up yet.', flags: MessageFlags.Ephemeral });
     }
 
     const menu = new StringSelectMenuBuilder()
@@ -31,7 +31,7 @@ module.exports = {
     return interaction.reply({
       content: '🎭 Pick a category to see available roles:',
       components: [row],
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
   },
 };

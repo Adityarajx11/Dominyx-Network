@@ -1,4 +1,4 @@
-const { SlashCommandBuilder } = require('discord.js');
+const { SlashCommandBuilder, MessageFlags } = require('discord.js');
 const { getManager } = require('../lib/lavalink');
 
 module.exports = {
@@ -18,7 +18,7 @@ module.exports = {
   async execute(interaction) {
     const player = getManager().getPlayer(interaction.guild.id);
     if (!player) {
-      return interaction.reply({ content: '🚫 Nothing is playing.', ephemeral: true });
+      return interaction.reply({ content: '🚫 Nothing is playing.', flags: MessageFlags.Ephemeral });
     }
     const mode = interaction.options.getString('mode');
     player.setRepeatMode(mode);

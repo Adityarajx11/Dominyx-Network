@@ -1,4 +1,4 @@
-const { SlashCommandBuilder } = require('discord.js');
+const { SlashCommandBuilder, MessageFlags } = require('discord.js');
 const { getManager } = require('../lib/lavalink');
 
 module.exports = {
@@ -9,7 +9,7 @@ module.exports = {
   async execute(interaction) {
     const player = getManager().getPlayer(interaction.guild.id);
     if (!player || player.queue.tracks.length < 2) {
-      return interaction.reply({ content: '🚫 Not enough songs in queue to shuffle.', ephemeral: true });
+      return interaction.reply({ content: '🚫 Not enough songs in queue to shuffle.', flags: MessageFlags.Ephemeral });
     }
     await player.queue.shuffle();
     return interaction.reply('🔀 Queue shuffled.');

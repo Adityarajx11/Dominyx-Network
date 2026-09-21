@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, MessageFlags } = require('discord.js');
 const { createCase, logCaseToChannel } = require('../lib/modlog');
 
 module.exports = {
@@ -15,10 +15,10 @@ module.exports = {
 
     const member = await interaction.guild.members.fetch(target.id).catch(() => null);
     if (!member) {
-      return interaction.reply({ content: '🚫 That user isn\'t in this server.', ephemeral: true });
+      return interaction.reply({ content: '🚫 That user isn\'t in this server.', flags: MessageFlags.Ephemeral });
     }
     if (!member.kickable) {
-      return interaction.reply({ content: '🚫 I can\'t kick that user (role hierarchy or permissions).', ephemeral: true });
+      return interaction.reply({ content: '🚫 I can\'t kick that user (role hierarchy or permissions).', flags: MessageFlags.Ephemeral });
     }
 
     try {
@@ -37,7 +37,7 @@ module.exports = {
       });
       return interaction.reply(`👢 Kicked **${target.tag}**. Case #${caseNumber}. Reason: ${reason}`);
     } catch (err) {
-      return interaction.reply({ content: `⚠️ Failed to kick: ${err.message}`, ephemeral: true });
+      return interaction.reply({ content: `⚠️ Failed to kick: ${err.message}`, flags: MessageFlags.Ephemeral });
     }
   },
 };

@@ -1,6 +1,6 @@
 require('dotenv').config();
 const path = require('path');
-const { Client, GatewayIntentBits } = require('discord.js');
+const { Client, GatewayIntentBits, MessageFlags } = require('discord.js');
 
 const { loadCommands, loadEvents } = require('@dominyx/core');
 
@@ -24,7 +24,7 @@ client.on('interactionCreate', async (interaction) => {
     await command.execute(interaction, client);
   } catch (err) {
     console.error(`Error running /${interaction.commandName}:`, err);
-    const errMsg = { content: '⚠️ Something went wrong running that command.', ephemeral: true };
+    const errMsg = { content: '⚠️ Something went wrong running that command.', flags: MessageFlags.Ephemeral };
     if (interaction.replied || interaction.deferred) await interaction.followUp(errMsg).catch(() => {});
     else await interaction.reply(errMsg).catch(() => {});
   }

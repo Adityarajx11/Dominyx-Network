@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, PermissionFlagsBits, ChannelType, EmbedBuilder } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, ChannelType, EmbedBuilder, MessageFlags } = require('discord.js');
 const { getGuardSettings, updateGuardSettings, addSelfRole, removeSelfRole } = require('../lib/guardStore');
 
 module.exports = {
@@ -51,7 +51,7 @@ module.exports = {
       const role = interaction.options.getRole('role');
       const foundCategory = await removeSelfRole(guildId, role.id);
       if (!foundCategory) {
-        return interaction.reply({ content: `❌ **${role.name}** wasn't in any self-assignable category.`, ephemeral: true });
+        return interaction.reply({ content: `❌ **${role.name}** wasn't in any self-assignable category.`, flags: MessageFlags.Ephemeral });
       }
       return interaction.reply(`☑️ Removed **${role.name}** from category **${foundCategory}**.`);
     }

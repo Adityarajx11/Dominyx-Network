@@ -1,4 +1,4 @@
-const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, StringSelectMenuBuilder, PermissionsBitField } = require('discord.js');
+const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, StringSelectMenuBuilder, PermissionsBitField, MessageFlags } = require('discord.js');
 const { getConfig, getOpenTicketCountForUser, createTicket, getTicketByChannel, claimTicket, setPriority, closeTicket, saveTranscript } = require('../lib/ticketStore');
 
 module.exports = {
@@ -13,19 +13,19 @@ module.exports = {
         const userId = interaction.user.id;
         const cfg = await getConfig(guildId);
         if (!cfg || !cfg.category_channel_id || !cfg.staff_role_id) {
-          return interaction.reply({ content: '❌ Ticket system is not fully configured. Run /ticketsetup and set category and staff role.', ephemeral: true });
+          return interaction.reply({ content: '❌ Ticket system is not fully configured. Run /ticketsetup and set category and staff role.', flags: MessageFlags.Ephemeral });
         }
 
         const openCount = await getOpenTicketCountForUser(guildId, userId);
         const maxTickets = cfg.max_tickets_per_user || 1;
         if (openCount >= maxTickets) {
-          return interaction.reply({ content: `❌ You already have ${openCount} open ticket(s) (limit ${maxTickets}). Close one before creating another.`, ephemeral: true });
+          return interaction.reply({ content: `❌ You already have ${openCount} open ticket(s) (limit ${maxTickets}). Close one before creating another.`, flags: MessageFlags.Ephemeral });
         }
 
         const selectedIndex = parseInt(interaction.values[0], 10);
         const category = Array.isArray(cfg.categories) ? cfg.categories[selectedIndex] : null;
         if (!category) {
-          return interaction.reply({ content: '❌ Invalid ticket category selected.', ephemeral: true });
+          return interaction.reply({ content: '❌ Invalid ticket category selected.', flags: MessageFlags.Ephemeral });
         }
 
         const username = interaction.user.username.toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -33,7 +33,7 @@ module.exports = {
 
         const guild = await client.guilds.fetch(guildId);
         const categoryChannel = await guild.channels.fetch(cfg.category_channel_id).catch(() => null);
-        if (!categoryChannel) return interaction.reply({ content: '❌ Configured category channel not found. Update your config.', ephemeral: true });
+        if (!categoryChannel) return interaction.reply({ content: '❌ Configured category channel not found. Update your config.', flags: MessageFlags.Ephemeral });
 
         const everyoneRole = guild.roles.everyone;
         const staffRole = cfg.staff_role_id ? await guild.roles.fetch(cfg.staff_role_id).catch(() => null) : null;
@@ -81,7 +81,7 @@ module.exports = {
         const row2 = new ActionRowBuilder().addComponents(prioritySelect);
 
         await newChannel.send({ embeds: [embed], components: [row1, row2] });
-        return interaction.reply({ content: `✅ Created ticket ${newChannel}.`, ephemeral: true });
+        return interaction.reply({ content: `✅ Created ticket ${newChannel}.`, flags: MessageFlags.Ephemeral });
       }
 
       // Claim
@@ -90,13 +90,13 @@ module.exports = {
         const guildId = interaction.guildId;
         const userId = interaction.user.id;
         const cfg = await getConfig(guildId);
-        if (!cfg || !cfg.staff_role_id) return interaction.reply({ content: '❌ Ticket system not configured properly.', ephemeral: true });
+        if (!cfg || !cfg.staff_role_id) return interaction.reply({ content: '❌ Ticket system not configured properly.', flags: MessageFlags.Ephemeral });
 
         const member = await interaction.guild.members.fetch(userId);
-        if (!member.roles.cache.has(cfg.staff_role_id)) return interaction.reply({ content: '❌ You must have the staff role to claim tickets.', ephemeral: true });
+        if (!member.roles.cache.has(cfg.staff_role_id)) return interaction.reply({ content: '❌ You must have the staff role to claim tickets.', flags: MessageFlags.Ephemeral });
 
         const ticket = await getTicketByChannel(channel.id);
-        if (!ticket) return interaction.reply({ content: '❌ No ticket found for this channel.', ephemeral: true });
+        if (!ticket) return interaction.reply({ content: '❌ No ticket found for this channel.', flags: MessageFlags.Ephemeral });
 
         await claimTicket(ticket.id, userId);
 
@@ -113,7 +113,7 @@ module.exports = {
           );
           await firstEmbedMsg.edit({ embeds: [newEmbed] }).catch(() => {});
         }
-        return interaction.reply({ content: `✅ Ticket claimed by <@${userId}>.`, ephemeral: true });
+        return interaction.reply({ content: `✅ Ticket claimed by <@${userId}>.`, flags: MessageFlags.Ephemeral });
       }
 
       // Priority select
@@ -122,13 +122,13 @@ module.exports = {
         const guildId = interaction.guildId;
         const userId = interaction.user.id;
         const cfg = await getConfig(guildId);
-        if (!cfg || !cfg.staff_role_id) return interaction.reply({ content: '❌ Ticket system not configured properly.', ephemeral: true });
+        if (!cfg || !cfg.staff_role_id) return interaction.reply({ content: '❌ Ticket system not configured properly.', flags: MessageFlags.Ephemeral });
 
         const member = await interaction.guild.members.fetch(userId);
-        if (!member.roles.cache.has(cfg.staff_role_id)) return interaction.reply({ content: '❌ You must have the staff role to change priority.', ephemeral: true });
+        if (!member.roles.cache.has(cfg.staff_role_id)) return interaction.reply({ content: '❌ You must have the staff role to change priority.', flags: MessageFlags.Ephemeral });
 
         const ticket = await getTicketByChannel(channel.id);
-        if (!ticket) return interaction.reply({ content: '❌ No ticket found for this channel.', ephemeral: true });
+        if (!ticket) return interaction.reply({ content: '❌ No ticket found for this channel.', flags: MessageFlags.Ephemeral });
 
         const selected = interaction.values[0];
         await setPriority(ticket.id, selected);
@@ -146,7 +146,7 @@ module.exports = {
           );
           await firstEmbedMsg.edit({ embeds: [newEmbed] }).catch(() => {});
         }
-        return interaction.reply({ content: `✅ Priority set to **${selected}**.`, ephemeral: true });
+        return interaction.reply({ content: `✅ Priority set to **${selected}**.`, flags: MessageFlags.Ephemeral });
       }
 
       // Close
@@ -155,15 +155,15 @@ module.exports = {
         const guildId = interaction.guildId;
         const userId = interaction.user.id;
         const cfg = await getConfig(guildId);
-        if (!cfg || !cfg.staff_role_id) return interaction.reply({ content: '❌ Ticket system not configured properly.', ephemeral: true });
+        if (!cfg || !cfg.staff_role_id) return interaction.reply({ content: '❌ Ticket system not configured properly.', flags: MessageFlags.Ephemeral });
 
         const member = await interaction.guild.members.fetch(userId);
         const ticket = await getTicketByChannel(channel.id);
-        if (!ticket) return interaction.reply({ content: '❌ No ticket found for this channel.', ephemeral: true });
+        if (!ticket) return interaction.reply({ content: '❌ No ticket found for this channel.', flags: MessageFlags.Ephemeral });
 
         const isStaff = member.roles.cache.has(cfg.staff_role_id);
         const isCreator = ticket.user_id === userId;
-        if (!isStaff && !isCreator) return interaction.reply({ content: '❌ Only staff or the ticket creator can close this ticket.', ephemeral: true });
+        if (!isStaff && !isCreator) return interaction.reply({ content: '❌ Only staff or the ticket creator can close this ticket.', flags: MessageFlags.Ephemeral });
 
         const fetched = await channel.messages.fetch({ limit: 100 });
         const msgs = Array.from(fetched.values()).reverse();
@@ -190,13 +190,13 @@ module.exports = {
           }
         }
 
-        await interaction.reply({ content: '🗑️ Ticket will be deleted in 5 seconds...', ephemeral: true });
+        await interaction.reply({ content: '🗑️ Ticket will be deleted in 5 seconds...', flags: MessageFlags.Ephemeral });
         setTimeout(() => { channel.delete().catch(() => {}); }, 5000);
         return;
       }
     } catch (err) {
       console.error('Ticket interaction error:', err);
-      const errMsg = { content: '⚠️ Something went wrong handling that ticket interaction.', ephemeral: true };
+      const errMsg = { content: '⚠️ Something went wrong handling that ticket interaction.', flags: MessageFlags.Ephemeral };
       if (interaction.replied || interaction.deferred) await interaction.followUp(errMsg).catch(() => {});
       else await interaction.reply(errMsg).catch(() => {});
     }

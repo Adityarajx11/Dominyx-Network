@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, PermissionFlagsBits, ChannelType, EmbedBuilder } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, ChannelType, EmbedBuilder, MessageFlags } = require('discord.js');
 const { getConfig, setConfig } = require('../lib/ticketStore');
 
 const FOOTER = { text: 'Dominyx • Tickets', iconURL: null };
@@ -49,7 +49,7 @@ module.exports = {
     const sub = interaction.options.getSubcommand();
     const guildId = interaction.guild.id;
 
-    const reply = (msg) => interaction.reply({ content: msg, ephemeral: true });
+    const reply = (msg) => interaction.reply({ content: msg, flags: MessageFlags.Ephemeral });
 
     if (sub === 'category') {
       const category = interaction.options.getChannel('category');
@@ -120,7 +120,7 @@ module.exports = {
           { name: 'Banner URL', value: cfg.banner_url ? `[View](${cfg.banner_url})` : 'Not set', inline: true },
           { name: 'Categories', value: (cfg.categories || []).map(c => `${c.emoji ? c.emoji + ' ' : ''}${c.label}`).join('\n') || 'None configured' },
         );
-      return interaction.reply({ embeds: [embed], ephemeral: true });
+      return interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
     }
   },
 };

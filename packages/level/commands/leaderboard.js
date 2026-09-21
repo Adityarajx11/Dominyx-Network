@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, MessageFlags } = require('discord.js');
 const { getLeaderboard } = require('../lib/db');
 
 module.exports = {
@@ -10,7 +10,7 @@ module.exports = {
     const top = await getLeaderboard(interaction.guild.id, 10);
 
     if (top.length === 0) {
-      return interaction.reply({ content: '📭 No one has earned XP yet.', ephemeral: true });
+      return interaction.reply({ content: '📭 No one has earned XP yet.', flags: MessageFlags.Ephemeral });
     }
 
     const medals = ['🥇', '🥈', '🥉'];

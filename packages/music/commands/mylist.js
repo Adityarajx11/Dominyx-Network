@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, MessageFlags } = require('discord.js');
 const { getUserPlaylist, addToPlaylist, removeFromPlaylist } = require('../lib/playlistStore');
 const { getOrCreatePlayer, searchTrack } = require('../lib/lavalink');
 
@@ -40,7 +40,7 @@ module.exports = {
     if (sub === 'show') {
       const list = getUserPlaylist(userId);
       if (list.length === 0) {
-        return interaction.reply({ content: '📭 Your playlist is empty. Add songs with `/mylist add`.', ephemeral: true });
+        return interaction.reply({ content: '📭 Your playlist is empty. Add songs with `/mylist add`.', flags: MessageFlags.Ephemeral });
       }
       const text = list.map((s, i) => `${i + 1}. **${s.title}**`).join('\n');
       const embed = new EmbedBuilder()
@@ -54,7 +54,7 @@ module.exports = {
       const position = interaction.options.getInteger('position');
       const removed = removeFromPlaylist(userId, position - 1);
       if (!removed) {
-        return interaction.reply({ content: '❌ Invalid position. Check `/mylist show` for numbers.', ephemeral: true });
+        return interaction.reply({ content: '❌ Invalid position. Check `/mylist show` for numbers.', flags: MessageFlags.Ephemeral });
       }
       return interaction.reply(`🗑️ Removed song #${position} from your playlist.`);
     }
@@ -62,11 +62,11 @@ module.exports = {
     if (sub === 'play') {
       const voiceChannel = interaction.member.voice.channel;
       if (!voiceChannel) {
-        return interaction.reply({ content: '🚫 Join a voice channel first.', ephemeral: true });
+        return interaction.reply({ content: '🚫 Join a voice channel first.', flags: MessageFlags.Ephemeral });
       }
       const list = getUserPlaylist(userId);
       if (list.length === 0) {
-        return interaction.reply({ content: '📭 Your playlist is empty.', ephemeral: true });
+        return interaction.reply({ content: '📭 Your playlist is empty.', flags: MessageFlags.Ephemeral });
       }
 
       await interaction.deferReply();

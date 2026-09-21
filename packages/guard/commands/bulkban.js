@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, MessageFlags } = require('discord.js');
 const { createCase, logCaseToChannel } = require('../lib/modlog');
 
 module.exports = {
@@ -18,10 +18,10 @@ module.exports = {
     const ids = rawIds.split(/[\s,]+/).filter(Boolean);
 
     if (ids.length === 0) {
-      return interaction.reply({ content: '❌ No valid user IDs provided.', ephemeral: true });
+      return interaction.reply({ content: '❌ No valid user IDs provided.', flags: MessageFlags.Ephemeral });
     }
     if (ids.length > 50) {
-      return interaction.reply({ content: '🚫 Max 50 users per bulk ban.', ephemeral: true });
+      return interaction.reply({ content: '🚫 Max 50 users per bulk ban.', flags: MessageFlags.Ephemeral });
     }
 
     await interaction.deferReply();

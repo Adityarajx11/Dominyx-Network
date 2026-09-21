@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, MessageFlags } = require('discord.js');
 const { createCase, logCaseToChannel } = require('../lib/modlog');
 
 module.exports = {
@@ -15,7 +15,7 @@ module.exports = {
 
     const member = await interaction.guild.members.fetch(target.id).catch(() => null);
     if (member && !member.bannable) {
-      return interaction.reply({ content: '🚫 I can\'t ban that user (role hierarchy or permissions).', ephemeral: true });
+      return interaction.reply({ content: '🚫 I can\'t ban that user (role hierarchy or permissions).', flags: MessageFlags.Ephemeral });
     }
 
     try {
@@ -34,7 +34,7 @@ module.exports = {
       });
       return interaction.reply(`🔨 Banned **${target.tag}**. Case #${caseNumber}. Reason: ${reason}`);
     } catch (err) {
-      return interaction.reply({ content: `⚠️ Failed to ban: ${err.message}`, ephemeral: true });
+      return interaction.reply({ content: `⚠️ Failed to ban: ${err.message}`, flags: MessageFlags.Ephemeral });
     }
   },
 };
