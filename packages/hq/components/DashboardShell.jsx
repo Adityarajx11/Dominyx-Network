@@ -16,8 +16,9 @@ const LINKS = [
   { href: '/invite', label: 'Invite bots', icon: '＋' },
 ];
 
-export default function DashboardShell({ user, children }) {
+export default function DashboardShell({ user, children, botsPresent = null, inviteUrls = {} }) {
   const path = usePathname();
+  const guildId = path.startsWith('/dashboard/') ? path.split('/')[2] : null;
 
   return (
     <div className="dash">
@@ -36,12 +37,25 @@ export default function DashboardShell({ user, children }) {
 
         <div className="side-label">BOTS</div>
         <nav className="side-nav side-bots">
-          {BOTS.map((b) => (
-            <a key={b.id} href="/invite" className="side-link side-bot">
-              <span>{b.emoji}</span>{b.name.replace('Dominyx ', '')}
-              <span className="side-dot" style={{ background: b.color, color: b.color }} />
-            </a>
-          ))}
+          {BOTS.map((b) => {
+            const inGuild = !!(guildId && botsPresent && botsPresent[b.id]);
+            const href = inGuild
+              ? `/dashboard/${guildId}?bot=${b.id}`
+              : (guildId && inviteUrls[b.id]) || '/invite';
+            const external = !inGuild;
+            return (
+              <a
+                key={b.id}
+                href={href}
+                {...(external ? { target: '_blank', rel: 'noreferrer' } : {})}
+                title={inGuild ? `Configure ${b.name}` : `Invite ${b.name}`}
+                className="side-link side-bot"
+              >
+                <span>{b.emoji}</span>{b.name.replace('Dominyx ', '')}
+                <span className="side-dot" style={{ background: b.color, color: b.color }} />
+              </a>
+            );
+          })}
         </nav>
 
         <div className="side-foot">

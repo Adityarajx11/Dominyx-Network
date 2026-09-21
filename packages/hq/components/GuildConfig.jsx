@@ -7,11 +7,16 @@ import { Field, Toggle, Select, SaveBar } from './ui';
 const TEXT_TYPES = [0, 5];
 const CATEGORY_TYPE = 4;
 
-export default function GuildConfig({ guildId, botsPresent = {}, inviteUrls = {} }) {
+export default function GuildConfig({ guildId, botsPresent = {}, inviteUrls = {}, initialBot = null }) {
   const [data, setData] = useState(null);
-  const [active, setActive] = useState('music');
+  const validInitial = initialBot && BOTS.some((b) => b.id === initialBot) ? initialBot : null;
+  const [active, setActive] = useState(validInitial || 'music');
   const [revision, setRevision] = useState(0);
   const [error, setError] = useState(null);
+
+  useEffect(() => {
+    if (initialBot && BOTS.some((b) => b.id === initialBot)) setActive(initialBot);
+  }, [initialBot]);
 
   const presentBots = botsPresent ? BOTS.filter((b) => botsPresent[b.id]) : BOTS;
   const absentBots = botsPresent ? BOTS.filter((b) => !botsPresent[b.id]) : [];

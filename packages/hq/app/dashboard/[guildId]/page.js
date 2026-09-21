@@ -9,7 +9,7 @@ function iconUrl(guild, size = 128) {
   return guild.icon ? `https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.png?size=${size}` : null;
 }
 
-export default async function GuildPage({ params }) {
+export default async function GuildPage({ params, searchParams }) {
   const guildId = params.guildId;
   let access;
   try {
@@ -31,7 +31,7 @@ export default async function GuildPage({ params }) {
   }
 
   return (
-    <DashboardShell user={access.user || { username: '—' }}>
+    <DashboardShell user={access.user || { username: '—' }} botsPresent={botsPresent} inviteUrls={inviteUrls}>
       <div className="page-head">
         <div className="crumbs">
           <a href="/dashboard" style={{ color: 'var(--violet)' }}>← Back to servers</a>
@@ -66,7 +66,7 @@ export default async function GuildPage({ params }) {
               </div>
             </div>
           )}
-          <GuildConfig guildId={guildId} botsPresent={botsPresent} inviteUrls={inviteUrls} />
+          <GuildConfig guildId={guildId} botsPresent={botsPresent} inviteUrls={inviteUrls} initialBot={searchParams?.bot || null} />
         </>
       )}
     </DashboardShell>
