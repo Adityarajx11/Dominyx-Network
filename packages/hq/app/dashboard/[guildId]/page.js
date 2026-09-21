@@ -80,7 +80,7 @@ export default async function GuildPage({ params, searchParams }) {
               </div>
             )
           )}
-          <GuildConfig guildId={guildId} botsPresent={botsPresent} inviteUrls={inviteUrls} initialBot={searchParams?.bot || null} />
+          <GuildConfig guildId={guildId} guildName={access.guild?.name || ''} botsPresent={botsPresent} inviteUrls={inviteUrls} initialBot={searchParams?.bot || null} />
         </>
       )}
     </DashboardShell>

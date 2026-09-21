@@ -881,6 +881,28 @@ a {
   flex-shrink: 0;
 }
 
+/* per-bot card shown when that bot isn't in the server yet */
+.absent-cta {
+  text-align: center;
+  padding: 36px 22px;
+  border: 1px dashed rgba(255, 255, 255, 0.16);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.02);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+}
+
+.absent-cta p {
+  margin: 0;
+}
+
+.absent-cta .muted {
+  color: var(--text-dim);
+  font-size: 13.5px;
+}
+
 .field {
   background: rgba(255, 255, 255, 0.028);
   border: 1px solid rgba(255, 255, 255, 0.07);

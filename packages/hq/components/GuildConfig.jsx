@@ -7,7 +7,7 @@ import { Field, Toggle, Select, SaveBar } from './ui';
 const TEXT_TYPES = [0, 5];
 const CATEGORY_TYPE = 4;
 
-export default function GuildConfig({ guildId, botsPresent = {}, inviteUrls = {}, initialBot = null }) {
+export default function GuildConfig({ guildId, guildName = '', botsPresent = {}, inviteUrls = {}, initialBot = null }) {
   const [data, setData] = useState(null);
   const validInitial = initialBot && BOTS.some((b) => b.id === initialBot) ? initialBot : null;
   const [active, setActive] = useState(validInitial || 'music');
@@ -21,6 +21,7 @@ export default function GuildConfig({ guildId, botsPresent = {}, inviteUrls = {}
   const presentBots = botsPresent ? BOTS.filter((b) => botsPresent[b.id]) : BOTS;
   const absentBots = botsPresent ? BOTS.filter((b) => !botsPresent[b.id]) : [];
   const isPresent = (id) => !botsPresent || botsPresent[id];
+  const activeBot = BOTS.find((b) => b.id === active);
 
   useEffect(() => {
     if (presentBots.length > 0 && !presentBots.find((b) => b.id === active)) {
@@ -82,6 +83,21 @@ export default function GuildConfig({ guildId, botsPresent = {}, inviteUrls = {}
         <div className="panel glass" style={{ ['--panel-color']: BOTS.find((b) => b.id === active)?.color }}>
           {presentBots.length === 0 ? (
             <div className="empty">No Dominyx bots are in this server yet. Invite one from the home page to get started.</div>
+          ) : activeBot && !isPresent(activeBot.id) ? (
+            <div>
+              <PanelHeader botId={activeBot.id} />
+              <div className="absent-cta">
+                <p><strong>{activeBot.name}</strong> isn’t in <strong>{guildName || 'this server'}</strong> yet.</p>
+                <p className="muted">Add it below — its full config unlocks here as soon as it joins.</p>
+                {inviteUrls[activeBot.id] ? (
+                  <a className="btn btn-discord" href={inviteUrls[activeBot.id]} target="_blank" rel="noreferrer">
+                    {activeBot.emoji} Add {activeBot.name} to Discord
+                  </a>
+                ) : (
+                  <a className="btn btn-primary" href="/invite">Choose a server to invite</a>
+                )}
+              </div>
+            </div>
           ) : (
             <>
               {active === 'music' && isPresent('music') && <MusicPanel key={revision} cfg={data.configs.music} meta={meta} onRefresh={loadConfig} guildId={guildId} />}
