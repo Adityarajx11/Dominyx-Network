@@ -24,7 +24,10 @@ export default async function Home({ searchParams }) {
           <span className="dot" /> DOMINYX <span className="badge">HQ</span>
         </div>
         {session ? (
-          <a className="btn btn-primary btn-sm" href="/dashboard">Open Dashboard</a>
+          <div style={{ display: 'flex', gap: 10 }}>
+            <a className="btn btn-primary btn-sm" href="/dashboard">Open Dashboard</a>
+            <a className="btn btn-ghost btn-sm" href="/api/auth/logout">Log out</a>
+          </div>
         ) : (
           <LoginButton className="btn btn-discord btn-sm">Login with Discord</LoginButton>
         )}
@@ -55,7 +58,8 @@ export default async function Home({ searchParams }) {
           <p className="section-sub">Six specialists, one network — each built for a single job, tuned to perfection.</p>
           <div className="grid">
             {BOTS.map((bot) => (
-              <div key={bot.id} className="card" style={{ ['--card-color']: bot.color, display: 'flex', flexDirection: 'column' }}>
+              <div key={bot.id} className="card-halo" style={{ ['--card-color']: bot.color }}>
+              <div className="card" style={{ display: 'flex', flexDirection: 'column' }}>
                 <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
                   <div className="emoji">{bot.emoji}</div>
                   <div className="tag">{bot.name}</div>
@@ -79,6 +83,7 @@ export default async function Home({ searchParams }) {
                   </a>
                 </div>
               </div>
+              </div>
             ))}
           </div>
         </div>
@@ -88,6 +93,20 @@ export default async function Home({ searchParams }) {
         <div className="wrap">
           <div className="notice">
             <strong>Never run a slash command again.</strong> Welcome channels, ticket panels, level roles, 24/7 music, live alerts and moderator settings — all editable from Dominyx HQ.
+          </div>
+        </div>
+      </section>
+
+      <section className="section">
+        <div className="wrap">
+          <div className="cta-panel">
+            <h2>Ready to command your server?</h2>
+            <p>Invite the family, open your dashboard, and configure every bot in minutes — free while in beta.</p>
+            {session ? (
+              <a className="btn btn-primary" href="/dashboard">Open Dashboard</a>
+            ) : (
+              <LoginButton className="btn btn-discord">Login with Discord</LoginButton>
+            )}
           </div>
         </div>
       </section>
