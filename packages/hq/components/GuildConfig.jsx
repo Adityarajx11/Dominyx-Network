@@ -85,7 +85,7 @@ export default function GuildConfig({ guildId, botsPresent = {}, inviteUrls = {}
             </button>
           ))}
         </div>
-        <div className="panel glass">
+        <div className="panel glass" style={{ ['--panel-color']: BOTS.find((b) => b.id === active)?.color }}>
           {presentBots.length === 0 ? (
             <div className="empty">No Dominyx bots are in this server yet. Invite one from the home page to get started.</div>
           ) : (
@@ -151,12 +151,13 @@ function usePusher(guildId, onRefresh) {
 function PanelHeader({ botId }) {
   const bot = BOTS.find((b) => b.id === botId);
   return (
-    <>
-      <h2>
-        <span>{bot.emoji}</span> {bot.name}
-      </h2>
-      <p className="panel-desc">{bot.description}</p>
-    </>
+    <div className="panel-hero">
+      <span className="panel-emoji">{bot.emoji}</span>
+      <div>
+        <h2>{bot.name}</h2>
+        <p className="panel-desc">{bot.description}</p>
+      </div>
+    </div>
   );
 }
 

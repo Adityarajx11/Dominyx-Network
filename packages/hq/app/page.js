@@ -34,6 +34,7 @@ export default async function Home({ searchParams }) {
       </nav>
 
       <header className="hero">
+        <div className="hero-rings" aria-hidden="true"><span /><span /><span /></div>
         <h1>
           DOMINYX
           <span className="accent">Command your Discord network.</span>
@@ -49,10 +50,15 @@ export default async function Home({ searchParams }) {
             <LoginButton className="btn btn-discord">Login with Discord</LoginButton>
           )}
         </div>
+        <div className="hero-chips">
+          {BOTS.map((bot) => (
+            <a key={bot.id} className="hero-chip" href="#family" title={bot.name}>{bot.emoji}</a>
+          ))}
+        </div>
         {errorMsg && <div className="error-banner">⚠️ {errorMsg}</div>}
       </header>
 
-      <section className="section" style={{ paddingTop: 40 }}>
+      <section className="section" id="family" style={{ paddingTop: 40 }}>
         <div className="wrap">
           <h2 className="section-title">Meet the family</h2>
           <p className="section-sub">Six specialists, one network — each built for a single job, tuned to perfection.</p>
