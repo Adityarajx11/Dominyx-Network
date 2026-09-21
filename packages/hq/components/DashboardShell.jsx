@@ -17,11 +17,10 @@ const LINKS = [
   { href: '/invite', label: 'Invite bots', icon: '＋' },
 ];
 
-export default function DashboardShell({ user, children, botsPresent = null, inviteUrls = {}, servers = [], botServers = {} }) {
+export default function DashboardShell({ user, children }) {
   const path = usePathname();
   const guildId = path.startsWith('/dashboard/') ? path.split('/')[2] : null;
   const [openBot, setOpenBot] = useState(null);
-  const [expanded, setExpanded] = useState(null);
   useEffect(() => {
     try {
       setOpenBot(new URLSearchParams(window.location.search).get('bot'));
@@ -48,61 +47,21 @@ export default function DashboardShell({ user, children, botsPresent = null, inv
         <div className="side-label">BOTS</div>
         <nav className="side-nav side-bots">
           {BOTS.map((b) => {
-            // Picker lists only servers actually holding this bot.
-            // Nowhere -> plain invite link. Single home -> jump straight in.
-            const homes = botServers[b.id] || [];
-            const isOpen = expanded === b.id;
-            const configuring = !!guildId && openBot === b.id;
-            if (homes.length === 0) {
-              return (
-                <a
-                  key={b.id}
-                  href="/invite"
-                  title={`Invite ${b.name}`}
-                  className="side-link side-bot"
-                >
-                  <span>{b.emoji}</span>{b.name.replace('Dominyx ', '')}
-                  <span className="side-dot" style={{ background: b.color, color: b.color }} />
-                </a>
-              );
-            }
+            // Sidebar never guesses: it carries the bot intent (?bot=) and the
+            // server page itself shows config when the bot is there, or the
+            // invite state when it isn't. Same tab, no surprises.
+            const href = guildId ? `/dashboard/${guildId}?bot=${b.id}` : `/dashboard?bot=${b.id}`;
+            const isActive = openBot === b.id;
             return (
-              <div key={b.id}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                  <a
-                    href={`/dashboard/${homes[0].id}?bot=${b.id}`}
-                    title={homes.length > 1 ? `Choose server for ${b.name}` : `Open ${b.name} in ${homes[0].name}`}
-                    className={`side-link side-bot${configuring ? ' active' : ''}`}
-                    style={{ flex: 1, minWidth: 0 }}
-                    onClick={homes.length > 1 ? (e) => { e.preventDefault(); setExpanded(isOpen ? null : b.id); } : undefined}
-                  >
-                    <span>{b.emoji}</span>{b.name.replace('Dominyx ', '')}
-                    <span className="side-dot" style={{ background: b.color, color: b.color }} />
-                  </a>
-                  {homes.length > 1 && (
-                    <button
-                      className="side-caret"
-                      aria-label={`Choose server for ${b.name}`}
-                      onClick={() => setExpanded(isOpen ? null : b.id)}
-                    >
-                      {isOpen ? '▾' : '▸'}
-                    </button>
-                  )}
-                </div>
-                {homes.length > 1 && isOpen && (
-                  <div className="side-sub">
-                    {homes.map((s) => (
-                      <a
-                        key={s.id}
-                        href={`/dashboard/${s.id}?bot=${b.id}`}
-                        className={`side-link side-server${guildId === s.id ? ' active' : ''}`}
-                      >
-                        {s.name}
-                      </a>
-                    ))}
-                  </div>
-                )}
-              </div>
+              <a
+                key={b.id}
+                href={href}
+                title={`Open ${b.name}`}
+                className={`side-link side-bot${isActive ? ' active' : ''}`}
+              >
+                <span>{b.emoji}</span>{b.name.replace('Dominyx ', '')}
+                <span className="side-dot" style={{ background: b.color, color: b.color }} />
+              </a>
             );
           })}
         </nav>

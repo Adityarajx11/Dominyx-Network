@@ -1,7 +1,7 @@
 import { requireGuildAccess } from '@/lib/auth';
 import DashboardShell from '@/components/DashboardShell';
 import GuildConfig from '@/components/GuildConfig';
-import { getBotsInGuild, getBotGuildMap } from '@/lib/discord';
+import { getBotsInGuild } from '@/lib/discord';
 import { BOTS } from '@/lib/bots';
 import { getInviteUrl } from '@/lib/invite';
 
@@ -19,32 +19,24 @@ export default async function GuildPage({ params, searchParams }) {
   }
 
   let botsPresent = null;
-  let botServers = {};
   if (access.token && access.guild) {
     try {
       botsPresent = await getBotsInGuild(guildId, access.token);
     } catch {}
-    try {
-      const botMap = await getBotGuildMap();
-      const manageable = access.manageable || [];
-      for (const [botId, guildSet] of Object.entries(botMap)) {
-        const hits = manageable
-          .filter((g) => guildSet.has(g.id))
-          .map((g) => ({ id: g.id, name: g.name }));
-        if (hits.length > 0) botServers[botId] = hits;
-      }
-    } catch {}
   }
+
+  // False when BOT_TOKEN_* aren't set: badges/presence can't be trusted,
+  // so the UI says so instead of misrouting.
+  const detectionOn = ['MUSIC', 'LEVEL', 'GREET', 'TICKET', 'PING', 'GUARD']
+    .some((k) => !!process.env[`BOT_TOKEN_${k}`]);
 
   const inviteUrls = {};
   for (const bot of BOTS) {
     inviteUrls[bot.id] = getInviteUrl(bot.id);
   }
 
-  const servers = (access.manageable || []).map((g) => ({ id: g.id, name: g.name }));
-
   return (
-    <DashboardShell user={access.user || { username: '—' }} botsPresent={botsPresent} inviteUrls={inviteUrls} servers={servers} botServers={botServers}>
+    <DashboardShell user={access.user || { username: '—' }}>
       <div className="page-head">
         <div className="crumbs">
           <a href="/dashboard" style={{ color: 'var(--violet)' }}>← Back to servers</a>
@@ -72,12 +64,21 @@ export default async function GuildPage({ params, searchParams }) {
         </div>
       ) : (
         <>
-          {!access.hasBot && (
+          {!detectionOn ? (
             <div className="wrap" style={{ paddingBottom: 0 }}>
               <div className="notice">
-                <strong>Tip:</strong> a Dominyx bot isn't in this server yet — invite one from the home page. Settings saved here will apply as soon as a bot joins.
+                <strong>Bot auto-detect is off</strong> (bot tokens aren’t set on the server).
+                All bots are shown below — the ones actually here will load, the rest show invite buttons.
               </div>
             </div>
+          ) : (
+            !access.hasBot && (
+              <div className="wrap" style={{ paddingBottom: 0 }}>
+                <div className="notice">
+                  <strong>Tip:</strong> a Dominyx bot isn't in this server yet — invite one from the home page. Settings saved here will apply as soon as a bot joins.
+                </div>
+              </div>
+            )
           )}
           <GuildConfig guildId={guildId} botsPresent={botsPresent} inviteUrls={inviteUrls} initialBot={searchParams?.bot || null} />
         </>
