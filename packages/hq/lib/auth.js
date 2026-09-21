@@ -1,5 +1,5 @@
 const { getSessionToken } = require('./session');
-const { getUser, getUserGuilds, getBotGuilds, canManage } = require('./discord');
+const { getUser, getUserGuilds, getBotsGuildMap, canManage } = require('./discord');
 
 async function getSession() {
   const token = getSessionToken();
@@ -13,14 +13,20 @@ async function getAuthedData() {
   const session = await getSession();
   if (!session) return null;
 
-  const [userGuilds, botGuilds] = await Promise.all([getUserGuilds(session.token), getBotGuilds()]);
+  const [userGuilds, botsMap] = await Promise.all([getUserGuilds(session.token), getBotsGuildMap()]);
   const manageable = userGuilds.filter((g) => canManage(g.permissions));
+
+  const botGuilds = new Set();
+  for (const set of Object.values(botsMap)) {
+    for (const id of set) botGuilds.add(id);
+  }
 
   return {
     token: session.token,
     user: session.user,
     userGuilds,
     botGuilds,
+    botsMap,
     manageable,
   };
 }

@@ -680,6 +680,21 @@ a {
   box-shadow: 0 10px 34px rgba(0, 0, 0, 0.45), 0 0 20px rgba(255, 31, 75, 0.16);
 }
 
+/* card for a server that doesn't have the selected bot yet */
+.server-card.is-absent {
+  border-color: rgba(139, 92, 246, 0.35);
+}
+
+.server-card.is-absent:hover {
+  border-color: var(--violet);
+  box-shadow: 0 10px 34px rgba(0, 0, 0, 0.45), 0 0 20px rgba(139, 92, 246, 0.2);
+}
+
+.server-invite {
+  margin-top: auto;
+  justify-content: center;
+}
+
 .server-row {
   display: flex;
   align-items: center;

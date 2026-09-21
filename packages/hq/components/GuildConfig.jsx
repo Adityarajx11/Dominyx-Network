@@ -14,20 +14,22 @@ export default function GuildConfig({ guildId, guildName = '', botsPresent = {},
   const [revision, setRevision] = useState(0);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    if (initialBot && BOTS.some((b) => b.id === initialBot)) setActive(initialBot);
-  }, [initialBot]);
-
   const presentBots = botsPresent ? BOTS.filter((b) => botsPresent[b.id]) : BOTS;
   const absentBots = botsPresent ? BOTS.filter((b) => !botsPresent[b.id]) : [];
   const isPresent = (id) => !botsPresent || botsPresent[id];
   const activeBot = BOTS.find((b) => b.id === active);
 
+  // An explicit ?bot= choice always wins — never yank it back to another tab.
+  // With no choice, fall back to the first bot actually present.
   useEffect(() => {
+    if (validInitial) {
+      setActive(validInitial);
+      return;
+    }
     if (presentBots.length > 0 && !presentBots.find((b) => b.id === active)) {
       setActive(presentBots[0].id);
     }
-  }, [presentBots.length]);
+  }, [validInitial, presentBots.length]);
 
   const loadConfig = useCallback(async () => {
     try {

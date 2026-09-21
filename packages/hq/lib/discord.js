@@ -135,6 +135,33 @@ async function getBotsInGuild(guildId) {
   return Object.keys(present).length > 0 ? present : null;
 }
 
+// botId -> Set<guildId> for every bot that has a token. One /users/@me/guilds call per bot.
+async function getBotsGuildMap() {
+  const botTokens = {
+    music: process.env.BOT_TOKEN_MUSIC,
+    level: process.env.BOT_TOKEN_LEVEL,
+    greet: process.env.BOT_TOKEN_GREET,
+    ticket: process.env.BOT_TOKEN_TICKET,
+    ping: process.env.BOT_TOKEN_PING,
+    guard: process.env.BOT_TOKEN_GUARD,
+  };
+  const map = {};
+  const jobs = Object.entries(botTokens).map(async ([botId, bToken]) => {
+    if (!bToken) return;
+    const clean = bToken.trim();
+    if (!clean) return;
+    try {
+      const headers = { Authorization: `Bot ${clean}`, 'Content-Type': 'application/json' };
+      const res = await fetch(`${API}/users/@me/guilds`, { headers });
+      if (!res.ok) return;
+      const guilds = await res.json();
+      map[botId] = new Set(guilds.map((g) => g.id));
+    } catch {}
+  });
+  await Promise.all(jobs);
+  return map;
+}
+
 const BOT_TOKEN_MAP = {
   music: () => process.env.BOT_TOKEN_MUSIC,
   level: () => process.env.BOT_TOKEN_LEVEL,
@@ -177,5 +204,6 @@ module.exports = {
   getGuildChannels,
   getGuildRoles,
   getBotsInGuild,
+  getBotsGuildMap,
   getGuildBotToken,
 };
