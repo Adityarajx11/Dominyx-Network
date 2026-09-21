@@ -43,8 +43,22 @@ export default async function GuildPage({ params, searchParams }) {
 
   const servers = (access.manageable || []).map((g) => ({ id: g.id, name: g.name }));
 
+  let botServers = {};
+  if (access.guild) {
+    try {
+      const botMap = await getBotGuildMap();
+      const manageable = access.manageable || [];
+      for (const [botId, guildSet] of Object.entries(botMap)) {
+        const hits = manageable
+          .filter((g) => guildSet.has(g.id))
+          .map((g) => ({ id: g.id, name: g.name }));
+        if (hits.length > 0) botServers[botId] = hits;
+      }
+    } catch {}
+  }
+
   return (
-    <DashboardShell user={access.user || { username: '—' }} botsPresent={botsPresent} inviteUrls={inviteUrls} servers={servers}>
+    <DashboardShell user={access.user || { username: '—' }} botsPresent={botsPresent} inviteUrls={inviteUrls} servers={servers} botServers={botServers}>
       <div className="page-head">
         <div className="crumbs">
           <a href="/dashboard" style={{ color: 'var(--violet)' }}>← Back to servers</a>

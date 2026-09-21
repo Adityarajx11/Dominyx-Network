@@ -17,7 +17,7 @@ const LINKS = [
   { href: '/invite', label: 'Invite bots', icon: '＋' },
 ];
 
-export default function DashboardShell({ user, children, botsPresent = null, inviteUrls = {}, servers = [] }) {
+export default function DashboardShell({ user, children, botsPresent = null, inviteUrls = {}, servers = [], botServers = {} }) {
   const path = usePathname();
   const guildId = path.startsWith('/dashboard/') ? path.split('/')[2] : null;
   const [openBot, setOpenBot] = useState(null);
@@ -48,26 +48,38 @@ export default function DashboardShell({ user, children, botsPresent = null, inv
         <div className="side-label">BOTS</div>
         <nav className="side-nav side-bots">
           {BOTS.map((b) => {
-            // Every bot gets a picker with all manageable servers.
-            // Picking one opens that server straight into this bot's config
-            // (or its invite state when the bot isn't there yet).
-            const hasServers = servers.length > 0;
+            // Picker lists only servers actually holding this bot.
+            // Nowhere -> plain invite link. Single home -> jump straight in.
+            const homes = botServers[b.id] || [];
             const isOpen = expanded === b.id;
             const configuring = !!guildId && openBot === b.id;
+            if (homes.length === 0) {
+              return (
+                <a
+                  key={b.id}
+                  href="/invite"
+                  title={`Invite ${b.name}`}
+                  className="side-link side-bot"
+                >
+                  <span>{b.emoji}</span>{b.name.replace('Dominyx ', '')}
+                  <span className="side-dot" style={{ background: b.color, color: b.color }} />
+                </a>
+              );
+            }
             return (
               <div key={b.id}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                   <a
-                    href={hasServers ? undefined : '/invite'}
-                    onClick={hasServers ? (e) => { e.preventDefault(); setExpanded(isOpen ? null : b.id); } : undefined}
-                    title={hasServers ? `Choose server for ${b.name}` : `Invite ${b.name}`}
+                    href={`/dashboard/${homes[0].id}?bot=${b.id}`}
+                    title={homes.length > 1 ? `Choose server for ${b.name}` : `Open ${b.name} in ${homes[0].name}`}
                     className={`side-link side-bot${configuring ? ' active' : ''}`}
                     style={{ flex: 1, minWidth: 0 }}
+                    onClick={homes.length > 1 ? (e) => { e.preventDefault(); setExpanded(isOpen ? null : b.id); } : undefined}
                   >
                     <span>{b.emoji}</span>{b.name.replace('Dominyx ', '')}
                     <span className="side-dot" style={{ background: b.color, color: b.color }} />
                   </a>
-                  {hasServers && (
+                  {homes.length > 1 && (
                     <button
                       className="side-caret"
                       aria-label={`Choose server for ${b.name}`}
@@ -77,9 +89,9 @@ export default function DashboardShell({ user, children, botsPresent = null, inv
                     </button>
                   )}
                 </div>
-                {hasServers && isOpen && (
+                {homes.length > 1 && isOpen && (
                   <div className="side-sub">
-                    {servers.map((s) => (
+                    {homes.map((s) => (
                       <a
                         key={s.id}
                         href={`/dashboard/${s.id}?bot=${b.id}`}
