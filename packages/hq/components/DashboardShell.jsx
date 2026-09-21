@@ -68,7 +68,7 @@ export default function DashboardShell({ user, children, botsPresent = null, inv
                 href={href}
                 {...(external ? { target: '_blank', rel: 'noreferrer' } : {})}
                 title={configuring ? `Configure ${b.name}` : (botHome[b.id] || guildId ? `Open ${b.name}` : `Invite ${b.name}`)}
-                className={`side-link side-bot${inGuild && openBot === b.id ? ' active' : ''}`}
+                className={`side-link side-bot${configuring && openBot === b.id ? ' active' : ''}`}
               >
                 <span>{b.emoji}</span>{b.name.replace('Dominyx ', '')}
                 <span className="side-dot" style={{ background: b.color, color: b.color }} />
