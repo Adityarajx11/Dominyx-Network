@@ -17,7 +17,7 @@ const LINKS = [
   { href: '/invite', label: 'Invite bots', icon: '＋' },
 ];
 
-export default function DashboardShell({ user, children, botsPresent = null, inviteUrls = {} }) {
+export default function DashboardShell({ user, children, botsPresent = null, inviteUrls = {}, botHome = {} }) {
   const path = usePathname();
   const guildId = path.startsWith('/dashboard/') ? path.split('/')[2] : null;
   const [openBot, setOpenBot] = useState(null);
@@ -47,17 +47,27 @@ export default function DashboardShell({ user, children, botsPresent = null, inv
         <div className="side-label">BOTS</div>
         <nav className="side-nav side-bots">
           {BOTS.map((b) => {
-            const inGuild = !!(guildId && botsPresent && botsPresent[b.id]);
-            const href = inGuild
-              ? `/dashboard/${guildId}?bot=${b.id}`
-              : (guildId && inviteUrls[b.id]) || '/invite';
-            const external = !inGuild;
+            // Server open: present (or unknown) -> its config tab; absent -> invite.
+            // No server open: jump to the server that has it; nowhere -> invite page.
+            let href = '/invite';
+            let external = false;
+            if (guildId) {
+              if (botsPresent == null || botsPresent[b.id]) {
+                href = `/dashboard/${guildId}?bot=${b.id}`;
+              } else {
+                href = inviteUrls[b.id] || '/invite';
+                external = href !== '/invite';
+              }
+            } else if (botHome[b.id]) {
+              href = `/dashboard/${botHome[b.id]}?bot=${b.id}`;
+            }
+            const configuring = !!guildId && !external;
             return (
               <a
                 key={b.id}
                 href={href}
                 {...(external ? { target: '_blank', rel: 'noreferrer' } : {})}
-                title={inGuild ? `Configure ${b.name}` : `Invite ${b.name}`}
+                title={configuring ? `Configure ${b.name}` : (botHome[b.id] || guildId ? `Open ${b.name}` : `Invite ${b.name}`)}
                 className={`side-link side-bot${inGuild && openBot === b.id ? ' active' : ''}`}
               >
                 <span>{b.emoji}</span>{b.name.replace('Dominyx ', '')}

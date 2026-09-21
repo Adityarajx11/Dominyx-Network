@@ -110,7 +110,7 @@ async function getGuildRoles(guildId, botOverride) {
   return discordFetch(`/guilds/${guildId}/roles`, { bot: botOverride });
 }
 
-async function getBotsInGuild(guildId, token) {
+async function getBotsInGuild(guildId) {
   const botTokens = {
     music: process.env.BOT_TOKEN_MUSIC,
     level: process.env.BOT_TOKEN_LEVEL,
@@ -133,6 +133,32 @@ async function getBotsInGuild(guildId, token) {
   });
   await Promise.all(checks);
   return Object.keys(present).length > 0 ? present : null;
+}
+
+// One pass over all bot tokens: botId -> Set of guild ids the bot is in.
+// Used to route sidebar clicks to the right server.
+async function getBotGuildMap() {
+  const botTokens = {
+    music: process.env.BOT_TOKEN_MUSIC,
+    level: process.env.BOT_TOKEN_LEVEL,
+    greet: process.env.BOT_TOKEN_GREET,
+    ticket: process.env.BOT_TOKEN_TICKET,
+    ping: process.env.BOT_TOKEN_PING,
+    guard: process.env.BOT_TOKEN_GUARD,
+  };
+  const map = {};
+  await Promise.all(Object.entries(botTokens).map(async ([botId, bToken]) => {
+    if (!bToken) return;
+    try {
+      const res = await fetch(`${API}/users/@me/guilds`, {
+        headers: { Authorization: `Bot ${bToken.trim()}` },
+      });
+      if (!res.ok) return;
+      const guilds = await res.json();
+      map[botId] = new Set(guilds.map((g) => g.id));
+    } catch {}
+  }));
+  return map;
 }
 
 const BOT_TOKEN_MAP = {
@@ -177,5 +203,6 @@ module.exports = {
   getGuildChannels,
   getGuildRoles,
   getBotsInGuild,
+  getBotGuildMap,
   getGuildBotToken,
 };
