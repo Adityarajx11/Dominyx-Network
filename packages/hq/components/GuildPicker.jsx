@@ -23,7 +23,7 @@ export default function GuildPicker({ guilds }) {
       ) : (
         <div className="server-grid">
           {guilds.map((g) => (
-            <div key={g.id} className="server-card" onClick={() => router.push(`/dashboard/${g.id}`)}>
+            <div key={g.id} className="server-card glass" onClick={() => router.push(`/dashboard/${g.id}`)}>
               <div className="server-row">
                 <div className="avatar">
                   {iconUrl(g) ? <img src={iconUrl(g)} alt={g.name} /> : g.name[0]}

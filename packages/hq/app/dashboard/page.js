@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 import { getAuthedData } from '@/lib/auth';
-import { SiteNav } from '@/components/SiteNav';
+import DashboardShell from '@/components/DashboardShell';
 import GuildPicker from '@/components/GuildPicker';
 
 export default async function DashboardPage() {
@@ -8,8 +8,7 @@ export default async function DashboardPage() {
   if (!data) redirect('/');
 
   return (
-    <>
-      <SiteNav user={data.user} />
+    <DashboardShell user={data.user}>
       <div className="page-head">
         <GuildPicker guilds={data.manageable.map((g) => ({
           id: g.id,
@@ -18,7 +17,7 @@ export default async function DashboardPage() {
           hasBot: data.botGuilds.has(g.id),
         }))} />
       </div>
-    </>
+    </DashboardShell>
   );
 }
 

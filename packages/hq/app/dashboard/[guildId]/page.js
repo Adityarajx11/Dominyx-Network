@@ -1,5 +1,5 @@
 import { requireGuildAccess } from '@/lib/auth';
-import { SiteNav } from '@/components/SiteNav';
+import DashboardShell from '@/components/DashboardShell';
 import GuildConfig from '@/components/GuildConfig';
 import { getBotsInGuild } from '@/lib/discord';
 import { BOTS } from '@/lib/bots';
@@ -31,8 +31,7 @@ export default async function GuildPage({ params }) {
   }
 
   return (
-    <>
-      <SiteNav user={access.user || { username: '—' }} />
+    <DashboardShell user={access.user || { username: '—' }}>
       <div className="page-head">
         <div className="crumbs">
           <a href="/dashboard" style={{ color: 'var(--violet)' }}>← Back to servers</a>
@@ -70,7 +69,7 @@ export default async function GuildPage({ params }) {
           <GuildConfig guildId={guildId} botsPresent={botsPresent} inviteUrls={inviteUrls} />
         </>
       )}
-    </>
+    </DashboardShell>
   );
 }
 

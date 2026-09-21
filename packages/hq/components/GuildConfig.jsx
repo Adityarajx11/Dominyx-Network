@@ -85,7 +85,7 @@ export default function GuildConfig({ guildId, botsPresent = {}, inviteUrls = {}
             </button>
           ))}
         </div>
-        <div className="panel">
+        <div className="panel glass">
           {presentBots.length === 0 ? (
             <div className="empty">No Dominyx bots are in this server yet. Invite one from the home page to get started.</div>
           ) : (
