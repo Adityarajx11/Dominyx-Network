@@ -38,7 +38,21 @@ module.exports = {
 
     if (!player.playing && !player.paused) {
       await player.play();
-      return interaction.editReply(`🎶 Loading **${track.info.title}**...`);
+      await interaction.editReply(`🎶 Loading **${track.info.title}**...`);
+      // Watchdog: "Loading" that never resolves means Lavalink couldn't start
+      // the audio (blocked source / dead node) — say so instead of hanging.
+      setTimeout(async () => {
+        try {
+          const p = getManager().getPlayer(interaction.guild.id);
+          if (p && !p.playing && !p.paused && p.queue.current?.info?.title === track.info.title) {
+            await interaction.followUp({
+              content: `❌ **${track.info.title}** never started — the audio source is blocking this server. Try a Spotify/SoundCloud link or another song.`,
+              flags: MessageFlags.Ephemeral,
+            }).catch(() => {});
+          }
+        } catch {}
+      }, 12000).unref?.();
+      return;
     } else {
       return interaction.editReply(`➕ Added to queue: **${track.info.title}** (position ${player.queue.tracks.length})`);
     }

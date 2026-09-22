@@ -109,6 +109,13 @@ function attachLavalink(client) {
     channel?.send(`⚠️ Error playing **${track?.info?.title || 'track'}**, skipping.`).catch(() => {});
   });
 
+  manager.on('trackStuck', (player, track, payload) => {
+    console.error('Track stuck:', payload?.message || payload);
+    const channel = client.channels.cache.get(player.textChannelId);
+    channel?.send(`⚠️ **${track?.info?.title || 'Track'}** got stuck and never started, skipping.`).catch(() => {});
+    player.skip(0, false).catch(() => {});
+  });
+
   return manager;
 }
 
