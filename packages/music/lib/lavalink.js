@@ -120,6 +120,14 @@ function getManager() {
   return manager;
 }
 
+function cancelLeave(guildId) {
+  const timer = leaveTimers.get(guildId);
+  if (timer) {
+    clearTimeout(timer);
+    leaveTimers.delete(guildId);
+  }
+}
+
 async function searchTrack(query, requestUser) {
   const node = manager.nodeManager.leastUsedNodes()[0];
   if (!node) throw new Error('No Lavalink node connected. Check LAVALINK_* env vars.');
@@ -151,4 +159,4 @@ function getOrCreatePlayer(interaction, opts = {}) {
   return player;
 }
 
-module.exports = { attachLavalink, initManager, getManager, searchTrack, getOrCreatePlayer };
+module.exports = { attachLavalink, initManager, getManager, searchTrack, getOrCreatePlayer, cancelLeave };
