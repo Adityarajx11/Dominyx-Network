@@ -56,10 +56,14 @@ export default async function Home({ searchParams }) {
             <LoginButton className="btn btn-discord">Login with Discord</LoginButton>
           )}
         </div>
-        <div className="hero-chips">
-          {BOTS.map((bot) => (
-            <a key={bot.id} className="hero-chip" href="#family" title={bot.name}>{bot.emoji}</a>
-          ))}
+        <div className="hero-chips" role="navigation" aria-label="Bot shortcuts">
+          {BOTS.map((bot) =>
+            session ? (
+              <a key={bot.id} className="hero-chip" href={`/dashboard?bot=${bot.id}`} title={`Open ${bot.name} in the dashboard`}>{bot.emoji}</a>
+            ) : (
+              <a key={bot.id} className="hero-chip" href="/invite" title={`Invite ${bot.name}`}>{bot.emoji}</a>
+            )
+          )}
         </div>
         <div className="hero-stats">
           <div className="hero-stat"><strong>6</strong><span>Specialist bots</span></div>
