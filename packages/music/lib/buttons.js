@@ -2,17 +2,17 @@ const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, MessageFlags
 const { getManager } = require('./lavalink');
 
 const ICONS = {
-  voldown: '🔉',
-  volup: '🔊',
-  pause: '⏸',
-  play: '▶',
-  skip: '⏭',
-  prev: '⏮',
-  loop: '🔁',
-  seekback: '⏪',
-  seekforward: '⏩',
-  shuffle: '🔀',
-  stop: '⏹',
+  voldown: '<:music_voldown:1543902056882896936>',
+  volup: '<:music_volup:1543902054345343027>',
+  pause: '<:music_pause:1543727712483549317>',
+  play: '<:music_play:1543727702832586802>',
+  skip: '<:music_skip:1543727710113759384>',
+  prev: '<:music_prev:1543727707853033604>',
+  loop: '<:music_loop:1543727705340772545>',
+  seekback: '<:music_seekback:1543727700651548833>',
+  seekforward: '<:music_seekforward:1543902278833148044>',
+  shuffle: '<:music_shuffle:1543727698579554426>',
+  stop: '<:music_stop:1543727696259846234>',
 };
 
 function formatDuration(ms) {
@@ -42,19 +42,19 @@ function buildControlRow(player) {
   const isPaused = player?.paused;
 
   const row1 = new ActionRowBuilder().addComponents(
+    new ButtonBuilder().setCustomId('music_voldown').setEmoji(ICONS.voldown).setStyle(ButtonStyle.Danger),
     new ButtonBuilder().setCustomId('music_previous').setEmoji(ICONS.prev).setStyle(ButtonStyle.Danger),
     new ButtonBuilder().setCustomId('music_pauseresume').setEmoji(isPaused ? ICONS.play : ICONS.pause).setStyle(ButtonStyle.Danger),
     new ButtonBuilder().setCustomId('music_skip').setEmoji(ICONS.skip).setStyle(ButtonStyle.Danger),
-    new ButtonBuilder().setCustomId('music_loop').setEmoji(ICONS.loop).setStyle(ButtonStyle.Danger),
-    new ButtonBuilder().setCustomId('music_stop').setEmoji(ICONS.stop).setStyle(ButtonStyle.Danger),
+    new ButtonBuilder().setCustomId('music_volup').setEmoji(ICONS.volup).setStyle(ButtonStyle.Danger),
   );
 
   const row2 = new ActionRowBuilder().addComponents(
-    new ButtonBuilder().setCustomId('music_voldown').setEmoji(ICONS.voldown).setStyle(ButtonStyle.Danger),
-    new ButtonBuilder().setCustomId('music_volup').setEmoji(ICONS.volup).setStyle(ButtonStyle.Danger),
     new ButtonBuilder().setCustomId('music_seekback').setEmoji(ICONS.seekback).setStyle(ButtonStyle.Danger),
-    new ButtonBuilder().setCustomId('music_seekforward').setEmoji(ICONS.seekforward).setStyle(ButtonStyle.Danger),
+    new ButtonBuilder().setCustomId('music_loop').setEmoji(ICONS.loop).setStyle(ButtonStyle.Danger),
+    new ButtonBuilder().setCustomId('music_stop').setEmoji(ICONS.stop).setStyle(ButtonStyle.Danger),
     new ButtonBuilder().setCustomId('music_shuffle').setEmoji(ICONS.shuffle).setStyle(ButtonStyle.Danger),
+    new ButtonBuilder().setCustomId('music_seekforward').setEmoji(ICONS.seekforward).setStyle(ButtonStyle.Danger),
   );
 
   return [row1, row2];
