@@ -85,7 +85,11 @@ async function handleMusicButton(interaction) {
 
   if (id === 'music_skip') {
     if (!track) return interaction.reply({ content: '🚫 Nothing to skip.', flags: MessageFlags.Ephemeral });
-    await player.skip();
+    try {
+      await player.skip(0, false);
+    } catch (err) {
+      return interaction.reply({ content: `❌ Skip failed: ${err.message || err}`, flags: MessageFlags.Ephemeral });
+    }
     return interaction.reply({ content: '⏭️ Skipped.', flags: MessageFlags.Ephemeral });
   }
 

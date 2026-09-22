@@ -11,7 +11,13 @@ module.exports = {
     if (!player || !player.queue.current) {
       return interaction.reply({ content: '🚫 Nothing is playing.', flags: MessageFlags.Ephemeral });
     }
-    await player.skip();
+    try {
+      // (0, false): skipping the last song just ends it instead of throwing
+      // "Can't skip more than the queue size".
+      await player.skip(0, false);
+    } catch (err) {
+      return interaction.reply({ content: `❌ Skip failed: ${err.message || err}`, flags: MessageFlags.Ephemeral });
+    }
     return interaction.reply('⏭️ Skipped.');
   },
 };
