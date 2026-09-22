@@ -42,19 +42,19 @@ function buildControlRow(player) {
   const isPaused = player?.paused;
 
   const row1 = new ActionRowBuilder().addComponents(
-    new ButtonBuilder().setCustomId('music_previous').setEmoji(ICONS.prev).setLabel('Prev').setStyle(ButtonStyle.Secondary),
-    new ButtonBuilder().setCustomId('music_pauseresume').setEmoji(isPaused ? ICONS.play : ICONS.pause).setLabel(isPaused ? 'Play' : 'Pause').setStyle(ButtonStyle.Success),
-    new ButtonBuilder().setCustomId('music_skip').setEmoji(ICONS.skip).setLabel('Skip').setStyle(ButtonStyle.Primary),
-    new ButtonBuilder().setCustomId('music_loop').setEmoji(ICONS.loop).setLabel('Loop').setStyle(ButtonStyle.Primary),
+    new ButtonBuilder().setCustomId('music_previous').setEmoji(ICONS.prev).setLabel('Prev').setStyle(ButtonStyle.Danger),
+    new ButtonBuilder().setCustomId('music_pauseresume').setEmoji(isPaused ? ICONS.play : ICONS.pause).setLabel(isPaused ? 'Play' : 'Pause').setStyle(ButtonStyle.Danger),
+    new ButtonBuilder().setCustomId('music_skip').setEmoji(ICONS.skip).setLabel('Skip').setStyle(ButtonStyle.Danger),
+    new ButtonBuilder().setCustomId('music_loop').setEmoji(ICONS.loop).setLabel('Loop').setStyle(ButtonStyle.Danger),
     new ButtonBuilder().setCustomId('music_stop').setEmoji(ICONS.stop).setLabel('Stop').setStyle(ButtonStyle.Danger),
   );
 
   const row2 = new ActionRowBuilder().addComponents(
-    new ButtonBuilder().setCustomId('music_voldown').setEmoji(ICONS.voldown).setLabel('-10').setStyle(ButtonStyle.Secondary),
-    new ButtonBuilder().setCustomId('music_volup').setEmoji(ICONS.volup).setLabel('+10').setStyle(ButtonStyle.Secondary),
-    new ButtonBuilder().setCustomId('music_seekback').setEmoji(ICONS.seekback).setLabel('10s').setStyle(ButtonStyle.Secondary),
-    new ButtonBuilder().setCustomId('music_seekforward').setEmoji(ICONS.seekforward).setLabel('10s').setStyle(ButtonStyle.Secondary),
-    new ButtonBuilder().setCustomId('music_shuffle').setEmoji(ICONS.shuffle).setLabel('Shuffle').setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder().setCustomId('music_voldown').setEmoji(ICONS.voldown).setLabel('-10').setStyle(ButtonStyle.Danger),
+    new ButtonBuilder().setCustomId('music_volup').setEmoji(ICONS.volup).setLabel('+10').setStyle(ButtonStyle.Danger),
+    new ButtonBuilder().setCustomId('music_seekback').setEmoji(ICONS.seekback).setLabel('10s').setStyle(ButtonStyle.Danger),
+    new ButtonBuilder().setCustomId('music_seekforward').setEmoji(ICONS.seekforward).setLabel('10s').setStyle(ButtonStyle.Danger),
+    new ButtonBuilder().setCustomId('music_shuffle').setEmoji(ICONS.shuffle).setLabel('Shuffle').setStyle(ButtonStyle.Danger),
   );
 
   return [row1, row2];
