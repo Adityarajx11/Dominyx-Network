@@ -61,7 +61,7 @@ export default async function Home({ searchParams }) {
             session ? (
               <a key={bot.id} className="hero-chip" href={`/dashboard?bot=${bot.id}`} title={`Open ${bot.name} in the dashboard`}>{bot.emoji}</a>
             ) : (
-              <a key={bot.id} className="hero-chip" href="/invite" title={`Invite ${bot.name}`}>{bot.emoji}</a>
+              <a key={bot.id} className="hero-chip" href={getInviteUrl(bot.id) || '/invite'} target={getInviteUrl(bot.id) ? '_blank' : undefined} rel="noreferrer" title={`Add ${bot.name} to Discord`}>{bot.emoji}</a>
             )
           )}
         </div>

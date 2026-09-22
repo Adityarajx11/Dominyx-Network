@@ -24,7 +24,7 @@ export function getInviteUrl(botId) {
     permissions: String(PERMISSIONS[botId] || 0),
     scope: 'bot applications.commands',
   });
-  return `https://discord.com/api/oauth2/authorize?${params.toString()}`;
+  return `https://discord.com/oauth2/authorize?${params.toString()}`;
 }
 
 export function getPermissionLabels(botId) {
