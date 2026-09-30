@@ -16,7 +16,7 @@ const PERMISSION_LABELS = {
   guard: ['View channels', 'Send messages', 'Embed links', 'Read message history', 'Add reactions', 'Kick members', 'Ban members', 'Manage roles'],
 };
 
-export function getInviteUrl(botId) {
+export function getInviteUrl(botId, guildId = null) {
   const id = process.env[`BOT_ID_${botId.toUpperCase()}`];
   if (!id) return null;
   const params = new URLSearchParams({
@@ -24,6 +24,10 @@ export function getInviteUrl(botId) {
     permissions: String(PERMISSIONS[botId] || 0),
     scope: 'bot applications.commands',
   });
+  if (guildId) {
+    params.set('guild_id', guildId);
+    params.set('disable_guild_select', 'true');
+  }
   return `https://discord.com/oauth2/authorize?${params.toString()}`;
 }
 

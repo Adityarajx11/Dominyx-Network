@@ -85,9 +85,10 @@ export default async function Home({ searchParams }) {
               <div className="card" style={{ display: 'flex', flexDirection: 'column' }}>
                 <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
                   <div className="emoji">{bot.emoji}</div>
-                  <div className="tag">{bot.name}</div>
+                  <div className="tag">{bot.short || bot.name}</div>
                 </div>
-                <h3>{bot.tagline}</h3>
+                <h3>{bot.name}</h3>
+                <div className="card-sub">{bot.tagline}</div>
                 <p>{bot.description}</p>
                 <div className="features">
                   {bot.features.map((f) => (

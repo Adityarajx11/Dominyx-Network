@@ -3,6 +3,11 @@ const { createCase, logCaseToChannel } = require('../lib/modlog');
 
 const LINK_RE = /https?:\/\/|discord\.gg\/|discord\.com\/invite\//i;
 
+// Known phishing / fake-nitro patterns. Custom scam handling stays in settings.
+const SCAM_RE = /discord[^ ]*nitro|free[^ ]*nitro|nitro[^ ]*free|steamcommunity\.com\/gift|discord\.gift\/[a-z0-9]+|verify.*(token|qr)|airdrop.*(claim|wallet)/i;
+const CUSTOM_EMOJI_RE = /<a?:\w+:\d+>/g;
+const UNICODE_EMOJI_RE = /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}]/gu;
+
 // Sliding message timestamps per guild+user for spam detection.
 const windows = new Map(); // `${guildId}:${userId}` -> number[]
 
@@ -112,6 +117,47 @@ module.exports = {
           await warnAndDelete(message, 'please turn off caps lock.');
           return;
         }
+      }
+
+      // Mass mentions.
+      if (settings.automod_mentions) {
+        const threshold = Number.isInteger(settings.mention_threshold) ? settings.mention_threshold : 5;
+        const mentionCount = message.mentions.users.size + message.mentions.roles.size;
+        if (mentionCount >= threshold) {
+          await warnAndDelete(message, `don't mass-mention (max ${threshold}).`);
+          return;
+        }
+      }
+
+      // Emoji spam.
+      if (settings.automod_emoji) {
+        const threshold = Number.isInteger(settings.emoji_threshold) ? settings.emoji_threshold : 10;
+        const custom = (content.match(CUSTOM_EMOJI_RE) || []).length;
+        const unicode = (content.match(UNICODE_EMOJI_RE) || []).length;
+        if (custom + unicode >= threshold) {
+          await warnAndDelete(message, `don't spam emojis (max ${threshold}).`);
+          return;
+        }
+      }
+
+      // Custom bad words (whole-word match, case-insensitive).
+      if (settings.automod_words) {
+        const words = Array.isArray(settings.bad_words) ? settings.bad_words : [];
+        const lower = content.toLowerCase();
+        const hit = words.find((w) => w && lower.includes(String(w).toLowerCase()));
+        if (hit) {
+          await warnAndDelete(message, 'that word isn\u2019t allowed here.');
+          return;
+        }
+      }
+
+      // Scam / phishing links (fake nitro, gift links, token grabs).
+      if (settings.scam_links && SCAM_RE.test(content)) {
+        await message.delete().catch(() => {});
+        await message.channel.send(`${message.author}, that looks like a scam link — deleted for everyone's safety.`).catch(() => null);
+        const muted = await handleAutomodMute(client, message, 'suspected scam link');
+        if (muted) await message.channel.send(`${message.author} was muted for posting a suspected scam link.`).catch(() => null);
+        return;
       }
     } catch (err) {
       console.error('Automod error:', err.message);

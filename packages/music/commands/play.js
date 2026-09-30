@@ -21,11 +21,12 @@ module.exports = {
 
     const settings = await getMusicSettings(interaction.guild.id);
     const query = interaction.options.getString('song');
-    const track = await searchTrack(query, interaction.user.tag);
+    const result = await searchTrack(query, interaction.user.tag);
 
-    if (!track) {
+    if (!result) {
       return interaction.editReply('❌ Couldn\'t find that song.');
     }
+    const { track, tracks, playlistName, isPlaylist } = result;
 
     const player = getOrCreatePlayer(interaction, { volume: settings.defaultVolume });
     if (!player.connected) await player.connect();
@@ -34,11 +35,18 @@ module.exports = {
       return interaction.editReply(`🚫 Queue is full (max ${settings.maxQueue} songs). Use \`/skip\` or \`/stop\` to make room.`);
     }
 
-    player.queue.add(track);
+    // Playlists: fill the queue in order, capped at maxQueue.
+    const room = settings.maxQueue - player.queue.tracks.length;
+    const toAdd = tracks.slice(0, Math.max(room, 1));
+    for (const t of toAdd) player.queue.add(t);
 
     if (!player.playing && !player.paused) {
       await player.play();
-      await interaction.editReply(`🎶 Loading **${track.info.title}**...`);
+      if (isPlaylist && toAdd.length > 1) {
+        await interaction.editReply(`🎶 Loading playlist **${playlistName || 'mix'}** — **${toAdd.length}** songs queued in order. Now: **${track.info.title}**...`);
+      } else {
+        await interaction.editReply(`🎶 Loading **${track.info.title}**...`);
+      }
       // Watchdog: "Loading" that never resolves means Lavalink couldn't start
       // the audio (blocked source / dead node) — say so instead of hanging.
       setTimeout(async () => {
@@ -54,6 +62,9 @@ module.exports = {
       }, 12000).unref?.();
       return;
     } else {
+      if (isPlaylist && toAdd.length > 1) {
+        return interaction.editReply(`➕ Queued playlist **${playlistName || 'mix'}** — **${toAdd.length}** songs in order (now at ${player.queue.tracks.length}).`);
+      }
       return interaction.editReply(`➕ Added to queue: **${track.info.title}** (position ${player.queue.tracks.length})`);
     }
   },

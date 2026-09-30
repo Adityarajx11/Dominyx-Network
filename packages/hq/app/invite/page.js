@@ -39,9 +39,10 @@ export default async function InvitePage() {
                 <div className="card" style={{ display: 'flex', flexDirection: 'column' }}>
                   <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
                     <div className="emoji">{bot.emoji}</div>
-                    <div className="tag">{bot.name}</div>
+                    <div className="tag">{bot.short || bot.name}</div>
                   </div>
-                  <h3 style={{ marginTop: 8 }}>{bot.tagline}</h3>
+                  <h3 style={{ marginTop: 8 }}>{bot.name}</h3>
+                  <div className="card-sub">{bot.tagline}</div>
                   <p>{bot.description}</p>
 
                   <div className="features" style={{ marginBottom: 16 }}>

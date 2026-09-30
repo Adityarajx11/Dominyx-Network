@@ -14,6 +14,7 @@ async function initMusicSettings() {
   await pool.query(`ALTER TABLE music_settings ADD COLUMN IF NOT EXISTS max_queue INTEGER DEFAULT 50;`);
   await pool.query(`ALTER TABLE music_settings ADD COLUMN IF NOT EXISTS leave_timeout_minutes INTEGER DEFAULT 5;`);
   await pool.query(`ALTER TABLE music_settings ADD COLUMN IF NOT EXISTS announce_channel_id TEXT;`);
+  await pool.query(`ALTER TABLE music_settings ADD COLUMN IF NOT EXISTS prefix TEXT DEFAULT '!';`);
   console.log('🎵 Music settings table ready.');
 }
 
@@ -24,6 +25,7 @@ const MUSIC_DEFAULTS = {
   maxQueue: 50,
   leaveTimeoutMinutes: 5,
   announceChannelId: null,
+  prefix: '!',
 };
 
 async function getMusicSettings(guildId) {
@@ -38,6 +40,7 @@ async function getMusicSettings(guildId) {
       maxQueue: Number.isInteger(row.max_queue) ? row.max_queue : 50,
       leaveTimeoutMinutes: Number.isInteger(row.leave_timeout_minutes) ? row.leave_timeout_minutes : 5,
       announceChannelId: row.announce_channel_id || null,
+      prefix: typeof row.prefix === 'string' && row.prefix.length > 0 ? row.prefix : '!',
     };
   } catch (err) {
     console.error('Failed to get music settings:', err.message);
@@ -87,4 +90,13 @@ async function set247(guildId, value) {
   );
 }
 
-module.exports = { initMusicSettings, get247, set247, getMusicSettings, requireDj, MUSIC_DEFAULTS };
+async function setPrefix(guildId, prefix) {
+  await pool.query(
+    `INSERT INTO music_settings (guild_id, prefix, updated_at)
+     VALUES ($1, $2, NOW())
+     ON CONFLICT (guild_id) DO UPDATE SET prefix = $2, updated_at = NOW()`,
+    [guildId, prefix]
+  );
+}
+
+module.exports = { initMusicSettings, get247, set247, setPrefix, getMusicSettings, requireDj, MUSIC_DEFAULTS };

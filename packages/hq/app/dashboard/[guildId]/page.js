@@ -32,7 +32,7 @@ export default async function GuildPage({ params, searchParams }) {
 
   const inviteUrls = {};
   for (const bot of BOTS) {
-    inviteUrls[bot.id] = getInviteUrl(bot.id);
+    inviteUrls[bot.id] = getInviteUrl(bot.id, guildId);
   }
 
   return (

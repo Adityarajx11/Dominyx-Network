@@ -10,7 +10,7 @@ const CATEGORY_TYPE = 4;
 export default function GuildConfig({ guildId, guildName = '', botsPresent = {}, inviteUrls = {}, initialBot = null }) {
   const [data, setData] = useState(null);
   const validInitial = initialBot && BOTS.some((b) => b.id === initialBot) ? initialBot : null;
-  const [active, setActive] = useState(validInitial || 'music');
+  const [active, setActive] = useState(validInitial || null);
   const [revision, setRevision] = useState(0);
   const [error, setError] = useState(null);
 
@@ -19,17 +19,28 @@ export default function GuildConfig({ guildId, guildName = '', botsPresent = {},
   const isPresent = (id) => !botsPresent || botsPresent[id];
   const activeBot = BOTS.find((b) => b.id === active);
 
-  // An explicit ?bot= choice always wins — never yank it back to another tab.
-  // With no choice, fall back to the first bot actually present.
+  // An explicit ?bot= choice opens that config. No ?bot= = show all-bot picker.
   useEffect(() => {
-    if (validInitial) {
-      setActive(validInitial);
-      return;
-    }
-    if (presentBots.length > 0 && !presentBots.find((b) => b.id === active)) {
-      setActive(presentBots[0].id);
-    }
-  }, [validInitial, presentBots.length]);
+    setActive(validInitial || null);
+  }, [validInitial]);
+
+  const selectBot = (id) => {
+    setActive(id);
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.set('bot', id);
+      window.history.replaceState(null, '', url.toString());
+    } catch {}
+  };
+
+  const goBack = () => {
+    setActive(null);
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('bot');
+      window.history.replaceState(null, '', url.toString());
+    } catch {}
+  };
 
   const loadConfig = useCallback(async () => {
     try {
@@ -76,38 +87,113 @@ export default function GuildConfig({ guildId, guildName = '', botsPresent = {},
     channelNames: Object.fromEntries(data.channels.map((c) => [c.id, `#${c.name}`])),
   };
 
+  // Step 1 — no bot picked yet: show all 6 bot cards.
+  // Present = "Manage config" opens panel. Absent = "Add to server" invites,
+  // then refresh updates presence and the same card opens config.
+  if (!active) {
+    return (
+      <div className="wrap">
+        <div className="notice">
+          Pick a bot to configure for <strong>{guildName || 'this server'}</strong>. Added bots open their config — missing ones show an add button.
+        </div>
+        <div className="grid" style={{ marginTop: 18 }}>
+          {BOTS.map((b) => {
+            const present = isPresent(b.id);
+            const url = inviteUrls[b.id];
+            return (
+              <div key={b.id} className="card-halo" style={{ ['--card-color']: b.color }}>
+                <div className="card" style={{ display: 'flex', flexDirection: 'column' }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
+                    <div className="emoji">{b.emoji}</div>
+                    <div className="tag">{present ? '✓ In server' : '＋ Not added'}</div>
+                  </div>
+                  <h3>{b.name}</h3>
+                  <p>{b.description}</p>
+                  <div className="features">
+                    {b.features.map((f) => (
+                      <span key={f} className="pill">{f}</span>
+                    ))}
+                  </div>
+                  <div style={{ marginTop: 'auto', display: 'flex', gap: 8 }}>
+                    {present ? (
+                      <button
+                        className="btn btn-primary btn-sm"
+                        onClick={() => selectBot(b.id)}
+                        style={{ width: '100%', justifyContent: 'center', marginTop: 16 }}
+                      >
+                        Manage config →
+                      </button>
+                    ) : url ? (
+                      <a
+                        className="btn btn-discord btn-sm"
+                        href={url}
+                        target="_blank"
+                        rel="noreferrer"
+                        style={{ width: '100%', justifyContent: 'center', marginTop: 16 }}
+                      >
+                        {b.emoji} Add to server
+                      </a>
+                    ) : (
+                      <a
+                        className="btn btn-primary btn-sm"
+                        href="/invite"
+                        style={{ width: '100%', justifyContent: 'center', marginTop: 16 }}
+                      >
+                        Choose server to invite
+                      </a>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        {!botsPresent && (
+          <div className="notice" style={{ marginTop: 18 }}>
+            Bot auto-detect is off (tokens aren’t set) — all bots show as configurable.
+          </div>
+        )}
+        {botsPresent && absentBots.length > 0 && (
+          <div className="notice" style={{ marginTop: 18 }}>
+            Added a bot just now? <a href="" onClick={(e) => { e.preventDefault(); window.location.reload(); }} style={{ color: 'var(--violet)', fontWeight: 700 }}>Refresh status</a> — new bots move to “In server” automatically.
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="wrap">
+      <div style={{ marginBottom: 14 }}>
+        <button className="btn btn-ghost btn-sm" onClick={goBack}>← All bots</button>
+      </div>
       <div className="notice">
         Changes here apply <strong>instantly</strong> — the bots read their config from the database at runtime. No restart needed.
       </div>
+
       <div>
         <div className="panel glass" style={{ ['--panel-color']: BOTS.find((b) => b.id === active)?.color }}>
           {presentBots.length === 0 ? (
             <div className="empty">No Dominyx bots are in this server yet. Invite one from the home page to get started.</div>
-          ) : activeBot && !isPresent(activeBot.id) ? (
-            <div>
-              <PanelHeader botId={activeBot.id} />
-              <div className="absent-cta">
-                <p><strong>{activeBot.name}</strong> isn’t in <strong>{guildName || 'this server'}</strong> yet.</p>
-                <p className="muted">Add it below — its full config unlocks here as soon as it joins.</p>
-                {inviteUrls[activeBot.id] ? (
-                  <a className="btn btn-discord" href={inviteUrls[activeBot.id]} target="_blank" rel="noreferrer">
-                    {activeBot.emoji} Add {activeBot.name} to Discord
-                  </a>
-                ) : (
-                  <a className="btn btn-primary" href="/invite">Choose a server to invite</a>
-                )}
-              </div>
-            </div>
           ) : (
             <>
-              {active === 'music' && isPresent('music') && <MusicPanel key={revision} cfg={data.configs.music} meta={meta} onRefresh={loadConfig} guildId={guildId} />}
-              {active === 'level' && isPresent('level') && <LevelPanel key={revision} cfg={data.configs.level} meta={meta} onRefresh={loadConfig} guildId={guildId} />}
-              {active === 'greet' && isPresent('greet') && <GreetPanel key={revision} cfg={data.configs.greet} meta={meta} onRefresh={loadConfig} guildId={guildId} />}
-              {active === 'ticket' && isPresent('ticket') && <TicketPanel key={revision} cfg={data.configs.ticket} meta={meta} onRefresh={loadConfig} guildId={guildId} />}
-              {active === 'ping' && isPresent('ping') && <PingPanel key={revision} cfg={data.configs.ping} meta={meta} onRefresh={loadConfig} guildId={guildId} />}
-              {active === 'guard' && isPresent('guard') && <GuardPanel key={revision} cfg={data.configs.guard} meta={meta} onRefresh={loadConfig} guildId={guildId} />}
+              {activeBot && !isPresent(activeBot.id) && (
+                <div className="notice" style={{ marginBottom: 20 }}>
+                  <strong>{activeBot.name}</strong> isn’t in <strong>{guildName || 'this server'}</strong> yet.
+                  {' '}You can still configure it below — settings apply as soon as it joins.{' '}
+                  {inviteUrls[activeBot.id] && (
+                    <a href={inviteUrls[activeBot.id]} target="_blank" rel="noreferrer" style={{ color: 'var(--violet)', fontWeight: 700 }}>
+                      Add {activeBot.name} to Discord →
+                    </a>
+                  )}
+                </div>
+              )}
+              {active === 'music' && <MusicPanel key={revision} cfg={data.configs.music} meta={meta} onRefresh={loadConfig} guildId={guildId} />}
+              {active === 'level' && <LevelPanel key={revision} cfg={data.configs.level} meta={meta} onRefresh={loadConfig} guildId={guildId} />}
+              {active === 'greet' && <GreetPanel key={revision} cfg={data.configs.greet} meta={meta} onRefresh={loadConfig} guildId={guildId} />}
+              {active === 'ticket' && <TicketPanel key={revision} cfg={data.configs.ticket} meta={meta} onRefresh={loadConfig} guildId={guildId} />}
+              {active === 'ping' && <PingPanel key={revision} cfg={data.configs.ping} meta={meta} onRefresh={loadConfig} guildId={guildId} />}
+              {active === 'guard' && <GuardPanel key={revision} cfg={data.configs.guard} meta={meta} onRefresh={loadConfig} guildId={guildId} />}
             </>
           )}
           {absentBots.length > 0 && (
@@ -182,6 +268,7 @@ function MusicPanel({ cfg, meta, onRefresh, guildId }) {
   const [maxQueue, setMaxQueue] = useState(cfg.maxQueue ?? 50);
   const [leaveTimeoutMinutes, setLeaveTimeoutMinutes] = useState(cfg.leaveTimeoutMinutes ?? 5);
   const [announceChannelId, setAnnounceChannelId] = useState(cfg.announceChannelId || '');
+  const [prefix, setPrefixState] = useState(cfg.prefix || '!');
 
   const save = () => push('music', 'settings', {
     stay247,
@@ -190,6 +277,7 @@ function MusicPanel({ cfg, meta, onRefresh, guildId }) {
     maxQueue: Math.min(500, Math.max(1, Number(maxQueue) || 50)),
     leaveTimeoutMinutes: Math.min(120, Math.max(1, Number(leaveTimeoutMinutes) || 5)),
     announceChannelId: announceChannelId || null,
+    prefix: (prefix || '!').slice(0, 3),
   });
 
   return (
@@ -216,6 +304,9 @@ function MusicPanel({ cfg, meta, onRefresh, guildId }) {
       </div>
       <Field label="Empty-queue leave timeout (minutes)" hint="How long to wait before leaving voice. 24/7 mode ignores this.">
         <input type="number" min="1" max="120" value={leaveTimeoutMinutes} onChange={(e) => setLeaveTimeoutMinutes(e.target.value)} />
+      </Field>
+      <Field label="Prefix for !p-style commands" hint="! and - always work. Custom prefix avoids clashes with other bots.">
+        <input type="text" maxLength={3} value={prefix} onChange={(e) => setPrefixState(e.target.value.replace(/\s/g, ''))} placeholder="!" />
       </Field>
       <SaveBar state={state} onSave={save} />
     </div>
@@ -624,6 +715,23 @@ function GuardPanel({ cfg, meta, onRefresh, guildId }) {
   const [muteRoleId, setMuteRoleId] = useState(cfg.mute_role_id || '');
   const [warnsMute, setWarnsMute] = useState(cfg.warns_mute ?? 3);
   const [warnsBan, setWarnsBan] = useState(cfg.warns_ban ?? 5);
+  const [raidEnabled, setRaidEnabled] = useState(cfg.raid_enabled ?? false);
+  const [raidJoins, setRaidJoins] = useState(cfg.raid_joins ?? 5);
+  const [raidSeconds, setRaidSeconds] = useState(cfg.raid_seconds ?? 10);
+  const [raidAction, setRaidAction] = useState(cfg.raid_action || 'kick');
+  const [raidCooldownMinutes, setRaidCooldownMinutes] = useState(cfg.raid_cooldown_minutes ?? 10);
+  const [minAccountAgeDays, setMinAccountAgeDays] = useState(cfg.min_account_age_days ?? 0);
+  const [ageAction, setAgeAction] = useState(cfg.age_action || 'kick');
+  const [automodMentions, setAutomodMentions] = useState(cfg.automod_mentions ?? false);
+  const [mentionThreshold, setMentionThreshold] = useState(cfg.mention_threshold ?? 5);
+  const [automodEmoji, setAutomodEmoji] = useState(cfg.automod_emoji ?? false);
+  const [emojiThreshold, setEmojiThreshold] = useState(cfg.emoji_threshold ?? 10);
+  const [automodWords, setAutomodWords] = useState(cfg.automod_words ?? false);
+  const [badWordsText, setBadWordsText] = useState((cfg.bad_words || []).join(', '));
+  const [scamLinks, setScamLinks] = useState(cfg.scam_links ?? false);
+  const [antinukeEnabled, setAntinukeEnabled] = useState(cfg.antinuke_enabled ?? true);
+  const [nukeAction, setNukeAction] = useState(cfg.nuke_action || 'alert');
+  const [nukeRollback, setNukeRollback] = useState(cfg.nuke_rollback ?? true);
 
   const categories = cfg.self_role_categories || {};
 
@@ -638,6 +746,29 @@ function GuardPanel({ cfg, meta, onRefresh, guildId }) {
     muteRoleId: muteRoleId || null,
     warnsMute: Math.max(1, Number(warnsMute) || 3),
     warnsBan: Math.max(1, Number(warnsBan) || 5),
+    automodMentions,
+    mentionThreshold: Math.max(1, Number(mentionThreshold) || 5),
+    automodEmoji,
+    emojiThreshold: Math.max(2, Number(emojiThreshold) || 10),
+    automodWords,
+    badWords: badWordsText.split(',').map((w) => w.trim().toLowerCase()).filter(Boolean),
+    scamLinks,
+    antinukeEnabled,
+    nukeAction,
+    nukeRollback,
+  });
+
+  const saveProtection = () => push('guard', 'settings', {
+    raidEnabled,
+    raidJoins: Math.min(20, Math.max(2, Number(raidJoins) || 5)),
+    raidSeconds: Math.min(120, Math.max(5, Number(raidSeconds) || 10)),
+    raidAction,
+    raidCooldownMinutes: Math.min(120, Math.max(1, Number(raidCooldownMinutes) || 10)),
+    minAccountAgeDays: Math.min(365, Math.max(0, Number(minAccountAgeDays) || 0)),
+    ageAction,
+    antinukeEnabled,
+    nukeAction,
+    nukeRollback,
   });
 
   return (
@@ -668,6 +799,93 @@ function GuardPanel({ cfg, meta, onRefresh, guildId }) {
       <Field label="Caps threshold (%)" hint="10–100. Messages with 10+ letters only.">
         <input type="number" min="10" max="100" value={capsThreshold} onChange={(e) => setCapsThreshold(e.target.value)} />
       </Field>
+      <Field hint="Delete messages with too many mentions.">
+        <Toggle checked={automodMentions} onChange={setAutomodMentions} label="Block mass mentions" />
+      </Field>
+      <div className="form-row">
+        <Field label="Max mentions" hint="Users + roles per message.">
+          <input type="number" min="1" max="20" value={mentionThreshold} onChange={(e) => setMentionThreshold(e.target.value)} />
+        </Field>
+        <Field label="Max emojis" hint="Custom + unicode per message.">
+          <input type="number" min="2" max="50" value={emojiThreshold} onChange={(e) => setEmojiThreshold(e.target.value)} />
+        </Field>
+      </div>
+      <Field hint="Delete messages stuffed with emojis.">
+        <Toggle checked={automodEmoji} onChange={setAutomodEmoji} label="Block emoji spam" />
+      </Field>
+      <Field hint="Delete suspected fake-nitro / gift / token-grab links (auto-mutes if a mute role is set).">
+        <Toggle checked={scamLinks} onChange={setScamLinks} label="Block scam links" />
+      </Field>
+      <Field hint="Delete messages containing your banned words.">
+        <Toggle checked={automodWords} onChange={setAutomodWords} label="Block banned words" />
+      </Field>
+      <Field label="Banned words" hint="Comma-separated, e.g. slur1, slur2. Case-insensitive.">
+        <input type="text" value={badWordsText} onChange={(e) => setBadWordsText(e.target.value)} placeholder="word1, word2" />
+      </Field>
+
+      <h3 style={{ marginTop: 32 }}>Raid protection</h3>
+      <Field hint="When a join burst hits, new joins get kicked or timed out automatically and the mod-log is pinged.">
+        <Toggle checked={raidEnabled} onChange={setRaidEnabled} label="Anti-raid mode" />
+      </Field>
+      <div className="form-row">
+        <Field label="Joins to trigger" hint="2–20.">
+          <input type="number" min="2" max="20" value={raidJoins} onChange={(e) => setRaidJoins(e.target.value)} />
+        </Field>
+        <Field label="Inside seconds" hint="5–120.">
+          <input type="number" min="5" max="120" value={raidSeconds} onChange={(e) => setRaidSeconds(e.target.value)} />
+        </Field>
+      </div>
+      <div className="form-row">
+        <Field label="Raid action">
+          <Select
+            value={raidAction}
+            onChange={setRaidAction}
+            options={[{ value: 'kick', label: 'Kick' }, { value: 'timeout', label: 'Timeout 10 min' }]}
+            placeholder="Kick"
+          />
+        </Field>
+        <Field label="Raid mode minutes" hint="How long new joins are auto-punished.">
+          <input type="number" min="1" max="120" value={raidCooldownMinutes} onChange={(e) => setRaidCooldownMinutes(e.target.value)} />
+        </Field>
+      </div>
+      <h3 style={{ marginTop: 32 }}>New-account gate</h3>
+      <div className="form-row">
+        <Field label="Min account age (days)" hint="0 = off. Kicks throwaway raid accounts.">
+          <input type="number" min="0" max="365" value={minAccountAgeDays} onChange={(e) => setMinAccountAgeDays(e.target.value)} />
+        </Field>
+        <Field label="Under-age action">
+          <Select
+            value={ageAction}
+            onChange={setAgeAction}
+            options={[{ value: 'kick', label: 'Kick' }, { value: 'timeout', label: 'Timeout 10 min' }]}
+            placeholder="Kick"
+          />
+        </Field>
+      </div>
+      <SaveBar state={state} onSave={saveProtection} />
+
+      <h3 style={{ marginTop: 32 }}>Anti-nuke</h3>
+      <Field hint="Mass bans / channel / role deletes trigger a mod-log alarm with the culprit. Rollback re-creates what was deleted.">
+        <Toggle checked={antinukeEnabled} onChange={setAntinukeEnabled} label="Anti-nuke alerts" />
+      </Field>
+      <div className="form-row">
+        <Field label="Nuker punishment" hint="Alert only is safest — auto-ban can backfire.">
+          <Select
+            value={nukeAction}
+            onChange={setNukeAction}
+            options={[
+              { value: 'alert', label: 'Alert only' },
+              { value: 'timeout', label: 'Timeout 1 hour' },
+              { value: 'ban', label: 'Ban' },
+            ]}
+            placeholder="Alert only"
+          />
+        </Field>
+        <Field hint="Re-create deleted channels/roles automatically on a burst.">
+          <Toggle checked={nukeRollback} onChange={setNukeRollback} label="Auto-rollback deletes" />
+        </Field>
+      </div>
+      <SaveBar state={state} onSave={saveProtection} />
 
       <h3 style={{ marginTop: 32 }}>Warn ladder</h3>
       <div className="form-row">

@@ -20,6 +20,24 @@ async function initGuardTables() {
   await pool.query(`ALTER TABLE guard_settings ADD COLUMN IF NOT EXISTS mute_role_id TEXT;`);
   await pool.query(`ALTER TABLE guard_settings ADD COLUMN IF NOT EXISTS warns_mute INTEGER DEFAULT 3;`);
   await pool.query(`ALTER TABLE guard_settings ADD COLUMN IF NOT EXISTS warns_ban INTEGER DEFAULT 5;`);
+  await pool.query(`ALTER TABLE guard_settings ADD COLUMN IF NOT EXISTS raid_enabled BOOLEAN DEFAULT false;`);
+  await pool.query(`ALTER TABLE guard_settings ADD COLUMN IF NOT EXISTS raid_joins INTEGER DEFAULT 5;`);
+  await pool.query(`ALTER TABLE guard_settings ADD COLUMN IF NOT EXISTS raid_seconds INTEGER DEFAULT 10;`);
+  await pool.query(`ALTER TABLE guard_settings ADD COLUMN IF NOT EXISTS raid_action TEXT DEFAULT 'kick';`);
+  await pool.query(`ALTER TABLE guard_settings ADD COLUMN IF NOT EXISTS raid_cooldown_minutes INTEGER DEFAULT 10;`);
+  await pool.query(`ALTER TABLE guard_settings ADD COLUMN IF NOT EXISTS min_account_age_days INTEGER DEFAULT 0;`);
+  await pool.query(`ALTER TABLE guard_settings ADD COLUMN IF NOT EXISTS age_action TEXT DEFAULT 'kick';`);
+  await pool.query(`ALTER TABLE guard_settings ADD COLUMN IF NOT EXISTS automod_mentions BOOLEAN DEFAULT false;`);
+  await pool.query(`ALTER TABLE guard_settings ADD COLUMN IF NOT EXISTS mention_threshold INTEGER DEFAULT 5;`);
+  await pool.query(`ALTER TABLE guard_settings ADD COLUMN IF NOT EXISTS automod_emoji BOOLEAN DEFAULT false;`);
+  await pool.query(`ALTER TABLE guard_settings ADD COLUMN IF NOT EXISTS emoji_threshold INTEGER DEFAULT 10;`);
+  await pool.query(`ALTER TABLE guard_settings ADD COLUMN IF NOT EXISTS automod_words BOOLEAN DEFAULT false;`);
+  await pool.query(`ALTER TABLE guard_settings ADD COLUMN IF NOT EXISTS bad_words JSONB DEFAULT '[]'::jsonb;`);
+  await pool.query(`ALTER TABLE guard_settings ADD COLUMN IF NOT EXISTS scam_links BOOLEAN DEFAULT false;`);
+  await pool.query(`ALTER TABLE guard_settings ADD COLUMN IF NOT EXISTS locked_channels JSONB DEFAULT '[]'::jsonb;`);
+  await pool.query(`ALTER TABLE guard_settings ADD COLUMN IF NOT EXISTS antinuke_enabled BOOLEAN DEFAULT true;`);
+  await pool.query(`ALTER TABLE guard_settings ADD COLUMN IF NOT EXISTS nuke_action TEXT DEFAULT 'alert';`);
+  await pool.query(`ALTER TABLE guard_settings ADD COLUMN IF NOT EXISTS nuke_rollback BOOLEAN DEFAULT true;`);
 
   await pool.query(`
     CREATE TABLE IF NOT EXISTS guild_case_counters (
@@ -68,6 +86,13 @@ async function updateGuardSettings(guildId, patch) {
     'automod_spam', 'spam_threshold', 'spam_seconds',
     'automod_links', 'automod_caps', 'caps_threshold',
     'mute_role_id', 'warns_mute', 'warns_ban',
+    'raid_enabled', 'raid_joins', 'raid_seconds', 'raid_action', 'raid_cooldown_minutes',
+    'min_account_age_days', 'age_action',
+    'automod_mentions', 'mention_threshold',
+    'automod_emoji', 'emoji_threshold',
+    'automod_words', 'bad_words',
+    'scam_links', 'locked_channels',
+    'antinuke_enabled', 'nuke_action', 'nuke_rollback',
   ];
   const keys = Object.keys(patch).filter(k => allowed.includes(k));
   if (keys.length === 0) return getGuardSettings(guildId);

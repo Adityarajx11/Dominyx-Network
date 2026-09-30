@@ -144,9 +144,18 @@ async function searchTrack(query, requestUser) {
 
   if (!res || !res.tracks || res.tracks.length === 0) return null;
 
-  const track = res.tracks[0];
-  track.requester = requestUser;
-  return track;
+  // Playlists (Spotify/YouTube): queue every track in order, not just the first.
+  const tracks = res.tracks.map((t) => {
+    t.requester = requestUser;
+    return t;
+  });
+  const isPlaylist = res.loadType === 'playlist' || tracks.length > 1;
+  return {
+    track: tracks[0],
+    tracks,
+    playlistName: res.playlist?.name || res.playlist?.title || null,
+    isPlaylist,
+  };
 }
 
 function getOrCreatePlayer(interaction, opts = {}) {
