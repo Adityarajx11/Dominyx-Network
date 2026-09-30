@@ -43,11 +43,9 @@ module.exports = {
 
     if (!player.playing && !player.paused) {
       await player.play();
-      if (isPlaylist && toAdd.length > 1) {
-        await interaction.editReply(`🎶 Loading playlist **${playlistName || 'mix'}** — **${toAdd.length}** songs queued in order. Now: **${track.info.title}**...`);
-      } else {
-        await interaction.editReply(`🎶 Loading **${track.info.title}**...`);
-      }
+      // No "Loading..." spam — trackStart posts the now-playing card.
+      // Just clear the deferred reply; errors still arrive via followUp.
+      await interaction.deleteReply().catch(() => {});
       // Watchdog: "Loading" that never resolves means Lavalink couldn't start
       // the audio (blocked source / dead node) — say so instead of hanging.
       setTimeout(async () => {

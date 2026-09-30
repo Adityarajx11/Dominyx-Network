@@ -773,9 +773,6 @@ function GuardPanel({ cfg, meta, onRefresh, guildId }) {
     automodLinks,
     automodCaps,
     capsThreshold: Math.min(100, Math.max(10, Number(capsThreshold) || 70)),
-    muteRoleId: muteRoleId || null,
-    warnsMute: Math.max(1, Number(warnsMute) || 3),
-    warnsBan: Math.max(1, Number(warnsBan) || 5),
     automodMentions,
     mentionThreshold: Math.max(1, Number(mentionThreshold) || 5),
     automodEmoji,
@@ -783,9 +780,6 @@ function GuardPanel({ cfg, meta, onRefresh, guildId }) {
     automodWords,
     badWords: badWordsText.split(',').map((w) => w.trim().toLowerCase()).filter(Boolean),
     scamLinks,
-    antinukeEnabled,
-    nukeAction,
-    nukeRollback,
   });
 
   const saveProtection = () => push('guard', 'settings', {
@@ -796,142 +790,145 @@ function GuardPanel({ cfg, meta, onRefresh, guildId }) {
     raidCooldownMinutes: Math.min(120, Math.max(1, Number(raidCooldownMinutes) || 10)),
     minAccountAgeDays: Math.min(365, Math.max(0, Number(minAccountAgeDays) || 0)),
     ageAction,
+  });
+
+  const saveNuke = () => push('guard', 'settings', {
     antinukeEnabled,
     nukeAction,
     nukeRollback,
   });
 
+  const saveLadder = () => push('guard', 'settings', {
+    muteRoleId: muteRoleId || null,
+    warnsMute: Math.max(0, Number(warnsMute) || 0),
+    warnsBan: Math.max(0, Number(warnsBan) || 0),
+  });
+
   return (
     <div>
       <PanelHeader botId="guard" />
-      <Field label="Mod-log channel" hint="Case records for bans, kicks and warns post here.">
+      <Field label="Mod-log channel" hint="All punishments and alarms post here. Set this first.">
         <Select value={modlogChannelId} onChange={setModlogChannelId} options={meta.textChannels} placeholder="Not set" />
       </Field>
 
-      <h3 style={{ marginTop: 32 }}>Automod</h3>
-      <Field hint="Delete + warn on spam bursts. Needs Message Content intent on the bot.">
-        <Toggle checked={automodSpam} onChange={setAutomodSpam} label="Anti-spam" />
+      <h3 style={{ marginTop: 32 }}>1 · Message filters <span className="muted" style={{ fontWeight: 400 }}>— bad messages get deleted + warned</span></h3>
+      <Field hint="Many messages in few seconds. Needs Message Content intent on the bot.">
+        <Toggle checked={automodSpam} onChange={setAutomodSpam} label="Spam block" />
       </Field>
       <div className="form-row">
-        <Field label="Spam messages" hint="Messages inside the window that trigger.">
+        <Field label="Messages" hint="How many messages trigger it.">
           <input type="number" min="2" value={spamThreshold} onChange={(e) => setSpamThreshold(e.target.value)} />
         </Field>
-        <Field label="Window (seconds)" hint="5–120.">
+        <Field label="Within seconds" hint="Time window, 5–120.">
           <input type="number" min="5" max="120" value={spamSeconds} onChange={(e) => setSpamSeconds(e.target.value)} />
         </Field>
       </div>
-      <Field hint="Delete messages containing links. Staff (Manage Messages) are exempt.">
-        <Toggle checked={automodLinks} onChange={setAutomodLinks} label="Block links" />
+      <Field hint="Any link = deleted. Staff are exempt.">
+        <Toggle checked={automodLinks} onChange={setAutomodLinks} label="Link block" />
       </Field>
-      <Field hint="Delete messages that are mostly CAPS.">
-        <Toggle checked={automodCaps} onChange={setAutomodCaps} label="Block caps" />
+      <Field hint="SHOUTING = deleted. Only checks messages with 10+ letters.">
+        <Toggle checked={automodCaps} onChange={setAutomodCaps} label="Caps block" />
       </Field>
-      <Field label="Caps threshold (%)" hint="10–100. Messages with 10+ letters only.">
+      <Field label="Caps % to trigger" hint="70 = 70% capital letters.">
         <input type="number" min="10" max="100" value={capsThreshold} onChange={(e) => setCapsThreshold(e.target.value)} />
       </Field>
-      <Field hint="Delete messages with too many mentions.">
-        <Toggle checked={automodMentions} onChange={setAutomodMentions} label="Block mass mentions" />
+      <Field hint="Tagging many people at once = deleted.">
+        <Toggle checked={automodMentions} onChange={setAutomodMentions} label="Mention block" />
       </Field>
-      <div className="form-row">
-        <Field label="Max mentions" hint="Users + roles per message.">
-          <input type="number" min="1" max="20" value={mentionThreshold} onChange={(e) => setMentionThreshold(e.target.value)} />
-        </Field>
-        <Field label="Max emojis" hint="Custom + unicode per message.">
-          <input type="number" min="2" max="50" value={emojiThreshold} onChange={(e) => setEmojiThreshold(e.target.value)} />
-        </Field>
-      </div>
-      <Field hint="Delete messages stuffed with emojis.">
-        <Toggle checked={automodEmoji} onChange={setAutomodEmoji} label="Block emoji spam" />
+      <Field label="Max mentions" hint="People + roles per message.">
+        <input type="number" min="1" max="20" value={mentionThreshold} onChange={(e) => setMentionThreshold(e.target.value)} />
       </Field>
-      <Field hint="Delete suspected fake-nitro / gift / token-grab links (auto-mutes if a mute role is set).">
-        <Toggle checked={scamLinks} onChange={setScamLinks} label="Block scam links" />
+      <Field hint="Emoji floods = deleted.">
+        <Toggle checked={automodEmoji} onChange={setAutomodEmoji} label="Emoji block" />
       </Field>
-      <Field hint="Delete messages containing your banned words.">
-        <Toggle checked={automodWords} onChange={setAutomodWords} label="Block banned words" />
+      <Field label="Max emojis" hint="Custom + normal emojis per message.">
+        <input type="number" min="2" max="50" value={emojiThreshold} onChange={(e) => setEmojiThreshold(e.target.value)} />
       </Field>
-      <Field label="Banned words" hint="Comma-separated, e.g. slur1, slur2. Case-insensitive.">
+      <Field hint="Fake nitro / gift / token-grab links = deleted + muted.">
+        <Toggle checked={scamLinks} onChange={setScamLinks} label="Scam-link block" />
+      </Field>
+      <Field hint="Your own forbidden words = deleted.">
+        <Toggle checked={automodWords} onChange={setAutomodWords} label="Bad-word block" />
+      </Field>
+      <Field label="Bad words" hint="Comma list, e.g. spam, scam. Small letters only.">
         <input type="text" value={badWordsText} onChange={(e) => setBadWordsText(e.target.value)} placeholder="word1, word2" />
       </Field>
+      <SaveBar state={state} onSave={saveAutomod} />
 
-      <h3 style={{ marginTop: 32 }}>Raid protection</h3>
-      <Field hint="When a join burst hits, new joins get kicked or timed out automatically and the mod-log is pinged.">
-        <Toggle checked={raidEnabled} onChange={setRaidEnabled} label="Anti-raid mode" />
+      <h3 style={{ marginTop: 32 }}>2 · Join protection <span className="muted" style={{ fontWeight: 400 }}>— who may enter</span></h3>
+      <Field hint="Many joins at once = raid. New joiners get kicked or timed out, mod-log screams.">
+        <Toggle checked={raidEnabled} onChange={setRaidEnabled} label="Raid alarm" />
       </Field>
       <div className="form-row">
-        <Field label="Joins to trigger" hint="2–20.">
+        <Field label="Joins to ring alarm" hint="2–20 people.">
           <input type="number" min="2" max="20" value={raidJoins} onChange={(e) => setRaidJoins(e.target.value)} />
         </Field>
-        <Field label="Inside seconds" hint="5–120.">
+        <Field label="Within seconds" hint="5–120.">
           <input type="number" min="5" max="120" value={raidSeconds} onChange={(e) => setRaidSeconds(e.target.value)} />
         </Field>
       </div>
       <div className="form-row">
-        <Field label="Raid action">
+        <Field label="What happens to raiders">
           <Select
             value={raidAction}
             onChange={setRaidAction}
-            options={[{ value: 'kick', label: 'Kick' }, { value: 'timeout', label: 'Timeout 10 min' }]}
-            placeholder="Kick"
+            options={[{ value: 'kick', label: 'Kick out' }, { value: 'timeout', label: 'Timeout 10 min' }]}
+            placeholder="Kick out"
           />
         </Field>
-        <Field label="Raid mode minutes" hint="How long new joins are auto-punished.">
+        <Field label="Alarm stays on (min)" hint="New joins punished this long.">
           <input type="number" min="1" max="120" value={raidCooldownMinutes} onChange={(e) => setRaidCooldownMinutes(e.target.value)} />
         </Field>
       </div>
-      <h3 style={{ marginTop: 32 }}>New-account gate</h3>
-      <div className="form-row">
-        <Field label="Min account age (days)" hint="0 = off. Kicks throwaway raid accounts.">
-          <input type="number" min="0" max="365" value={minAccountAgeDays} onChange={(e) => setMinAccountAgeDays(e.target.value)} />
-        </Field>
-        <Field label="Under-age action">
-          <Select
-            value={ageAction}
-            onChange={setAgeAction}
-            options={[{ value: 'kick', label: 'Kick' }, { value: 'timeout', label: 'Timeout 10 min' }]}
-            placeholder="Kick"
-          />
-        </Field>
-      </div>
-      <SaveBar state={state} onSave={saveProtection} />
-
-      <h3 style={{ marginTop: 32 }}>Anti-nuke</h3>
-      <Field hint="Mass bans / channel / role deletes trigger a mod-log alarm with the culprit. Rollback re-creates what was deleted.">
-        <Toggle checked={antinukeEnabled} onChange={setAntinukeEnabled} label="Anti-nuke alerts" />
+      <Field label="Minimum account age (days)" hint="0 = off. New throwaway accounts get bounced at the door.">
+        <input type="number" min="0" max="365" value={minAccountAgeDays} onChange={(e) => setMinAccountAgeDays(e.target.value)} />
       </Field>
-      <div className="form-row">
-        <Field label="Nuker punishment" hint="Alert only is safest — auto-ban can backfire.">
-          <Select
-            value={nukeAction}
-            onChange={setNukeAction}
-            options={[
-              { value: 'alert', label: 'Alert only' },
-              { value: 'timeout', label: 'Timeout 1 hour' },
-              { value: 'ban', label: 'Ban' },
-            ]}
-            placeholder="Alert only"
-          />
-        </Field>
-        <Field hint="Re-create deleted channels/roles automatically on a burst.">
-          <Toggle checked={nukeRollback} onChange={setNukeRollback} label="Auto-rollback deletes" />
-        </Field>
-      </div>
+      <Field label="What happens to new accounts">
+        <Select
+          value={ageAction}
+          onChange={setAgeAction}
+          options={[{ value: 'kick', label: 'Kick out' }, { value: 'timeout', label: 'Timeout 10 min' }]}
+          placeholder="Kick out"
+        />
+      </Field>
       <SaveBar state={state} onSave={saveProtection} />
 
-      <h3 style={{ marginTop: 32 }}>Warn ladder</h3>
+      <h3 style={{ marginTop: 32 }}>3 · Anti-nuke <span className="muted" style={{ fontWeight: 400 }}>— server destruction alarm</span></h3>
+      <Field hint="3+ bans, channel or role deletes in 30 seconds = alarm with the culprit's name.">
+        <Toggle checked={antinukeEnabled} onChange={setAntinukeEnabled} label="Nuke alarm" />
+      </Field>
+      <Field label="What happens to the nuker" hint="Alert only is safest — auto-ban can backfire on admins.">
+        <Select
+          value={nukeAction}
+          onChange={setNukeAction}
+          options={[
+            { value: 'alert', label: 'Just alarm' },
+            { value: 'timeout', label: 'Timeout 1 hour' },
+            { value: 'ban', label: 'Ban' },
+          ]}
+          placeholder="Just alarm"
+        />
+      </Field>
+      <Field hint="Deleted channels and roles get re-created automatically. Needs Manage Channels + Manage Roles.">
+        <Toggle checked={nukeRollback} onChange={setNukeRollback} label="Bring back deleted stuff" />
+      </Field>
+      <SaveBar state={state} onSave={saveNuke} />
+
+      <h3 style={{ marginTop: 32 }}>4 · Warn ladder <span className="muted" style={{ fontWeight: 400 }}>— X warns = auto-punish</span></h3>
       <div className="form-row">
-        <Field label="Mute role" hint="Given automatically at the mute threshold.">
+        <Field label="Mute role" hint="Given automatically. Keep it below Guard's role.">
           <Select value={muteRoleId} onChange={setMuteRoleId} options={meta.roles} placeholder="No mute role" />
         </Field>
-        <Field label="Warns → mute" hint="0 disables this step.">
+        <Field label="Warns → mute" hint="0 = skip this step.">
           <input type="number" min="0" value={warnsMute} onChange={(e) => setWarnsMute(e.target.value)} />
         </Field>
       </div>
-      <Field label="Warns → ban" hint="0 disables this step.">
+      <Field label="Warns → ban" hint="0 = skip this step.">
         <input type="number" min="0" value={warnsBan} onChange={(e) => setWarnsBan(e.target.value)} />
       </Field>
-      <SaveBar state={state} onSave={saveAutomod} />
+      <SaveBar state={state} onSave={saveLadder} />
 
-      <h3 style={{ marginTop: 32 }}>Self-assignable roles</h3>
+      <h3 style={{ marginTop: 32 }}>5 · Join-to-get roles <span className="muted" style={{ fontWeight: 400 }}>— members pick their own</span></h3>
       {Object.keys(categories).length === 0 && <div className="empty">No self-role categories yet.</div>}
       {Object.entries(categories).map(([cat, roleIds]) => (
         <div key={cat} style={{ marginBottom: 14 }}>

@@ -99,10 +99,9 @@ module.exports = {
         for (const t of toAdd) pl.queue.add(t);
         if (!pl.playing && !pl.paused) {
           await pl.play();
+          // No "Loading..." spam — trackStart posts the now-playing card.
           if (isPlaylist && toAdd.length > 1) {
-            await message.reply(`🎶 Playlist **${playlistName || 'mix'}** — **${toAdd.length}** songs queued in order. Now: **${track.info.title}**...`).catch(() => {});
-          } else {
-            await message.reply(`🎶 Loading **${track.info.title}**...`).catch(() => {});
+            await message.reply(`➕ Playlist **${playlistName || 'mix'}** — **${toAdd.length}** songs queued.`).catch(() => {});
           }
         } else {
           if (isPlaylist && toAdd.length > 1) {

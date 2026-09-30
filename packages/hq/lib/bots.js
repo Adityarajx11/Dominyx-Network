@@ -45,8 +45,8 @@ export const BOTS = [
     short: 'Alerts',
     emoji: '📡',
     tagline: 'Never miss a go-live',
-    description: 'Instant pings the moment your YouTubers go live.',
-    features: ['Live detection', 'Custom alert channel', 'Per-server config'],
+    description: 'Instant pings the moment your YouTubers go live — custom channel, message, and role mention.',
+    features: ['Live detection', 'Custom alert channel', 'Role mention', 'Per-server config'],
     color: '#3B82F6',
   },
   {
@@ -55,8 +55,8 @@ export const BOTS = [
     short: 'Safety',
     emoji: '🛡️',
     tagline: 'Mod team in a box',
-    description: 'Bans, warns, case history, and self-assign roles — all logged.',
-    features: ['Case history', 'Staff notes', 'Bulk ban', 'Self-assign roles'],
+    description: 'Bans, warns, case history, anti-raid, anti-nuke rollback, scam filters, and lockdowns — all logged.',
+    features: ['Anti-raid & anti-nuke', 'Case history', 'Scam & spam filters', 'Lockdowns & self-roles'],
     color: '#64748B',
   },
 ];
