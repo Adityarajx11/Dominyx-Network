@@ -8,28 +8,8 @@ import GuildPicker from '@/components/GuildPicker';
 const BOT_IDS = new Set(BOTS.map((b) => b.id));
 
 export default async function DashboardPage({ searchParams }) {
-  let data;
-  try {
-    data = await getAuthedData();
-  } catch {
-    data = { discordDown: true };
-  }
-  if (!data || (!data.manageable && !data.discordDown)) redirect('/');
-
-  if (data.discordDown) {
-    return (
-      <DashboardShell user={{ username: '—' }}>
-        <div className="wrap">
-          <div className="notice">
-            <strong>Discord is unreachable right now.</strong> Your servers couldn&apos;t load — nothing is broken on your side.
-            <div style={{ marginTop: 12 }}>
-              <a className="btn btn-primary btn-sm" href="/dashboard">Retry</a>
-            </div>
-          </div>
-        </div>
-      </DashboardShell>
-    );
-  }
+  const data = await getAuthedData();
+  if (!data) redirect('/');
 
   const bot = BOT_IDS.has(searchParams?.bot) ? searchParams.bot : null;
   const botName = bot ? BOTS.find((b) => b.id === bot).name : null;

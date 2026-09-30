@@ -13,22 +13,7 @@ async function getAuthedData() {
   const session = await getSession();
   if (!session) return null;
 
-  // Discord flakes sometimes — one retry before giving up, so a hiccup
-  // never looks like "no access".
-  let userGuilds;
-  let botsMap;
-  try {
-    [userGuilds, botsMap] = await Promise.all([getUserGuilds(session.token), getBotsGuildMap()]);
-  } catch {
-    await new Promise((r) => setTimeout(r, 1500));
-    try {
-      [userGuilds, botsMap] = await Promise.all([getUserGuilds(session.token), getBotsGuildMap()]);
-    } catch {
-      const err = new Error('Discord is unreachable right now — retry in a few seconds');
-      err.status = 502;
-      throw err;
-    }
-  }
+  const [userGuilds, botsMap] = await Promise.all([getUserGuilds(session.token), getBotsGuildMap()]);
   const manageable = userGuilds.filter((g) => canManage(g.permissions));
 
   const botGuilds = new Set();

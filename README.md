@@ -2,8 +2,6 @@
 
 A family of single-purpose Discord bots, sharing one core package. Each bot lives in `packages/` and deploys independently to Railway. Hub: **Dominyx HQ**.
 
-Built by [Adityarajx11](https://adityarajx11-portfolio.vercel.app/).
-
 ## Members
 
 | Bot | Package | Purpose |

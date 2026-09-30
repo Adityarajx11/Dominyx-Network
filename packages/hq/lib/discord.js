@@ -53,7 +53,11 @@ async function getUser(token) {
 }
 
 async function getUserGuilds(token) {
-  return discordFetch('/users/@me/guilds', { token });
+  try {
+    return await discordFetch('/users/@me/guilds', { token });
+  } catch {
+    return [];
+  }
 }
 
 async function getBotGuilds() {
@@ -168,44 +172,26 @@ const BOT_TOKEN_MAP = {
 };
 
 // Returns a bot token that is in the given guild (for reading channels/roles).
-// All tokens are probed in PARALLEL (sequential probing added seconds per load),
-// and the winner is cached per guild for 5 minutes.
-const guildTokenCache = new Map(); // guildId -> { token, at }
-
+// Tries each bot token directly against the guild — most reliable check.
 async function getGuildBotToken(guildId) {
-  const cached = guildTokenCache.get(guildId);
-  if (cached && Date.now() - cached.at < 5 * 60 * 1000) return cached.token;
-
   const botTokens = [
-    process.env.BOT_TOKEN_MUSIC,
-    process.env.BOT_TOKEN_LEVEL,
-    process.env.BOT_TOKEN_GREET,
-    process.env.BOT_TOKEN_TICKET,
-    process.env.BOT_TOKEN_PING,
-    process.env.BOT_TOKEN_GUARD,
-  ].filter(Boolean).map((t) => t.trim()).filter(Boolean);
-
-  const probes = botTokens.map(async (clean) => {
-    const res = await fetch(`${API}/guilds/${guildId}`, {
-      headers: { Authorization: `Bot ${clean}` },
-    }).catch(() => null);
-    if (res && res.ok) return clean;
-    throw new Error('nope');
-  });
-
-  let winner = null;
-  try {
-    winner = await Promise.any(probes);
-  } catch {
-    winner = null;
+    ['music', process.env.BOT_TOKEN_MUSIC],
+    ['level', process.env.BOT_TOKEN_LEVEL],
+    ['greet', process.env.BOT_TOKEN_GREET],
+    ['ticket', process.env.BOT_TOKEN_TICKET],
+    ['ping', process.env.BOT_TOKEN_PING],
+    ['guard', process.env.BOT_TOKEN_GUARD],
+  ];
+  for (const [, bToken] of botTokens) {
+    if (!bToken) continue;
+    try {
+      const res = await fetch(`${API}/guilds/${guildId}`, {
+        headers: { Authorization: `Bot ${bToken.trim()}` },
+      });
+      if (res.ok) return bToken.trim();
+    } catch {}
   }
-  const token = winner || botToken;
-  guildTokenCache.set(guildId, { token, at: Date.now() });
-  if (guildTokenCache.size > 500) {
-    const oldest = guildTokenCache.keys().next().value;
-    guildTokenCache.delete(oldest);
-  }
-  return token;
+  return botToken;
 }
 module.exports = {
   oauthAuthorizeUrl,
