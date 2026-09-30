@@ -144,12 +144,13 @@ async function searchTrack(query, requestUser) {
 
   if (!res || !res.tracks || res.tracks.length === 0) return null;
 
-  // Playlists (Spotify/YouTube): queue every track in order, not just the first.
+  // Playlists (Spotify/YouTube links): queue every track in order.
+  // Plain searches return many candidates too — those are NOT playlists, take #1.
   const tracks = res.tracks.map((t) => {
     t.requester = requestUser;
     return t;
   });
-  const isPlaylist = res.loadType === 'playlist' || tracks.length > 1;
+  const isPlaylist = res.loadType === 'playlist' && tracks.length > 1;
   return {
     track: tracks[0],
     tracks,

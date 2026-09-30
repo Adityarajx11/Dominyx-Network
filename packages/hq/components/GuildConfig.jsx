@@ -13,6 +13,7 @@ export default function GuildConfig({ guildId, guildName = '', botsPresent = {},
   const [active, setActive] = useState(validInitial || null);
   const [revision, setRevision] = useState(0);
   const [error, setError] = useState(null);
+  const [loadingNote, setLoadingNote] = useState('Contacting Discord…');
 
   const presentBots = botsPresent ? BOTS.filter((b) => botsPresent[b.id]) : BOTS;
   const absentBots = botsPresent ? BOTS.filter((b) => !botsPresent[b.id]) : [];
@@ -43,18 +44,30 @@ export default function GuildConfig({ guildId, guildName = '', botsPresent = {},
   };
 
   const loadConfig = useCallback(async () => {
+    setError(null);
+    setLoadingNote('Contacting Discord…');
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 25000);
     try {
-      const res = await fetch(`/api/guild/${guildId}/config`);
+      const res = await fetch(`/api/guild/${guildId}/config`, { signal: ctrl.signal });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        throw new Error(body.error || 'Failed to load');
+        throw new Error(
+          res.status === 401 ? 'Login expired — log in again.'
+          : res.status === 403 ? 'No access — you need Manage Server in this server.'
+          : res.status === 404 ? 'Server not found — the bot may have been removed.'
+          : (body.error || 'Failed to load')
+        );
       }
+      setLoadingNote('Loading settings…');
       const json = await res.json();
       setData(json);
       setError(null);
       setRevision((r) => r + 1);
     } catch (err) {
-      setError(err.message);
+      setError(err.name === 'AbortError' ? 'Loading timed out (Discord or database is slow).' : err.message);
+    } finally {
+      clearTimeout(timer);
     }
   }, [guildId]);
 
@@ -67,8 +80,9 @@ export default function GuildConfig({ guildId, guildName = '', botsPresent = {},
       <div className="wrap">
         <div className="notice">
           <strong>{error}</strong>
-          <div style={{ marginTop: 12 }}>
-            <a className="btn btn-primary btn-sm" href="/dashboard">Back to servers</a>
+          <div style={{ marginTop: 12, display: 'flex', gap: 8 }}>
+            <button className="btn btn-primary btn-sm" onClick={loadConfig}>Retry</button>
+            <a className="btn btn-ghost btn-sm" href="/dashboard">Back to servers</a>
           </div>
         </div>
       </div>
@@ -76,7 +90,14 @@ export default function GuildConfig({ guildId, guildName = '', botsPresent = {},
   }
 
   if (!data) {
-    return <div className="loading">Loading server config…</div>;
+    return (
+      <div className="wrap">
+        <div className="loading">Loading server config… {loadingNote}</div>
+        <div className="notice" style={{ marginTop: 12 }}>
+          Taking too long? <a href="" onClick={(e) => { e.preventDefault(); loadConfig(); }} style={{ color: 'var(--violet)', fontWeight: 700 }}>Retry</a> — first load warms the database and can take ~30s.
+        </div>
+      </div>
+    );
   }
 
   const meta = {
@@ -306,7 +327,16 @@ function MusicPanel({ cfg, meta, onRefresh, guildId }) {
         <input type="number" min="1" max="120" value={leaveTimeoutMinutes} onChange={(e) => setLeaveTimeoutMinutes(e.target.value)} />
       </Field>
       <Field label="Prefix for !p-style commands" hint="! and - always work. Custom prefix avoids clashes with other bots.">
-        <input type="text" maxLength={3} value={prefix} onChange={(e) => setPrefixState(e.target.value.replace(/\s/g, ''))} placeholder="!" />
+        <div style={{ display: 'flex', gap: 8 }}>
+          <input type="text" maxLength={3} value={prefix} onChange={(e) => setPrefixState(e.target.value.replace(/\s/g, ''))} placeholder="!" style={{ flex: 1 }} />
+          <button
+            className="btn btn-primary btn-sm"
+            disabled={!prefix}
+            onClick={() => push('music', 'settings', { prefix: (prefix || '!').slice(0, 3) })}
+          >
+            Set prefix
+          </button>
+        </div>
       </Field>
       <SaveBar state={state} onSave={save} />
     </div>
