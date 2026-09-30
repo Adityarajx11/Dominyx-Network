@@ -16,12 +16,12 @@ module.exports = {
     const next = interaction.options.getString('set');
     if (!next) {
       const settings = await getMusicSettings(interaction.guild.id);
-      return interaction.reply(`🔧 Prefix is **${settings.prefix}** (plus \`!\` and \`-\` always work). Change it: \`/prefix set:?\``);
+      return interaction.reply(`🔧 Prefix is **${settings.prefix}**. Change it: \`/prefix set:?\``);
     }
     if (/\s/.test(next)) {
       return interaction.reply('❌ Prefix cannot contain spaces.');
     }
     await setPrefix(interaction.guild.id, next);
-    return interaction.reply(`✅ Prefix → **${next}** (plus \`!\` and \`-\` always work). Try \`${next}p <song>\`.`);
+    return interaction.reply(`✅ Prefix → **${next}**. Try \`${next}p <song>\`.`);
   },
 };

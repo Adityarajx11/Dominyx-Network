@@ -326,7 +326,7 @@ function MusicPanel({ cfg, meta, onRefresh, guildId }) {
       <Field label="Empty-queue leave timeout (minutes)" hint="How long to wait before leaving voice. 24/7 mode ignores this.">
         <input type="number" min="1" max="120" value={leaveTimeoutMinutes} onChange={(e) => setLeaveTimeoutMinutes(e.target.value)} />
       </Field>
-      <Field label="Prefix for !p-style commands" hint="! and - always work. Custom prefix avoids clashes with other bots.">
+      <Field label="Prefix for !p-style commands" hint="Only this prefix works. Change it if another bot uses the same one.">
         <div style={{ display: 'flex', gap: 8 }}>
           <input type="text" maxLength={3} value={prefix} onChange={(e) => setPrefixState(e.target.value.replace(/\s/g, ''))} placeholder="!" style={{ flex: 1 }} />
           <button

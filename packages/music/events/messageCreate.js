@@ -34,15 +34,14 @@ module.exports = {
       if (!message.guild || message.author.bot) return;
       const text = (message.content || '').trim();
       if (!text) return;
-      // Server prefix first, ! and - always work as fallback (no lockouts).
+      // Only the server prefix works — no fallback (owner's choice).
       let serverPrefix = '!';
       try {
         const s = await getMusicSettings(message.guild.id);
         if (s.prefix) serverPrefix = s.prefix;
       } catch {}
-      const prefixes = [...new Set([serverPrefix, '!', '-'])];
-      const prefix = prefixes.find((p) => text.startsWith(p));
-      if (!prefix) return;
+      if (!text.startsWith(serverPrefix)) return;
+      const prefix = serverPrefix;
 
       const [raw, ...rest] = text.slice(prefix.length).trim().split(/\s+/);
       if (!raw) return;

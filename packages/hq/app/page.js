@@ -1,6 +1,7 @@
 import { BOTS } from '@/lib/bots';
 import { getSession } from '@/lib/auth';
 import { getInviteUrl } from '@/lib/invite';
+import { CHANGELOG } from '@/lib/changelog';
 import LoginButton from '@/components/LoginButton';
 import RevealScope from '@/components/RevealScope';
 import Auralis from '@/components/Auralis';
@@ -117,6 +118,24 @@ export default async function Home({ searchParams }) {
         <div className="wrap" data-reveal>
           <div className="notice">
             <strong>Never run a slash command again.</strong> Welcome channels, ticket panels, level roles, 24/7 music, live alerts and moderator settings — all editable from Dominyx HQ.
+          </div>
+        </div>
+      </section>
+
+      <section className="section" style={{ paddingTop: 0 }}>
+        <div className="wrap" data-reveal>
+          <h2 className="section-title">What&apos;s fixed</h2>
+          <p className="section-sub">Latest repairs and upgrades across the network.</p>
+          <div className="rows">
+            {CHANGELOG.map((c) => (
+              <div key={`${c.date}-${c.title}`} className="row-item">
+                <div>
+                  <strong>{c.title}</strong>{' '}
+                  <span className="muted">· {c.date}</span>
+                  <div className="muted">{c.desc}</div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </section>

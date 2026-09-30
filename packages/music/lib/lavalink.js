@@ -144,13 +144,14 @@ async function searchTrack(query, requestUser) {
 
   if (!res || !res.tracks || res.tracks.length === 0) return null;
 
-  // Playlists (Spotify/YouTube links): queue every track in order.
-  // Plain searches return many candidates too — those are NOT playlists, take #1.
+  // Playlists ONLY come from links. Word searches return many candidates too —
+  // those are never playlists, take #1. (Some hosts mislabel searches.)
   const tracks = res.tracks.map((t) => {
     t.requester = requestUser;
     return t;
   });
-  const isPlaylist = res.loadType === 'playlist' && tracks.length > 1;
+  console.log(`[music] search "${String(query).slice(0, 60)}" → loadType=${res.loadType} tracks=${tracks.length} isUrl=${isUrl}`);
+  const isPlaylist = isUrl && (res.loadType === 'playlist' || tracks.length > 1);
   return {
     track: tracks[0],
     tracks,
