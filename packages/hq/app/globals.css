@@ -1218,6 +1218,56 @@ textarea {
   color: var(--text-dim);
 }
 
+/* ---------- guild config loader ---------- */
+.load-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 56px 24px;
+  text-align: center;
+  background: linear-gradient(160deg, var(--bg-card), var(--bg-soft));
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  animation: fadeUp 0.4s ease both;
+}
+
+.load-spinner span {
+  display: block;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 3px solid var(--border-hi);
+  border-top-color: var(--crimson);
+  animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.load-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.load-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: min(420px, 100%);
+  margin: 8px 0 6px;
+}
+
+.load-lines span {
+  height: 12px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.04) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease infinite;
+}
+
 .notice {
   background: rgba(255, 31, 75, 0.08);
   border: 1px solid rgba(255, 31, 75, 0.28);

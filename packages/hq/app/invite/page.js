@@ -71,7 +71,7 @@ export default async function InvitePage() {
       </section>
 
       <footer className="footer">
-        Dominyx Network · invite a bot, then manage it from the dashboard
+        Dominyx Network · invite a bot, then manage it from the dashboard · built by <a href="https://adityarajx11-portfolio.vercel.app/" target="_blank" rel="noreferrer" style={{ color: 'var(--violet)', fontWeight: 700 }}>Adityarajx11</a>
       </footer>
     </>
   );

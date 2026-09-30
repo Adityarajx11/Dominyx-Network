@@ -155,7 +155,7 @@ export default async function Home({ searchParams }) {
       </section>
 
       <footer className="footer">
-        Dominyx Network · a family of single-purpose Discord bots
+        Dominyx Network · a family of single-purpose Discord bots · built by <a href="https://adityarajx11-portfolio.vercel.app/" target="_blank" rel="noreferrer" style={{ color: 'var(--violet)', fontWeight: 700 }}>Adityarajx11</a>
       </footer>
     </>
   );

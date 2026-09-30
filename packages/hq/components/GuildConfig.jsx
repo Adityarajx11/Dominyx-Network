@@ -56,6 +56,7 @@ export default function GuildConfig({ guildId, guildName = '', botsPresent = {},
           res.status === 401 ? 'Login expired — log in again.'
           : res.status === 403 ? 'No access — you need Manage Server in this server.'
           : res.status === 404 ? 'Server not found — the bot may have been removed.'
+          : res.status === 502 ? 'Discord is unreachable right now — retry in a few seconds.'
           : (body.error || 'Failed to load')
         );
       }
@@ -92,9 +93,12 @@ export default function GuildConfig({ guildId, guildName = '', botsPresent = {},
   if (!data) {
     return (
       <div className="wrap">
-        <div className="loading">Loading server config… {loadingNote}</div>
-        <div className="notice" style={{ marginTop: 12 }}>
-          Taking too long? <a href="" onClick={(e) => { e.preventDefault(); loadConfig(); }} style={{ color: 'var(--violet)', fontWeight: 700 }}>Retry</a> — first load warms the database and can take ~30s.
+        <div className="load-card">
+          <div className="load-spinner" aria-hidden="true"><span /></div>
+          <div className="load-title">Loading server config…</div>
+          <div className="muted">{loadingNote}</div>
+          <div className="load-lines" aria-hidden="true"><span /><span /><span /></div>
+          <button className="btn btn-ghost btn-sm" onClick={loadConfig}>Retry now</button>
         </div>
       </div>
     );
