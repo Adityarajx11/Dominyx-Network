@@ -95,7 +95,7 @@ module.exports = {
           return;
         }
         const room = settings.maxQueue - pl.queue.tracks.length;
-        const toAdd = tracks.slice(0, Math.max(room, 1));
+        const toAdd = isPlaylist ? tracks.slice(0, Math.max(room, 1)) : [track];
         for (const t of toAdd) pl.queue.add(t);
         if (!pl.playing && !pl.paused) {
           await pl.play();

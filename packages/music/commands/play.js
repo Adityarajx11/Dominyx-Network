@@ -36,8 +36,9 @@ module.exports = {
     }
 
     // Playlists: fill the queue in order, capped at maxQueue.
+    // Plain searches: first match only.
     const room = settings.maxQueue - player.queue.tracks.length;
-    const toAdd = tracks.slice(0, Math.max(room, 1));
+    const toAdd = isPlaylist ? tracks.slice(0, Math.max(room, 1)) : [track];
     for (const t of toAdd) player.queue.add(t);
 
     if (!player.playing && !player.paused) {

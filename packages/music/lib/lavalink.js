@@ -151,7 +151,25 @@ async function searchTrack(query, requestUser) {
     return t;
   });
   console.log(`[music] search "${String(query).slice(0, 60)}" → loadType=${res.loadType} tracks=${tracks.length} isUrl=${isUrl}`);
-  const isPlaylist = isUrl && (res.loadType === 'playlist' || tracks.length > 1);
+  // Only REAL playlists/albums queue many songs. Plain video/track links and
+  // YouTube Mixes (list=RD...) play single — never "similar songs" dumps.
+  function wantsPlaylist(url) {
+    try {
+      const u = new URL(url);
+      const host = u.hostname.replace(/^(www\.|open\.|m\.|music\.)/, '');
+      if (host.includes('spotify.com')) return /\/(album|playlist)\//.test(u.pathname);
+      if (host.includes('youtube.com') || host === 'youtu.be') {
+        const list = u.searchParams.get('list');
+        if (!list || /^RD/.test(list)) return false;
+        return true;
+      }
+      if (host.includes('soundcloud.com')) return /\/sets\//.test(u.pathname);
+      return false;
+    } catch {
+      return false;
+    }
+  }
+  const isPlaylist = isUrl && wantsPlaylist(query) && tracks.length > 1;
   return {
     track: tracks[0],
     tracks,
