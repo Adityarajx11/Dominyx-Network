@@ -12,7 +12,8 @@ module.exports = {
         .setRequired(true)),
 
   async execute(interaction) {
-    const voiceChannel = interaction.member.voice.channel;
+    const member = interaction.member ?? await interaction.guild.members.fetch(interaction.user.id);
+    const voiceChannel = member.voice?.channel;
     if (!voiceChannel) {
       return interaction.reply({ content: '🚫 Join a voice channel first.', flags: MessageFlags.Ephemeral });
     }
