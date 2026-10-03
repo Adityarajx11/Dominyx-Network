@@ -30,6 +30,10 @@ function attachLavalink(client) {
         port: lavalinkPort,
         authorization: lavalinkPassword,
         secure: lavalinkSecure,
+        resuming: {
+          enabled: true,
+          timeout: 60,
+        },
       },
     ],
     sendToShard: (guildId, payload) => client.guilds.cache.get(guildId)?.shard?.send(payload),
