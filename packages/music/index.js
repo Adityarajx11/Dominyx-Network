@@ -56,62 +56,6 @@ client.on('interactionCreate', async (interaction) => {
       else await interaction.reply(errMsg).catch(() => {});
     }
   }
-
-  if (interaction.isStringSelectMenu() && interaction.customId.startsWith('suggest:')) {
-    try {
-      const selectedUri = interaction.values[0];
-
-      // Create a mock interaction for player setup
-      const member = interaction.member ?? await interaction.guild.members.fetch(interaction.user.id);
-      const settings = await getMusicSettings(interaction.guild.id);
-      
-      // Reuse existing player creation logic
-      const player = getOrCreatePlayer(
-        {
-          member,
-          guild: interaction.guild,
-          channel: interaction.channel,
-        },
-        { volume: settings.defaultVolume }
-      );
-      if (!player.connected) await player.connect();
-
-      // Search for the selected track by URI
-      const node = getManager().nodeManager.leastUsedNodes()[0];
-      if (!node) {
-        return interaction.reply({
-          content: '⚠️ Music server is not connected.',
-          flags: MessageFlags.Ephemeral,
-        });
-      }
-
-      const res = await node.search({ query: selectedUri }, interaction.user.tag);
-      if (!res || !res.tracks || res.tracks.length === 0) {
-        return interaction.reply({
-          content: '❌ Could not find that track.',
-          flags: MessageFlags.Ephemeral,
-        });
-      }
-
-      const selectedTrack = res.tracks[0];
-      player.queue.add(selectedTrack);
-
-      // If not playing, start playback
-      if (!player.playing && !player.paused) {
-        await player.play();
-      }
-
-      await interaction.reply({
-        content: `✅ Added **${selectedTrack.info.title}** to the queue.`,
-        flags: MessageFlags.Ephemeral,
-      });
-    } catch (err) {
-      console.error('Song suggestion error:', err);
-      const errMsg = { content: '⚠️ Something went wrong adding that song.', flags: MessageFlags.Ephemeral };
-      if (interaction.replied || interaction.deferred) await interaction.followUp(errMsg).catch(() => {});
-      else await interaction.reply(errMsg).catch(() => {});
-    }
-  }
 });
 
 client.login(process.env.BOT_TOKEN);
