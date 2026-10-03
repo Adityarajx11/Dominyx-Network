@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, MessageFlags, StringSelectMenuBuilder, ActionRowBuilder } = require('discord.js');
+const { SlashCommandBuilder, MessageFlags } = require('discord.js');
 const { getOrCreatePlayer, searchTrack, getManager } = require('../lib/lavalink');
 const { getMusicSettings } = require('../lib/settings');
 
@@ -84,53 +84,6 @@ module.exports = {
         await interaction.editReply(`➕ Queued playlist **${playlistName || 'mix'}** — **${toAdd.length}** songs in order (now at ${player.queue.tracks.length}).`);
       } else {
         await interaction.editReply(`➕ Added to queue: **${track.info.title}** (position ${player.queue.tracks.length})`);
-      }
-
-      // Send song suggestions (only for single track, not playlists)
-      if (!isPlaylist) {
-        try {
-          const node = getManager().nodeManager.leastUsedNodes()[0];
-          if (node) {
-            // Search for related tracks using the queued track's artist
-            const relatedRes = await node.search(
-              { query: track.info.author, source: 'ytsearch' },
-              interaction.user.tag
-            );
-
-            if (relatedRes && relatedRes.tracks && relatedRes.tracks.length > 0) {
-              // Filter out the track that was just queued
-              const related = relatedRes.tracks
-                .filter(t => t.info.uri !== track.info.uri)
-                .slice(0, 5);
-              console.log(`[music] suggestions: ${related.length} related tracks found for "${track.info.author}"`);
-
-              if (related.length > 0) {
-                // Build select menu options
-                const options = related.map(t => ({
-                  label: t.info.title.length > 100 ? t.info.title.slice(0, 97) + '...' : t.info.title,
-                  value: t.info.uri.length > 100 ? `${t.info.sourceName}:${t.info.identifier}` : t.info.uri,
-                  description: t.info.author.length > 100 ? t.info.author.slice(0, 97) + '...' : t.info.author,
-                }));
-
-                const selectMenu = new StringSelectMenuBuilder()
-                  .setCustomId(`suggest:${interaction.guildId}`)
-                  .setPlaceholder('🎵 Select a suggested song')
-                  .addOptions(options);
-
-                const row = new ActionRowBuilder().addComponents(selectMenu);
-
-                await interaction.followUp({
-                  content: '🎵 Or pick a related song:',
-                  components: [row],
-                }).catch(err => {
-                  console.error('[music] suggestion followUp failed:', err.message);
-                });
-              }
-            }
-          }
-        } catch (err) {
-          console.error('[music] suggestion block failed:', err.message, err.stack);
-        }
       }
     }
   },
