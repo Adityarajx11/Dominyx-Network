@@ -104,6 +104,7 @@ module.exports = {
                 .slice(0, 5);
 
               if (related.length > 0) {
+                console.log(`[music] suggestions: found ${related.length} related tracks for "${track.info.author}"`);
                 // Build select menu options
                 const options = related.map(t => ({
                   label: t.info.title.length > 100 ? t.info.title.slice(0, 97) + '...' : t.info.title,
@@ -126,7 +127,7 @@ module.exports = {
             }
           }
         } catch (err) {
-          console.error('Error fetching song suggestions:', err);
+          console.error('[music] suggestion failed:', err.message, err.stack);
           // Silently fail — don't break the main /play flow
         }
       }
