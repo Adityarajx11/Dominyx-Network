@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, MessageFlags } = require('discord.js');
-const { getOrCreatePlayer, searchTrack } = require('../lib/lavalink');
+const { getOrCreatePlayer, searchTrack, getManager } = require('../lib/lavalink');
 const { getMusicSettings } = require('../lib/settings');
 
 module.exports = {
@@ -19,6 +19,24 @@ module.exports = {
     }
 
     await interaction.deferReply();
+
+    // Gate: check if Lavalink node is connected; wait up to 5 seconds if not
+    const node = getManager().nodeManager.nodes.get('main');
+    if (!node || !node.connected) {
+      await interaction.editReply('🔄 Reconnecting to the music server, one sec…');
+      const reconnected = await new Promise((resolve) => {
+        const check = setInterval(() => {
+          if (node?.connected) {
+            clearInterval(check);
+            resolve(true);
+          }
+        }, 500);
+        setTimeout(() => { clearInterval(check); resolve(false); }, 5000);
+      });
+      if (!reconnected) {
+        return interaction.editReply('⚠️ Music server is still reconnecting — try again in a few seconds.');
+      }
+    }
 
     const settings = await getMusicSettings(interaction.guild.id);
     const query = interaction.options.getString('song');
