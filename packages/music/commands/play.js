@@ -102,9 +102,9 @@ module.exports = {
               const related = relatedRes.tracks
                 .filter(t => t.info.uri !== track.info.uri)
                 .slice(0, 5);
+              console.log(`[music] suggestions: ${related.length} related tracks found for "${track.info.author}"`);
 
               if (related.length > 0) {
-                console.log(`[music] suggestions: found ${related.length} related tracks for "${track.info.author}"`);
                 // Build select menu options
                 const options = related.map(t => ({
                   label: t.info.title.length > 100 ? t.info.title.slice(0, 97) + '...' : t.info.title,
@@ -122,13 +122,14 @@ module.exports = {
                 await interaction.followUp({
                   content: '🎵 Or pick a related song:',
                   components: [row],
-                }).catch(() => {});
+                }).catch(err => {
+                  console.error('[music] suggestion followUp failed:', err.message);
+                });
               }
             }
           }
         } catch (err) {
-          console.error('[music] suggestion failed:', err.message, err.stack);
-          // Silently fail — don't break the main /play flow
+          console.error('[music] suggestion block failed:', err.message, err.stack);
         }
       }
     }
