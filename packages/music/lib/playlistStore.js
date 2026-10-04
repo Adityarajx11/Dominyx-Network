@@ -1,7 +1,11 @@
+// Personal playlists. Postgres is primary (Railway disk is wiped on restart);
+// the JSON file is a local-dev fallback when the DB is unreachable.
 const fs = require('fs');
 const path = require('path');
+const { pool } = require('@dominyx/core');
 
 const DATA_FILE = path.join(__dirname, '..', 'data', 'playlists.json');
+const MAX_SONGS = 100;
 
 function loadAll() {
   try {
@@ -21,24 +25,70 @@ function saveAll(data) {
   }
 }
 
-function getUserPlaylist(userId) {
-  const all = loadAll();
-  return all[userId] || [];
+async function dbGet(userId) {
+  const res = await pool.query('SELECT songs FROM user_playlists WHERE user_id = $1', [userId]);
+  const songs = res.rows[0]?.songs;
+  return Array.isArray(songs) ? songs : null;
 }
 
-function addToPlaylist(userId, song) {
-  const all = loadAll();
-  if (!all[userId]) all[userId] = [];
-  all[userId].push(song);
-  saveAll(all);
+async function dbSet(userId, songs) {
+  await pool.query(
+    `INSERT INTO user_playlists (user_id, songs, updated_at)
+     VALUES ($1, $2, NOW())
+     ON CONFLICT (user_id) DO UPDATE SET songs = $2, updated_at = NOW()`,
+    [userId, JSON.stringify(songs)]
+  );
 }
 
-function removeFromPlaylist(userId, index) {
-  const all = loadAll();
-  if (!all[userId] || !all[userId][index]) return false;
-  all[userId].splice(index, 1);
-  saveAll(all);
+async function getUserPlaylist(userId) {
+  try {
+    const songs = await dbGet(userId);
+    if (songs) return songs;
+  } catch {}
+  return loadAll()[userId] || [];
+}
+
+async function addToPlaylist(userId, song) {
+  let songs = [];
+  try {
+    songs = (await dbGet(userId)) || [];
+  } catch {
+    const all = loadAll();
+    songs = all[userId] || [];
+    songs.push(song);
+    saveAll({ ...all, [userId]: songs });
+    return songs.length;
+  }
+  if (songs.length >= MAX_SONGS) return -1;
+  songs.push(song);
+  try {
+    await dbSet(userId, songs);
+  } catch {
+    const all = loadAll();
+    saveAll({ ...all, [userId]: songs });
+  }
+  return songs.length;
+}
+
+async function removeFromPlaylist(userId, index) {
+  let songs = [];
+  let useDb = true;
+  try {
+    songs = (await dbGet(userId)) || [];
+  } catch {
+    useDb = false;
+    songs = loadAll()[userId] || [];
+  }
+  if (!songs[index]) return false;
+  songs.splice(index, 1);
+  try {
+    if (useDb) await dbSet(userId, songs);
+    else {
+      const all = loadAll();
+      saveAll({ ...all, [userId]: songs });
+    }
+  } catch {}
   return true;
 }
 
-module.exports = { getUserPlaylist, addToPlaylist, removeFromPlaylist };
+module.exports = { getUserPlaylist, addToPlaylist, removeFromPlaylist, MAX_SONGS };

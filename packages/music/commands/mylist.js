@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, EmbedBuilder, MessageFlags } = require('discord.js');
-const { getUserPlaylist, addToPlaylist, removeFromPlaylist } = require('../lib/playlistStore');
+const { getUserPlaylist, addToPlaylist, removeFromPlaylist, MAX_SONGS } = require('../lib/playlistStore');
 const { getOrCreatePlayer, searchTrack } = require('../lib/lavalink');
 
 module.exports = {
@@ -30,15 +30,17 @@ module.exports = {
     if (sub === 'add') {
       await interaction.deferReply();
       const query = interaction.options.getString('song');
-      const track = await searchTrack(query, interaction.user.tag);
-      if (!track) return interaction.editReply('❌ Couldn\'t find that song.');
+      const result = await searchTrack(query, interaction.user.tag);
+      if (!result) return interaction.editReply('❌ Couldn\'t find that song.');
+      const track = result.track;
 
-      addToPlaylist(userId, { title: track.info.title, url: track.info.uri, requestedBy: interaction.user.tag });
-      return interaction.editReply(`✅ Added **${track.info.title}** to your saved playlist.`);
+      const count = await addToPlaylist(userId, { title: track.info.title, url: track.info.uri, requestedBy: interaction.user.tag });
+      if (count === -1) return interaction.editReply(`🚫 Playlist full (max ${MAX_SONGS} songs). Remove one with \`/mylist remove\`.`);
+      return interaction.editReply(`✅ Added **${track.info.title}** to your saved playlist (#${count}).`);
     }
 
     if (sub === 'show') {
-      const list = getUserPlaylist(userId);
+      const list = await getUserPlaylist(userId);
       if (list.length === 0) {
         return interaction.reply({ content: '📭 Your playlist is empty. Add songs with `/mylist add`.', flags: MessageFlags.Ephemeral });
       }
@@ -52,7 +54,7 @@ module.exports = {
 
     if (sub === 'remove') {
       const position = interaction.options.getInteger('position');
-      const removed = removeFromPlaylist(userId, position - 1);
+      const removed = await removeFromPlaylist(userId, position - 1);
       if (!removed) {
         return interaction.reply({ content: '❌ Invalid position. Check `/mylist show` for numbers.', flags: MessageFlags.Ephemeral });
       }
@@ -64,7 +66,7 @@ module.exports = {
       if (!voiceChannel) {
         return interaction.reply({ content: '🚫 Join a voice channel first.', flags: MessageFlags.Ephemeral });
       }
-      const list = getUserPlaylist(userId);
+      const list = await getUserPlaylist(userId);
       if (list.length === 0) {
         return interaction.reply({ content: '📭 Your playlist is empty.', flags: MessageFlags.Ephemeral });
       }
@@ -76,9 +78,9 @@ module.exports = {
 
       let added = 0;
       for (const song of list) {
-        const track = await searchTrack(song.url, interaction.user.tag);
-        if (track) {
-          player.queue.add(track);
+        const result = await searchTrack(song.url || song.title, interaction.user.tag);
+        if (result) {
+          player.queue.add(result.track);
           added++;
         }
       }

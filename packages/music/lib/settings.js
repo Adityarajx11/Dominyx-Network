@@ -15,6 +15,13 @@ async function initMusicSettings() {
   await pool.query(`ALTER TABLE music_settings ADD COLUMN IF NOT EXISTS leave_timeout_minutes INTEGER DEFAULT 5;`);
   await pool.query(`ALTER TABLE music_settings ADD COLUMN IF NOT EXISTS announce_channel_id TEXT;`);
   await pool.query(`ALTER TABLE music_settings ADD COLUMN IF NOT EXISTS prefix TEXT DEFAULT '!';`);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS user_playlists (
+      user_id TEXT PRIMARY KEY,
+      songs JSONB DEFAULT '[]'::jsonb,
+      updated_at TIMESTAMPTZ DEFAULT NOW()
+    );
+  `);
   console.log('🎵 Music settings table ready.');
 }
 
