@@ -30,6 +30,11 @@ function attachLavalink(client) {
         port: lavalinkPort,
         authorization: lavalinkPassword,
         secure: lavalinkSecure,
+        // Reconnect retry configuration: prevents tight reconnect loops
+        // retryAmount: max attempts before giving up
+        // retryDelay: initial delay in ms; increases by 250ms per attempt, capped at 30 seconds
+        retryAmount: 5,
+        retryDelay: 5000,
         resuming: {
           enabled: true,
           timeout: 60,
