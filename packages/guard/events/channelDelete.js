@@ -17,7 +17,7 @@ module.exports = {
         const exec = await findExecutor(guild, AuditLogEvent.ChannelDelete);
         let restored = 0;
         if (!settings || settings.nuke_rollback !== false) {
-          restored = await rollbackBurst(guild, client, guild.id);
+          restored = await rollbackBurst(guild, client, guild.id, 'channel');
         }
         await alertModlog(
           client,

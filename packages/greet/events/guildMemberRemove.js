@@ -10,8 +10,9 @@ module.exports = {
       if (!settings.goodbyeChannelId) return;
       if (member.user.bot && !settings.greetBots) return;
 
-      const channel = member.guild.channels.cache.get(settings.goodbyeChannelId);
-      if (!channel) return;
+      const channel = member.guild.channels.cache.get(settings.goodbyeChannelId)
+        ?? await member.guild.channels.fetch(settings.goodbyeChannelId).catch(() => null);
+      if (!channel?.isTextBased?.()) return;
 
       const template = settings.goodbyeMessage || DEFAULT_GOODBYE;
       const text = template

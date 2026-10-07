@@ -1,12 +1,23 @@
-require('dotenv').config();
 const path = require('path');
+// Load this bot's own .env first — cwd is the repo root when run via workspaces.
+require('dotenv').config({ path: path.join(__dirname, '.env') });
+require('dotenv').config();
 const { Client, GatewayIntentBits, MessageFlags } = require('discord.js');
 const { GlobalFonts } = require('@napi-rs/canvas');
 
 const { loadCommands, loadEvents } = require('@dominyx/core');
 
-GlobalFonts.registerFromPath(path.join(__dirname, './fonts/Inter-Regular.ttf'), 'Inter');
-GlobalFonts.registerFromPath(path.join(__dirname, './fonts/Inter-Bold.ttf'), 'Inter Bold');
+const fs = require('fs');
+
+for (const [file, name] of [['./fonts/Inter-Regular.ttf', 'Inter'], ['./fonts/Inter-Bold.ttf', 'Inter Bold']]) {
+  try {
+    const full = path.join(__dirname, file);
+    if (!fs.existsSync(full)) throw new Error(`missing file ${file}`);
+    GlobalFonts.registerFromPath(full, name);
+  } catch (err) {
+    console.warn(`⚠️ Font load failed, cards fall back to system fonts: ${err.message}`);
+  }
+}
 
 const client = new Client({
   intents: [
@@ -33,4 +44,7 @@ client.on('interactionCreate', async (interaction) => {
   }
 });
 
-client.login(process.env.BOT_TOKEN);
+client.login(process.env.BOT_TOKEN).catch((err) => {
+  console.error('❌ Login failed (bad BOT_TOKEN?):', err.message);
+  process.exit(1);
+});

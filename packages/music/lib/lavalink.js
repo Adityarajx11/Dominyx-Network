@@ -103,7 +103,9 @@ function attachLavalink(client) {
       stay247 = settings.stay247;
       timeoutMinutes = settings.leaveTimeoutMinutes;
     } catch {}
-    if (!stay247) {      const timer = setTimeout(() => {
+    if (!stay247) {
+      cancelLeave(player.guildId);
+      const timer = setTimeout(() => {
         channel?.send(`👋 Leaving voice — queue empty for ${timeoutMinutes} minute(s). Use \`/247\` to keep me connected permanently.`).catch(() => {});
         player.destroy().catch(() => {});
         leaveTimers.delete(player.guildId);
@@ -116,6 +118,7 @@ function attachLavalink(client) {
     console.error('Track error:', payload?.exception?.message || payload);
     const channel = client.channels.cache.get(player.textChannelId);
     channel?.send(`⚠️ Error playing **${track?.info?.title || 'track'}**, skipping.`).catch(() => {});
+    player.skip(0, false).catch(() => {});
   });
 
   manager.on('trackStuck', (player, track, payload) => {
@@ -145,7 +148,14 @@ function cancelLeave(guildId) {
 }
 
 async function searchTrack(query, requestUser) {
-  const node = manager.nodeManager.leastUsedNodes()[0];
+  if (!manager) throw new Error('Lavalink not initialized yet — try again in a few seconds.');
+  let node = manager.nodeManager.leastUsedNodes().find((n) => n.connected);
+  if (!node) {
+    // One last chance: the node may be mid-reconnect (bounded retries).
+    try { await manager.nodeManager.nodes.get('main')?.connect?.(); } catch {}
+    await new Promise((r) => setTimeout(r, 3000));
+    node = manager.nodeManager.leastUsedNodes().find((n) => n.connected);
+  }
   if (!node) throw new Error('No Lavalink node connected. Check LAVALINK_* env vars.');
 
   const isUrl = /^https?:\/\//i.test(query);
@@ -188,10 +198,13 @@ async function searchTrack(query, requestUser) {
 }
 
 function getOrCreatePlayer(interaction, opts = {}) {
-  const voiceChannel = interaction.member.voice.channel;
+  if (!manager) throw new Error('Lavalink not initialized yet — try again in a few seconds.');
+  const voiceChannel = interaction.member?.voice?.channel;
+  if (!voiceChannel) throw new Error('Join a voice channel first.');
   let player = manager.getPlayer(interaction.guild.id);
 
   if (!player) {
+    cancelLeave(interaction.guild.id);
     player = manager.createPlayer({
       guildId: interaction.guild.id,
       voiceChannelId: voiceChannel.id,
@@ -199,6 +212,20 @@ function getOrCreatePlayer(interaction, opts = {}) {
       selfDeaf: true,
       ...(Number.isInteger(opts.volume) ? { volume: opts.volume } : {}),
     });
+  } else {
+    // Reused player: sync to the live channels so replies/now-playing
+    // don't go stale, and drop any pending auto-leave.
+    cancelLeave(interaction.guild.id);
+    try {
+      if (voiceChannel && player.voiceChannelId !== voiceChannel.id && typeof player.setVoiceChannel === 'function') {
+        player.setVoiceChannel(voiceChannel.id).catch(() => {});
+      }
+      if (interaction.channel?.id && player.textChannelId !== interaction.channel.id && typeof player.setTextChannel === 'function') {
+        player.setTextChannel(interaction.channel.id).catch(() => {});
+      } else if (interaction.channel?.id) {
+        player.textChannelId = interaction.channel.id;
+      }
+    } catch {}
   }
 
   return player;

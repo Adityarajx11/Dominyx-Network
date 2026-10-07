@@ -1,8 +1,9 @@
 const { EmbedBuilder } = require('discord.js');
-const { getAllEnabledGuilds } = require('./pingStore');
+const { getAllEnabledGuilds, updatePingSettings } = require('./pingStore');
 
 const lastAlertedVideoIds = new Map();
 const lastCheckedAt = new Map();
+let checking = false;
 
 const DEFAULT_ALERT = '🔴 **{channel}** is live now! {url}';
 
@@ -10,22 +11,37 @@ async function checkGuild(client, guild) {
   const { guild_id: guildId, youtube_channel_id: youtubeChannelId, live_alert_channel_id: liveAlertChannelId } = guild;
   const apiKey = process.env.YOUTUBE_API_KEY;
   if (!apiKey) return;
+  // Half-configured rows (e.g. only a custom message set) must not burn quota.
+  if (!youtubeChannelId || !liveAlertChannelId) return;
 
   try {
     const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${youtubeChannelId}&eventType=live&type=video&key=${apiKey}`;
-    const res = await fetch(url);
+    const res = await fetch(url, { signal: AbortSignal.timeout(10000) });
+    if (!res.ok) {
+      console.error(`YouTube API ${res.status} (guild ${guildId}):`, (await res.text().catch(() => '')).slice(0, 200));
+      return;
+    }
     const data = await res.json();
+    if (data.error) {
+      console.error(`YouTube API error (guild ${guildId}):`, data.error.message || data.error);
+      return;
+    }
 
     if (!data.items || data.items.length === 0) return;
 
     const live = data.items[0];
     const videoId = live.id.videoId;
 
+    // Skip only if THIS video already alerted (memory first, DB for restarts).
     if (lastAlertedVideoIds.get(guildId) === videoId) return;
-    lastAlertedVideoIds.set(guildId, videoId);
+    if (guild.last_video_id && guild.last_video_id === videoId && !lastAlertedVideoIds.has(guildId)) {
+      lastAlertedVideoIds.set(guildId, videoId);
+      return;
+    }
 
-    const alertChannel = client.channels.cache.get(liveAlertChannelId);
-    if (!alertChannel) return;
+    const alertChannel = client.channels.cache.get(liveAlertChannelId)
+      ?? await client.channels.fetch(liveAlertChannelId).catch(() => null);
+    if (!alertChannel?.isTextBased?.()) return;
 
     const watchUrl = `https://www.youtube.com/watch?v=${videoId}`;
     const template = guild.alert_message || DEFAULT_ALERT;
@@ -42,24 +58,39 @@ async function checkGuild(client, guild) {
       .setTitle(live.snippet.title)
       .setURL(watchUrl)
       .setDescription(live.snippet.description?.slice(0, 200) || '')
-      .setImage(live.snippet.thumbnails?.high?.url || live.snippet.thumbnails?.default?.url)
       .setFooter({ text: 'Dominyx • YouTube Live' })
       .setTimestamp();
+    const thumb = live.snippet.thumbnails?.high?.url || live.snippet.thumbnails?.default?.url;
+    if (thumb) embed.setImage(thumb);
 
     await alertChannel.send({ content: `${mention}${content}`, embeds: [embed] });
+
+    // Mark alerted only after a successful send — a failed send retries next poll.
+    lastAlertedVideoIds.set(guildId, videoId);
+    await updatePingSettings(guildId, { last_video_id: videoId }).catch(() => {});
   } catch (err) {
     console.error(`YouTube live-check error (guild ${guildId}):`, err.message);
   }
 }
 
 async function checkAllGuilds(client) {
-  const now = Date.now();
-  const guilds = await getAllEnabledGuilds();
-  for (const g of guilds) {
-    const intervalMs = (Number.isInteger(g.poll_minutes) ? g.poll_minutes : 10) * 60 * 1000;
-    if (now - (lastCheckedAt.get(g.guild_id) || 0) < intervalMs) continue;
-    lastCheckedAt.set(g.guild_id, now);
-    await checkGuild(client, g);
+  if (checking) return;
+  checking = true;
+  try {
+    const fallbackMinutes = Number(process.env.YOUTUBE_POLL_MINUTES || 10);
+    const now = Date.now();
+    const guilds = await getAllEnabledGuilds();
+    for (const g of guilds) {
+      const mins = Number.isInteger(g.poll_minutes) ? g.poll_minutes : fallbackMinutes;
+      const intervalMs = mins * 60 * 1000;
+      if (now - (lastCheckedAt.get(g.guild_id) || 0) < intervalMs) continue;
+      await checkGuild(client, g);
+      lastCheckedAt.set(g.guild_id, Date.now());
+    }
+  } catch (err) {
+    console.error('YouTube poll loop error:', err.message);
+  } finally {
+    checking = false;
   }
 }
 

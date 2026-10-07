@@ -172,17 +172,25 @@ module.exports = {
       if (cmd === 'shuffle') {
         const pl = player();
         if (!pl || pl.queue.tracks.length < 2) return message.reply('🚫 Not enough songs to shuffle.').catch(() => {});
-        await pl.queue.shuffle().catch(() => {});
+        try {
+          await pl.queue.shuffle();
+        } catch {
+          return message.reply('❌ Shuffle failed.').catch(() => {});
+        }
         return message.reply('🔀 Shuffled.').catch(() => {});
       }
 
       if (cmd === 'loop') {
         const pl = player();
         if (!pl) return message.reply('🚫 Nothing is playing.').catch(() => {});
-        const order = ['off', 'track', 'queue'];
-        const next = order[(order.indexOf(pl.repeatMode) + 1) % order.length];
-        pl.setRepeatMode(next);
-        return message.reply(`🔁 Loop → **${next}**.`).catch(() => {});
+        try {
+          const order = ['off', 'track', 'queue'];
+          const next = order[(order.indexOf(pl.repeatMode) + 1) % order.length];
+          pl.setRepeatMode(next);
+          return message.reply(`🔁 Loop → **${next}**.`).catch(() => {});
+        } catch {
+          return message.reply('❌ Loop change failed.').catch(() => {});
+        }
       }
 
       if (cmd === 'mylist') {

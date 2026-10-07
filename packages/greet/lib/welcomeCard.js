@@ -86,22 +86,29 @@ async function generateWelcomeCard(member, themeName = 'crimson') {
   ctx.stroke();
 
   const textStartX = 250;
+  const textMaxW = 470; // keep text clear of the member-count badge
+  const fitText = (raw) => {
+    let s = String(raw || '');
+    if (ctx.measureText(s).width <= textMaxW) return s;
+    while (s.length > 1 && ctx.measureText(`${s}…`).width > textMaxW) s = s.slice(0, -1);
+    return `${s.trimEnd()}…`;
+  };
 
   // "WELCOME" title
-  ctx.font = 'bold 54px Inter Bold';
+  ctx.font = 'bold 54px "Inter Bold", Inter, sans-serif';
   ctx.fillStyle = MAIN;
   ctx.textBaseline = 'top';
   ctx.fillText('WELCOME', textStartX, 100);
 
   // Member username
-  ctx.font = '30px Inter Bold';
+  ctx.font = '30px "Inter Bold", Inter, sans-serif';
   ctx.fillStyle = 'rgb(255, 255, 255)';
-  ctx.fillText(member.user.username, textStartX, 162);
+  ctx.fillText(fitText(member.user.username), textStartX, 162);
 
   // "to {guild name}"
-  ctx.font = '24px Inter';
+  ctx.font = '24px Inter, sans-serif';
   ctx.fillStyle = 'rgb(200, 200, 205)';
-  ctx.fillText(`to ${member.guild.name}`, textStartX, 204);
+  ctx.fillText(fitText(`to ${member.guild.name}`), textStartX, 204);
 
   // Badge (member count)
   const badgeX = 740;
@@ -128,7 +135,7 @@ async function generateWelcomeCard(member, themeName = 'crimson') {
   ctx.stroke();
 
   const badgeText = `MEMBER #${member.guild.memberCount}`;
-  ctx.font = 'bold 20px Inter Bold';
+  ctx.font = 'bold 20px "Inter Bold", Inter, sans-serif';
   ctx.fillStyle = MAIN;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';

@@ -73,6 +73,7 @@ async function ensureTables() {
     `ALTER TABLE ping_settings ADD COLUMN IF NOT EXISTS alert_message TEXT`,
     `ALTER TABLE ping_settings ADD COLUMN IF NOT EXISTS mention_role_id TEXT`,
     `ALTER TABLE ping_settings ADD COLUMN IF NOT EXISTS poll_minutes INTEGER DEFAULT 10`,
+    `ALTER TABLE ping_settings ADD COLUMN IF NOT EXISTS last_video_id TEXT`,
     `ALTER TABLE music_settings ADD COLUMN IF NOT EXISTS prefix TEXT DEFAULT '!'`,
     `CREATE TABLE IF NOT EXISTS guard_settings (
       guild_id TEXT PRIMARY KEY,

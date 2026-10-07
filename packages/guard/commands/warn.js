@@ -41,13 +41,29 @@ module.exports = {
       const member = await interaction.guild.members.fetch(target.id).catch(() => null);
 
       if (member && banAt > 0 && warnCount >= banAt) {
-        await member.ban({ reason: `Warn ladder: ${warnCount} warnings` }).catch(() => {});
-        ladderMsg = ` Reached **${warnCount}** warnings — **banned** automatically.`;
+        if (!member.bannable) {
+          ladderMsg = ` Reached **${warnCount}** warnings — I **can't ban** (role hierarchy).`;
+        } else {
+          try {
+            await member.ban({ reason: `Warn ladder: ${warnCount} warnings` });
+            ladderMsg = ` Reached **${warnCount}** warnings — **banned** automatically.`;
+          } catch {
+            ladderMsg = ` Reached **${warnCount}** warnings — ban **failed** (permissions).`;
+          }
+        }
       } else if (member && muteAt > 0 && warnCount >= muteAt && settings?.mute_role_id) {
         const muteRole = interaction.guild.roles.cache.get(settings.mute_role_id);
         if (muteRole && !member.roles.cache.has(muteRole.id)) {
-          await member.roles.add(muteRole, `Warn ladder: ${warnCount} warnings`).catch(() => {});
-          ladderMsg = ` Reached **${warnCount}** warnings — **muted** automatically.`;
+          if (!member.manageable) {
+            ladderMsg = ` Reached **${warnCount}** warnings — I **can't mute** (role hierarchy).`;
+          } else {
+            try {
+              await member.roles.add(muteRole, `Warn ladder: ${warnCount} warnings`);
+              ladderMsg = ` Reached **${warnCount}** warnings — **muted** automatically.`;
+            } catch {
+              ladderMsg = ` Reached **${warnCount}** warnings — mute **failed** (permissions).`;
+            }
+          }
         }
       }
     } catch {}

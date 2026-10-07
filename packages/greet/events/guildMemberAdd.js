@@ -36,8 +36,9 @@ module.exports = {
 
       if (!settings.welcomeChannelId) return;
 
-      const channel = member.guild.channels.cache.get(settings.welcomeChannelId);
-      if (!channel) return;
+      const channel = member.guild.channels.cache.get(settings.welcomeChannelId)
+        ?? await member.guild.channels.fetch(settings.welcomeChannelId).catch(() => null);
+      if (!channel?.isTextBased?.()) return;
 
       const template = settings.welcomeMessage || DEFAULT_TEMPLATE;
       const welcomeMessage = template

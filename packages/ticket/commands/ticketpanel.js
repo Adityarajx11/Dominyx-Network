@@ -1,6 +1,15 @@
 const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, StringSelectMenuBuilder, ActionRowBuilder, MessageFlags } = require('discord.js');
 const { getConfig } = require('../lib/ticketStore');
 
+// Accepts unicode emoji or custom <:name:id> / <a:name:id>; anything else is dropped.
+function parseMenuEmoji(input) {
+  if (!input || typeof input !== 'string') return null;
+  const custom = input.match(/^<a?:\w+:(\d+)>$/);
+  if (custom) return { id: custom[1] };
+  if (/\p{Extended_Pictographic}/u.test(input)) return input;
+  return null;
+}
+
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('ticketpanel')
@@ -8,12 +17,21 @@ module.exports = {
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
 
   async execute(interaction) {
+    if (!interaction.guild) {
+      return interaction.reply({ content: '❌ Server-only command.', flags: MessageFlags.Ephemeral });
+    }
     const guildId = interaction.guild.id;
     const config = await getConfig(guildId);
 
     if (!config || !config.categories || config.categories.length === 0) {
       return interaction.reply({
         content: '❌ No ticket categories configured yet. Run /ticketsetup addcategory first.',
+        flags: MessageFlags.Ephemeral,
+      });
+    }
+    if (!config.category_channel_id || !config.staff_role_id) {
+      return interaction.reply({
+        content: '❌ Finish setup first: `/ticketsetup category` (parent) and `/ticketsetup staffrole`.',
         flags: MessageFlags.Ephemeral,
       });
     }
@@ -27,10 +45,14 @@ module.exports = {
       embed.setImage(config.banner_url);
     }
 
-    const options = config.categories.map((category, index) => {
-      const option = { label: category.label, value: String(index) };
-      if (category.emoji) option.emoji = category.emoji;
-      if (category.description) option.description = category.description;
+    const options = config.categories.slice(0, 25).map((category, index) => {
+      const option = {
+        label: String(category.label || `Option ${index + 1}`).slice(0, 100),
+        value: String(index),
+      };
+      const emoji = parseMenuEmoji(category.emoji);
+      if (emoji) option.emoji = emoji;
+      if (category.description) option.description = String(category.description).slice(0, 100);
       return option;
     });
 

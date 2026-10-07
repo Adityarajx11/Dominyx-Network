@@ -1,5 +1,14 @@
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, StringSelectMenuBuilder, PermissionsBitField, MessageFlags } = require('discord.js');
-const { getConfig, getOpenTicketCountForUser, createTicket, getTicketByChannel, claimTicket, setPriority, closeTicket, saveTranscript } = require('../lib/ticketStore');
+const { getConfig, getOpenTicketCountForUser, createTicket, getTicketByChannel, claimTicket, setPriority, closeTicket, saveTranscript, deleteTicket } = require('../lib/ticketStore');
+
+async function resolveChannel(interaction) {
+  if (interaction.channel) return interaction.channel;
+  try {
+    return await interaction.guild?.channels?.fetch(interaction.channelId);
+  } catch {
+    return null;
+  }
+}
 
 module.exports = {
   name: 'interactionCreate',
@@ -28,29 +37,43 @@ module.exports = {
           return interaction.reply({ content: '❌ Invalid ticket category selected.', flags: MessageFlags.Ephemeral });
         }
 
-        const username = interaction.user.username.toLowerCase().replace(/[^a-z0-9]/g, '');
-        const channelName = `ticket-${username}`.slice(0, 90);
+        await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+
+        const base = (interaction.user.username.toLowerCase().replace(/[^a-z0-9]/g, '') || userId.slice(-4)).slice(0, 20);
+        const channelName = `ticket-${base}-${Date.now().toString(36)}`.slice(0, 90);
 
         const guild = await client.guilds.fetch(guildId);
         const categoryChannel = await guild.channels.fetch(cfg.category_channel_id).catch(() => null);
-        if (!categoryChannel) return interaction.reply({ content: '❌ Configured category channel not found. Update your config.', flags: MessageFlags.Ephemeral });
+        if (!categoryChannel) return interaction.followUp({ content: '❌ Configured category channel not found. Update your config.', flags: MessageFlags.Ephemeral });
 
         const everyoneRole = guild.roles.everyone;
         const staffRole = cfg.staff_role_id ? await guild.roles.fetch(cfg.staff_role_id).catch(() => null) : null;
 
-        const newChannel = await guild.channels.create({
-          name: channelName,
-          type: 0,
-          parent: categoryChannel.id,
-          permissionOverwrites: [
-            { id: everyoneRole.id, deny: [PermissionsBitField.Flags.ViewChannel] },
-            { id: userId, allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages] },
-            ...(staffRole ? [{ id: staffRole.id, allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages] }] : []),
-            { id: client.user.id, allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages, PermissionsBitField.Flags.ManageChannels] },
-          ],
-        });
+        let newChannel;
+        try {
+          newChannel = await guild.channels.create({
+            name: channelName,
+            type: 0,
+            parent: categoryChannel.id,
+            permissionOverwrites: [
+              { id: everyoneRole.id, deny: [PermissionsBitField.Flags.ViewChannel] },
+              { id: userId, allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages] },
+              ...(staffRole ? [{ id: staffRole.id, allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages] }] : []),
+              { id: client.user.id, allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages, PermissionsBitField.Flags.ManageChannels] },
+            ],
+          });
+        } catch (err) {
+          return interaction.followUp({ content: '❌ I cannot create channels (need Manage Channels + a category I can see).', flags: MessageFlags.Ephemeral });
+        }
 
-        const ticket = await createTicket(guildId, newChannel.id, userId, category.label);
+        let ticket;
+        try {
+          ticket = await createTicket(guildId, newChannel.id, userId, category.label);
+        } catch (err) {
+          await newChannel.delete().catch(() => {});
+          // Likely hit the open-ticket limit in a double-click race.
+          return interaction.followUp({ content: '❌ You already have the max open tickets (double-click?).', flags: MessageFlags.Ephemeral });
+        }
 
         const embed = new EmbedBuilder()
           .setColor(0xDC143C)
@@ -80,25 +103,30 @@ module.exports = {
         const row1 = new ActionRowBuilder().addComponents(claimButton, closeButton);
         const row2 = new ActionRowBuilder().addComponents(prioritySelect);
 
-        await newChannel.send({ embeds: [embed], components: [row1, row2] });
-        return interaction.reply({ content: `✅ Created ticket ${newChannel}.`, flags: MessageFlags.Ephemeral });
+        await newChannel.send({ embeds: [embed], components: [row1, row2] }).catch(async () => {
+          await deleteTicket(ticket.id);
+        });
+        return interaction.followUp({ content: `✅ Created ticket ${newChannel}.`, flags: MessageFlags.Ephemeral });
       }
 
       // Claim
       if (interaction.isButton() && interaction.customId === 'ticket_claim') {
-        const channel = interaction.channel;
+        const channel = await resolveChannel(interaction);
+        if (!channel) return interaction.reply({ content: '❌ Cannot see this channel — try again.', flags: MessageFlags.Ephemeral });
         const guildId = interaction.guildId;
         const userId = interaction.user.id;
         const cfg = await getConfig(guildId);
         if (!cfg || !cfg.staff_role_id) return interaction.reply({ content: '❌ Ticket system not configured properly.', flags: MessageFlags.Ephemeral });
 
-        const member = await interaction.guild.members.fetch(userId);
-        if (!member.roles.cache.has(cfg.staff_role_id)) return interaction.reply({ content: '❌ You must have the staff role to claim tickets.', flags: MessageFlags.Ephemeral });
+        const member = await interaction.guild.members.fetch(userId).catch(() => null);
+        if (!member || !member.roles.cache.has(cfg.staff_role_id)) return interaction.reply({ content: '❌ You must have the staff role to claim tickets.', flags: MessageFlags.Ephemeral });
 
         const ticket = await getTicketByChannel(channel.id);
         if (!ticket) return interaction.reply({ content: '❌ No ticket found for this channel.', flags: MessageFlags.Ephemeral });
+        if (ticket.status === 'closed') return interaction.reply({ content: '❌ This ticket is already closed.', flags: MessageFlags.Ephemeral });
 
-        await claimTicket(ticket.id, userId);
+        const claimed = await claimTicket(ticket.id, userId);
+        if (!claimed) return interaction.reply({ content: '❌ This ticket just closed — nothing to claim.', flags: MessageFlags.Ephemeral });
 
         const messages = await channel.messages.fetch({ limit: 50 });
         const firstEmbedMsg = messages.reverse().find(m => m.embeds && m.embeds.length);
@@ -107,7 +135,7 @@ module.exports = {
           const newEmbed = EmbedBuilder.from(embed).setFields(
             { name: 'Creator', value: `<@${ticket.user_id}>`, inline: true },
             { name: 'Category', value: ticket.category || 'Unknown', inline: true },
-            { name: 'Priority', value: ticket.priority || 'Medium', inline: true },
+            { name: 'Priority', value: ticket.priority ? ticket.priority.charAt(0).toUpperCase() + ticket.priority.slice(1) : 'Medium', inline: true },
             { name: 'Status', value: 'Claimed', inline: true },
             { name: 'Claimed By', value: `<@${userId}>`, inline: true },
           );
@@ -118,20 +146,23 @@ module.exports = {
 
       // Priority select
       if (interaction.isStringSelectMenu() && interaction.customId === 'ticket_priority_select') {
-        const channel = interaction.channel;
+        const channel = await resolveChannel(interaction);
+        if (!channel) return interaction.reply({ content: '❌ Cannot see this channel — try again.', flags: MessageFlags.Ephemeral });
         const guildId = interaction.guildId;
         const userId = interaction.user.id;
         const cfg = await getConfig(guildId);
         if (!cfg || !cfg.staff_role_id) return interaction.reply({ content: '❌ Ticket system not configured properly.', flags: MessageFlags.Ephemeral });
 
-        const member = await interaction.guild.members.fetch(userId);
-        if (!member.roles.cache.has(cfg.staff_role_id)) return interaction.reply({ content: '❌ You must have the staff role to change priority.', flags: MessageFlags.Ephemeral });
+        const member = await interaction.guild.members.fetch(userId).catch(() => null);
+        if (!member || !member.roles.cache.has(cfg.staff_role_id)) return interaction.reply({ content: '❌ You must have the staff role to change priority.', flags: MessageFlags.Ephemeral });
 
         const ticket = await getTicketByChannel(channel.id);
         if (!ticket) return interaction.reply({ content: '❌ No ticket found for this channel.', flags: MessageFlags.Ephemeral });
+        if (ticket.status === 'closed') return interaction.reply({ content: '❌ This ticket is already closed.', flags: MessageFlags.Ephemeral });
 
         const selected = interaction.values[0];
-        await setPriority(ticket.id, selected);
+        const updated = await setPriority(ticket.id, selected);
+        if (!updated) return interaction.reply({ content: '❌ This ticket just closed.', flags: MessageFlags.Ephemeral });
 
         const messages = await channel.messages.fetch({ limit: 50 });
         const firstEmbedMsg = messages.reverse().find(m => m.embeds && m.embeds.length);
@@ -151,33 +182,36 @@ module.exports = {
 
       // Close
       if (interaction.isButton() && interaction.customId === 'ticket_close') {
-        const channel = interaction.channel;
+        const channel = await resolveChannel(interaction);
+        if (!channel) return interaction.reply({ content: '❌ Cannot see this channel — try again.', flags: MessageFlags.Ephemeral });
         const guildId = interaction.guildId;
         const userId = interaction.user.id;
         const cfg = await getConfig(guildId);
         if (!cfg || !cfg.staff_role_id) return interaction.reply({ content: '❌ Ticket system not configured properly.', flags: MessageFlags.Ephemeral });
 
-        const member = await interaction.guild.members.fetch(userId);
+        const member = await interaction.guild.members.fetch(userId).catch(() => null);
         const ticket = await getTicketByChannel(channel.id);
         if (!ticket) return interaction.reply({ content: '❌ No ticket found for this channel.', flags: MessageFlags.Ephemeral });
+        if (ticket.status === 'closed') return interaction.reply({ content: '❌ This ticket is already closed.', flags: MessageFlags.Ephemeral });
 
-        const isStaff = member.roles.cache.has(cfg.staff_role_id);
+        const isStaff = !!member && member.roles.cache.has(cfg.staff_role_id);
         const isCreator = ticket.user_id === userId;
         if (!isStaff && !isCreator) return interaction.reply({ content: '❌ Only staff or the ticket creator can close this ticket.', flags: MessageFlags.Ephemeral });
 
-        const fetched = await channel.messages.fetch({ limit: 100 });
-        const msgs = Array.from(fetched.values()).reverse();
-        const lines = msgs.map(m => `${new Date(m.createdTimestamp).toISOString()} | ${m.author.tag}: ${m.content.replace(/\n/g, ' ')}`);
-        const transcript = lines.join('\n');
+        const fetched = await channel.messages.fetch({ limit: 100 }).catch(() => null);
+        const msgs = fetched ? Array.from(fetched.values()).reverse() : [];
+        const lines = msgs.map(m => `${new Date(m.createdTimestamp).toISOString()} | ${m.author?.tag || 'unknown'}: ${(m.content || '[embed/attachment]').replace(/\n/g, ' ')}`);
+        const transcript = lines.join('\n').slice(0, 7_000_000);
 
         await saveTranscript(ticket.id, transcript);
-        await closeTicket(ticket.id);
+        const closed = await closeTicket(ticket.id);
+        if (!closed) return interaction.reply({ content: '❌ This ticket just closed.', flags: MessageFlags.Ephemeral });
 
         if (cfg.dm_close) {
           const creator = await interaction.client.users.fetch(ticket.user_id).catch(() => null);
           if (creator) {
             await creator.send(
-              `🗑️ Your ticket in **${interaction.guild.name}** was closed by <@${userId}>. Open a new one if you still need help.`
+              `🗑️ Your ticket in **${interaction.guild.name}** was closed by ${interaction.user.tag}. Open a new one if you still need help.`
             ).catch(() => {});
           }
         }

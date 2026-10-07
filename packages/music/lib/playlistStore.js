@@ -34,8 +34,8 @@ async function dbGet(userId) {
 async function dbSet(userId, songs) {
   await pool.query(
     `INSERT INTO user_playlists (user_id, songs, updated_at)
-     VALUES ($1, $2, NOW())
-     ON CONFLICT (user_id) DO UPDATE SET songs = $2, updated_at = NOW()`,
+     VALUES ($1, $2::jsonb, NOW())
+     ON CONFLICT (user_id) DO UPDATE SET songs = $2::jsonb, updated_at = NOW()`,
     [userId, JSON.stringify(songs)]
   );
 }
@@ -55,6 +55,7 @@ async function addToPlaylist(userId, song) {
   } catch {
     const all = loadAll();
     songs = all[userId] || [];
+    if (songs.length >= MAX_SONGS) return -1;
     songs.push(song);
     saveAll({ ...all, [userId]: songs });
     return songs.length;
@@ -87,7 +88,9 @@ async function removeFromPlaylist(userId, index) {
       const all = loadAll();
       saveAll({ ...all, [userId]: songs });
     }
-  } catch {}
+  } catch {
+    return false;
+  }
   return true;
 }
 

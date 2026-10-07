@@ -1,6 +1,8 @@
-require('dotenv').config();
 const path = require('path');
-const { Client, GatewayIntentBits, MessageFlags } = require('discord.js');
+// Load this bot's own .env first — cwd is the repo root when run via workspaces.
+require('dotenv').config({ path: path.join(__dirname, '.env') });
+require('dotenv').config();
+const { Client, GatewayIntentBits, MessageFlags, Events } = require('discord.js');
 
 const { loadCommands, loadEvents } = require('@dominyx/core');
 const { startAutoClose } = require('./lib/autoClose');
@@ -15,7 +17,10 @@ const client = new Client({
 
 loadCommands(client, path.join(__dirname, 'commands'));
 loadEvents(client, path.join(__dirname, 'events'));
-startAutoClose(client);
+
+// Sweeper starts only after login: running it logged-out would see an empty
+// guild cache and mismark tickets.
+client.once(Events.ClientReady, () => startAutoClose(client));
 
 client.on('interactionCreate', async (interaction) => {
   if (!interaction.isChatInputCommand()) return;
@@ -32,4 +37,7 @@ client.on('interactionCreate', async (interaction) => {
   }
 });
 
-client.login(process.env.BOT_TOKEN);
+client.login(process.env.BOT_TOKEN).catch((err) => {
+  console.error('❌ Login failed (bad BOT_TOKEN?):', err.message);
+  process.exit(1);
+});

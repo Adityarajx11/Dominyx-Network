@@ -52,6 +52,9 @@ module.exports = {
 
     if (sub === 'role') {
       const level = interaction.options.getInteger('level');
+      if (!Number.isInteger(level) || level < 1 || level > 100) {
+        return interaction.reply({ content: '❌ Level must be 1–100.', flags: MessageFlags.Ephemeral });
+      }
       const role = interaction.options.getRole('role');
       await addLevelRole(guildId, level, role.id);
 

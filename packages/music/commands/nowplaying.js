@@ -7,7 +7,12 @@ module.exports = {
     .setDescription('Show the currently playing song'),
 
   async execute(interaction) {
-    const player = getManager().getPlayer(interaction.guild.id);
+    let player;
+    try {
+      player = getManager()?.getPlayer(interaction.guild.id);
+    } catch {
+      player = null;
+    }
     if (!player || !player.queue.current) {
       return interaction.reply({ content: '📭 Nothing is playing.', flags: MessageFlags.Ephemeral });
     }
@@ -15,11 +20,11 @@ module.exports = {
     const embed = new EmbedBuilder()
       .setColor(0x5865F2)
       .setTitle('🎵 Now Playing')
-      .setDescription(`**${track.info.title}**`)
+      .setDescription(`**${track.info?.title || 'Unknown'}**`)
       .addFields(
-        { name: 'Requested by', value: `${track.requester}`, inline: true },
-        { name: 'Loop', value: player.repeatMode, inline: true },
-        { name: 'Volume', value: `${player.volume}%`, inline: true },
+        { name: 'Requested by', value: `${track.requester || 'someone'}`, inline: true },
+        { name: 'Loop', value: String(player.repeatMode ?? 'off'), inline: true },
+        { name: 'Volume', value: `${player.volume ?? 100}%`, inline: true },
       );
     return interaction.reply({ embeds: [embed] });
   },

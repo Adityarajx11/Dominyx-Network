@@ -38,11 +38,17 @@ module.exports = {
         .setDescription('Show current ping configuration')),
 
   async execute(interaction) {
+    if (!interaction.guild) {
+      return interaction.reply({ content: '❌ Server-only command.', flags: MessageFlags.Ephemeral });
+    }
     const sub = interaction.options.getSubcommand();
     const guildId = interaction.guild.id;
 
     if (sub === 'youtube') {
       const channelId = interaction.options.getString('channel_id');
+      if (!/^UC[\w-]{22}$/.test(channelId)) {
+        return interaction.reply({ content: '❌ That doesn\u2019t look like a YouTube channel ID — it starts with `UC` and is 24 characters. Copy it from the channel URL.', flags: MessageFlags.Ephemeral });
+      }
       const alertChannel = interaction.options.getChannel('alert_channel');
       await updatePingSettings(guildId, {
         youtube_channel_id: channelId,

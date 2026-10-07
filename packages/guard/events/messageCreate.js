@@ -75,11 +75,11 @@ module.exports = {
   async execute(message, client) {
     try {
       if (!message.guild || message.author.bot) return;
-      // Staff and moderators are exempt.
-      if (message.member?.permissions?.has?.('ManageMessages')) return;
+      // Staff and moderators are exempt (fetch member when uncached).
+      const member = message.member ?? await message.guild.members.fetch(message.author.id).catch(() => null);
+      if (member?.permissions?.has?.('ManageMessages')) return;
 
-      const settings = await getGuardSettings(message.guild.id).catch(() => null);
-      if (!settings) return;
+      const settings = (await getGuardSettings(message.guild.id).catch(() => null)) ?? {};
       const content = message.content || '';
 
       // Spam: N messages inside M seconds.
@@ -97,7 +97,11 @@ module.exports = {
           const toDelete = await message.channel.messages.fetch({ limit: Math.min(list.length, 10) }).catch(() => null);
           if (toDelete) {
             const mine = toDelete.filter((m) => m.author.id === message.author.id);
-            await message.channel.bulkDelete(mine, true).catch(() => message.delete().catch(() => {}));
+            if (typeof message.channel.bulkDelete === 'function') {
+              await message.channel.bulkDelete(mine, true).catch(() => message.delete().catch(() => {}));
+            } else {
+              await message.delete().catch(() => {});
+            }
           }
           if (muted) await message.channel.send(`${message.author} was muted for spamming.`).catch(() => null);
           return;
@@ -143,8 +147,11 @@ module.exports = {
       // Custom bad words (whole-word match, case-insensitive).
       if (settings.automod_words) {
         const words = Array.isArray(settings.bad_words) ? settings.bad_words : [];
-        const lower = content.toLowerCase();
-        const hit = words.find((w) => w && lower.includes(String(w).toLowerCase()));
+        const hit = words.find((w) => {
+          if (!w) return false;
+          const esc = String(w).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+          return new RegExp(`\\b${esc}\\b`, 'i').test(content);
+        });
         if (hit) {
           await warnAndDelete(message, 'that word isn\u2019t allowed here.');
           return;

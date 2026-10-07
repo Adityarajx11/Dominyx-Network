@@ -20,35 +20,59 @@ module.exports = {
 
     await interaction.deferReply();
 
-    // Gate: check if Lavalink node is connected; wait up to 5 seconds if not
-    const node = getManager().nodeManager.nodes.get('main');
-    if (!node || !node.connected) {
+    // Gate: if the Lavalink node is down, kick off a reconnect and wait briefly.
+    // Re-fetch the node every tick: the manager may have replaced the object.
+    const getNode = () => {
+      try { return getManager()?.nodeManager?.nodes?.get('main'); } catch { return null; }
+    };
+    let node = getNode();
+    if (!node?.connected) {
       await interaction.editReply('🔄 Reconnecting to the music server, one sec…');
+      try { await node?.connect?.(); } catch {}
       const reconnected = await new Promise((resolve) => {
         const check = setInterval(() => {
+          node = getNode();
           if (node?.connected) {
             clearInterval(check);
             resolve(true);
           }
         }, 500);
-        setTimeout(() => { clearInterval(check); resolve(false); }, 5000);
+        setTimeout(() => { clearInterval(check); resolve(false); }, 8000);
       });
       if (!reconnected) {
-        return interaction.editReply('⚠️ Music server is still reconnecting — try again in a few seconds.');
+        return interaction.editReply('⚠️ Music server is still down — try again in a bit. If it persists, the Lavalink host itself is offline.');
       }
     }
 
     const settings = await getMusicSettings(interaction.guild.id);
     const query = interaction.options.getString('song');
-    const result = await searchTrack(query, interaction.user.tag);
+
+    let result;
+    try {
+      result = await searchTrack(query, interaction.user.tag);
+    } catch (err) {
+      const msg = /No Lavalink node|not initialized/i.test(err.message)
+        ? '🔌 Music server is unreachable — try again in a bit. If it persists, the Lavalink host is offline.'
+        : `⚠️ Search failed: ${err.message}`;
+      return interaction.editReply(msg);
+    }
 
     if (!result) {
       return interaction.editReply('❌ Couldn\'t find that song.');
     }
     const { track, tracks, playlistName, isPlaylist } = result;
 
-    const player = getOrCreatePlayer(interaction, { volume: settings.defaultVolume });
-    if (!player.connected) await player.connect();
+    let player;
+    try {
+      player = getOrCreatePlayer(interaction, { volume: settings.defaultVolume });
+      if (!player.connected) await player.connect();
+    } catch (err) {
+      try { await player?.destroy?.().catch(() => {}); } catch {}
+      const msg = /voice channel/i.test(err.message)
+        ? '🚫 Join a voice channel first.'
+        : '🔌 Could not join voice (permissions? channel full?). I cleaned up — try `/play` again.';
+      return interaction.editReply(msg);
+    }
 
     if (player.queue.tracks.length >= settings.maxQueue) {
       return interaction.editReply(`🚫 Queue is full (max ${settings.maxQueue} songs). Use \`/skip\` or \`/stop\` to make room.`);
@@ -61,7 +85,11 @@ module.exports = {
     for (const t of toAdd) player.queue.add(t);
 
     if (!player.playing && !player.paused) {
-      await player.play();
+      try {
+        await player.play();
+      } catch (err) {
+        return interaction.editReply(`❌ Couldn't start playback: ${err.message || err}`);
+      }
       // No "Loading..." spam — trackStart posts the now-playing card.
       // Just clear the deferred reply; errors still arrive via followUp.
       await interaction.deleteReply().catch(() => {});

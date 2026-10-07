@@ -13,8 +13,9 @@ async function sweepOnce(client) {
 
   for (const ticket of stale) {
     try {
-      const guild = client.guilds.cache.get(ticket.guild_id);
-      if (!guild) { await closeTicket(ticket.id).catch(() => {}); continue; }
+      const guild = client.guilds.cache.get(ticket.guild_id)
+        ?? await client.guilds.fetch(ticket.guild_id).catch(() => null);
+      if (!guild) continue; // guild gone from cache AND unreachable — retry next sweep, never mark closed blindly.
       const channel = await guild.channels.fetch(ticket.channel_id).catch(() => null);
 
       await closeTicket(ticket.id);
@@ -28,9 +29,9 @@ async function sweepOnce(client) {
         }
       }
 
-      if (ticket.log_channel_id && channel) {
+      if (ticket.log_channel_id) {
         const logChannel = await guild.channels.fetch(ticket.log_channel_id).catch(() => null);
-        if (logChannel) {
+        if (logChannel?.isTextBased?.()) {
           const embed = new EmbedBuilder()
             .setColor(0xDC143C)
             .setTitle('Ticket Auto-Closed (inactive)')

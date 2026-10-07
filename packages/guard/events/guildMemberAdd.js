@@ -15,14 +15,25 @@ function pruneJoins(guildId, windowMs) {
 
 async function punishJoiner(client, guild, member, action, reason) {
   const tag = member.user.tag;
+  let ok = false;
   if (action === 'timeout') {
     try {
-      await member.timeout(10 * 60 * 1000, `Guard: ${reason}`).catch(() => null);
+      if (member.moderatable) {
+        await member.timeout(10 * 60 * 1000, `Guard: ${reason}`);
+        ok = true;
+      }
     } catch {}
   } else {
     try {
-      await member.kick(`Guard: ${reason}`).catch(() => null);
+      if (member.kickable) {
+        await member.kick(`Guard: ${reason}`);
+        ok = true;
+      }
     } catch {}
+  }
+  if (!ok) {
+    console.warn(`Raid punish failed for ${tag}: missing permissions or hierarchy.`);
+    return;
   }
   const caseNumber = await createCase({
     guildId: guild.id,
@@ -49,12 +60,23 @@ module.exports = {
     try {
       const guild = member.guild;
       if (!guild) return;
-      const settings = await getGuardSettings(guild.id).catch(() => null);
-      if (!settings) return;
+      const settings = (await getGuardSettings(guild.id).catch(() => null)) ?? {};
+
+      // Count every join (bots included) toward burst detection first.
+      const needEarly = Number.isInteger(settings.raid_joins) ? settings.raid_joins : 5;
+      const windowEarly = (Number.isInteger(settings.raid_seconds) ? settings.raid_seconds : 10) * 1000;
+      const burstList = pruneJoins(guild.id, windowEarly);
+      burstList.push(Date.now());
 
       // Flag bot adds so owners see who invited them.
       if (member.user.bot) {
         await alertModlog(client, guild.id, 'Bot added', `**${member.user.tag}** (<@${member.id}>) joined. Remove it if you didn't invite it.`).catch(() => {});
+        if (settings.raid_enabled && burstList.length >= needEarly) {
+          await alertModlog(client, guild.id, 'Raid detected', `${burstList.length} rapid joins (bots included) — watch this server.`).catch(() => {});
+          joins.set(guild.id, []);
+        } else {
+          joins.set(guild.id, burstList);
+        }
         return;
       }
 
@@ -69,7 +91,7 @@ module.exports = {
         }
       }
 
-      // Raid: join burst detection.
+      // Raid: join burst detection (this join was already recorded above).
       if (!settings.raid_enabled) return;
       const need = Number.isInteger(settings.raid_joins) ? settings.raid_joins : 5;
       const windowSec = Number.isInteger(settings.raid_seconds) ? settings.raid_seconds : 10;
@@ -83,8 +105,6 @@ module.exports = {
       }
 
       const list = pruneJoins(guild.id, windowSec * 1000);
-      list.push(now);
-      joins.set(guild.id, list);
       if (list.length >= need) {
         raidUntil.set(guild.id, now + cooldownMin * 60 * 1000);
         joins.set(guild.id, []);

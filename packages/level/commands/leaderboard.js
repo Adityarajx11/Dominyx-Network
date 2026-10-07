@@ -23,7 +23,7 @@ module.exports = {
       .setColor(0x3498DB)
       .setTitle(`🏆 ${interaction.guild.name} Leaderboard`)
       .setDescription(lines.join('\n'))
-      .setThumbnail(interaction.guild.iconURL())
+      .setThumbnail(interaction.guild.iconURL() ?? undefined)
       .setFooter({ text: 'Dominyx • Leaderboard', iconURL: interaction.client.user.displayAvatarURL() })
       .setTimestamp();
 

@@ -24,17 +24,18 @@ function formatDuration(ms) {
 }
 
 function buildNowPlayingEmbed(track, player) {
+  const title = track?.info?.title || 'Unknown track';
   return new EmbedBuilder()
     .setColor(0xED4245)
     .setTitle('🎵 Now Playing')
-    .setDescription(`**${track.info.title}**`)
-    .setThumbnail(track.info.artworkUrl || null)
+    .setDescription(`**${title}**`)
+    .setThumbnail(track?.info?.artworkUrl || null)
     .addFields(
-      { name: 'Duration', value: formatDuration(track.info.duration), inline: true },
-      { name: 'Artist', value: track.info.author || 'Unknown', inline: true },
-      { name: 'Requested by', value: `${track.requester}`, inline: true },
-      { name: 'Volume', value: `${player.volume}%`, inline: true },
-      { name: 'Loop', value: player.repeatMode, inline: true },
+      { name: 'Duration', value: formatDuration(track?.info?.duration), inline: true },
+      { name: 'Artist', value: track?.info?.author || 'Unknown', inline: true },
+      { name: 'Requested by', value: `${track?.requester || 'someone'}`, inline: true },
+      { name: 'Volume', value: `${player?.volume ?? 100}%`, inline: true },
+      { name: 'Loop', value: String(player?.repeatMode ?? 'off'), inline: true },
     );
 }
 
@@ -61,7 +62,12 @@ function buildControlRow(player) {
 }
 
 async function handleMusicButton(interaction) {
-  const player = getManager().getPlayer(interaction.guild.id);
+  let player;
+  try {
+    player = getManager()?.getPlayer(interaction.guild.id);
+  } catch {
+    player = null;
+  }
 
   if (!player) {
     return interaction.reply({ content: '🚫 Nothing is playing anymore.', flags: MessageFlags.Ephemeral });
@@ -71,81 +77,92 @@ async function handleMusicButton(interaction) {
   const track = player.queue.current;
 
   async function refresh() {
-    return interaction.update({
-      embeds: track ? [buildNowPlayingEmbed(track, player)] : [],
-      components: buildControlRow(player),
-    });
-  }
-
-  if (id === 'music_pauseresume') {
-    if (player.paused) await player.resume();
-    else await player.pause();
-    return refresh();
-  }
-
-  if (id === 'music_skip') {
-    if (!track) return interaction.reply({ content: '🚫 Nothing to skip.', flags: MessageFlags.Ephemeral });
     try {
-      await player.skip(0, false);
-    } catch (err) {
-      return interaction.reply({ content: `❌ Skip failed: ${err.message || err}`, flags: MessageFlags.Ephemeral });
+      return await interaction.update({
+        embeds: track ? [buildNowPlayingEmbed(track, player)] : [],
+        components: buildControlRow(player),
+      });
+    } catch {
+      return interaction.followUp({ content: '✅ Done.', flags: MessageFlags.Ephemeral }).catch(() => {});
     }
-    return interaction.reply({ content: '⏭️ Skipped.', flags: MessageFlags.Ephemeral });
   }
 
-  if (id === 'music_previous') {
-    const prev = player.queue.previous?.[0];
-    if (!prev) return interaction.reply({ content: '🚫 No previous song.', flags: MessageFlags.Ephemeral });
-    player.queue.tracks.unshift(prev);
-    await player.skip();
-    return interaction.reply({ content: '⏮️ Playing previous song.', flags: MessageFlags.Ephemeral });
-  }
-
-  if (id === 'music_stop') {
-    player.queue.tracks.splice(0, player.queue.tracks.length);
-    await player.stopPlaying(true);
-    return interaction.update({ content: '⏹️ Playback stopped.', embeds: [], components: [] });
-  }
-
-  if (id === 'music_shuffle') {
-    if (player.queue.tracks.length < 2) {
-      return interaction.reply({ content: '🚫 Not enough songs to shuffle.', flags: MessageFlags.Ephemeral });
+  try {
+    if (id === 'music_pauseresume') {
+      if (player.paused) await player.resume();
+      else await player.pause();
+      return refresh();
     }
-    await player.queue.shuffle();
-    return interaction.reply({ content: '🔀 Queue shuffled.', flags: MessageFlags.Ephemeral });
-  }
 
-  if (id === 'music_loop') {
-    const order = ['off', 'track', 'queue'];
-    const next = order[(order.indexOf(player.repeatMode) + 1) % order.length];
-    player.setRepeatMode(next);
-    return refresh();
-  }
+    if (id === 'music_skip') {
+      if (!track) return interaction.reply({ content: '🚫 Nothing to skip.', flags: MessageFlags.Ephemeral });
+      try {
+        await player.skip(0, false);
+      } catch (err) {
+        return interaction.reply({ content: `❌ Skip failed: ${err.message || err}`, flags: MessageFlags.Ephemeral });
+      }
+      return interaction.reply({ content: '⏭️ Skipped.', flags: MessageFlags.Ephemeral });
+    }
 
-  if (id === 'music_volup') {
-    const newVol = Math.min(200, player.volume + 10);
-    await player.setVolume(newVol);
-    return refresh();
-  }
+    if (id === 'music_previous') {
+      const rawPrev = player.queue.previous;
+      const prev = Array.isArray(rawPrev) ? rawPrev[0] : rawPrev;
+      if (!prev) return interaction.reply({ content: '🚫 No previous song.', flags: MessageFlags.Ephemeral });
+      player.queue.tracks.unshift(prev);
+      await player.skip();
+      return interaction.reply({ content: '⏮️ Playing previous song.', flags: MessageFlags.Ephemeral });
+    }
 
-  if (id === 'music_voldown') {
-    const newVol = Math.max(0, player.volume - 10);
-    await player.setVolume(newVol);
-    return refresh();
-  }
+    if (id === 'music_stop') {
+      player.queue.tracks.splice(0, player.queue.tracks.length);
+      await player.stopPlaying(true);
+      return interaction.update({ content: '⏹️ Playback stopped.', embeds: [], components: [] });
+    }
 
-  if (id === 'music_seekforward') {
-    if (!track) return interaction.reply({ content: '🚫 Nothing playing.', flags: MessageFlags.Ephemeral });
-    const newPos = Math.min(track.info.duration || Infinity, (player.position || 0) + 10000);
-    await player.seek(newPos);
-    return interaction.reply({ content: '⏩ Skipped forward 10s.', flags: MessageFlags.Ephemeral });
-  }
+    if (id === 'music_shuffle') {
+      if (player.queue.tracks.length < 2) {
+        return interaction.reply({ content: '🚫 Not enough songs to shuffle.', flags: MessageFlags.Ephemeral });
+      }
+      await player.queue.shuffle();
+      return interaction.reply({ content: '🔀 Queue shuffled.', flags: MessageFlags.Ephemeral });
+    }
 
-  if (id === 'music_seekback') {
-    if (!track) return interaction.reply({ content: '🚫 Nothing playing.', flags: MessageFlags.Ephemeral });
-    const newPos = Math.max(0, (player.position || 0) - 10000);
-    await player.seek(newPos);
-    return interaction.reply({ content: '⏪ Rewound 10s.', flags: MessageFlags.Ephemeral });
+    if (id === 'music_loop') {
+      const order = ['off', 'track', 'queue'];
+      const next = order[(order.indexOf(player.repeatMode) + 1) % order.length];
+      player.setRepeatMode(next);
+      return refresh();
+    }
+
+    if (id === 'music_volup') {
+      const newVol = Math.min(200, player.volume + 10);
+      await player.setVolume(newVol);
+      return refresh();
+    }
+
+    if (id === 'music_voldown') {
+      const newVol = Math.max(0, player.volume - 10);
+      await player.setVolume(newVol);
+      return refresh();
+    }
+
+    if (id === 'music_seekforward' || id === 'music_seekback') {
+      if (!track) return interaction.reply({ content: '🚫 Nothing playing.', flags: MessageFlags.Ephemeral });
+      if (!track.info?.isSeekable || !track.info?.duration) {
+        return interaction.reply({ content: '🚫 Can\u2019t seek in this stream (live/unseekable).', flags: MessageFlags.Ephemeral });
+      }
+      const delta = id === 'music_seekforward' ? 10000 : -10000;
+      const newPos = Math.min(track.info.duration, Math.max(0, (player.position || 0) + delta));
+      await player.seek(newPos);
+      return interaction.reply({ content: id === 'music_seekforward' ? '⏩ Skipped forward 10s.' : '⏪ Rewound 10s.', flags: MessageFlags.Ephemeral });
+    }
+
+    return interaction.reply({ content: '❓ Unknown button.', flags: MessageFlags.Ephemeral });
+  } catch (err) {
+    console.error('Music button error:', err.message || err);
+    const errMsg = { content: '⚠️ That didn\u2019t work — try again.', flags: MessageFlags.Ephemeral };
+    if (interaction.replied || interaction.deferred) return interaction.followUp(errMsg).catch(() => {});
+    return interaction.reply(errMsg).catch(() => {});
   }
 }
 

@@ -16,7 +16,7 @@ module.exports = {
     const roleStack = config?.role_stack ?? true;
 
     if (ignoredChannels.includes(message.channel.id)) return;
-    if (ignoredRoles.length > 0 && message.member?.roles?.cache?.hasAny?.(...ignoredRoles)) return;
+    if (ignoredRoles.length > 0 && ignoredRoles.some((id) => message.member?.roles?.cache?.has(id))) return;
 
     if (isOnCooldown(message.guild.id, message.author.id, cooldownMs)) return;
 
@@ -33,9 +33,10 @@ module.exports = {
       const template = config?.message_template || '🎉 {user} leveled up to **Level {level}**!';
       const text = template.replaceAll('{user}', `${message.author}`).replaceAll('{level}', `${level}`);
 
-      const targetChannel = config?.channel_id
-        ? message.guild.channels.cache.get(config.channel_id)
-        : message.channel;
+      const targetChannel = (config?.channel_id
+        ? await message.guild.channels.fetch(config.channel_id).catch(() => null)
+        : null) ?? message.channel;
+      if (!targetChannel?.isTextBased?.()) return;
 
       const embed = new EmbedBuilder()
         .setColor(0x2ECC71)
@@ -53,16 +54,16 @@ module.exports = {
       if (roleToGrant) {
         const role = message.guild.roles.cache.get(roleToGrant.role_id);
         const member = message.member;
-        if (role && member && !member.roles.cache.has(role.id)) {
-          // When stacking is off, remove older level roles first.
-          if (!roleStack) {
-            const otherIds = levelRoles
-              .map(r => r.role_id)
-              .filter(id => id !== role.id && member.roles.cache.has(id));
-            for (const id of otherIds) {
-              await member.roles.remove(id).catch(() => {});
-            }
+        // When stacking is off, old level roles go even if the new one is held.
+        if (role && member && !roleStack) {
+          const otherIds = levelRoles
+            .map(r => r.role_id)
+            .filter(id => id !== role.id && member.roles.cache.has(id));
+          for (const id of otherIds) {
+            await member.roles.remove(id).catch(() => {});
           }
+        }
+        if (role && member && !member.roles.cache.has(role.id)) {
           member.roles.add(role).catch(() => {});
         }
       }

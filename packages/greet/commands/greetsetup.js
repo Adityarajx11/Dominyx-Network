@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, PermissionFlagsBits, ChannelType, EmbedBuilder } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, ChannelType, EmbedBuilder, MessageFlags } = require('discord.js');
 const { getGreetSettings, updateGreetSettings } = require('../lib/settings');
 
 module.exports = {
@@ -31,10 +31,45 @@ module.exports = {
         .addBooleanOption(opt =>
           opt.setName('enabled').setDescription('true = card on, false = text only').setRequired(true)))
     .addSubcommand(sub =>
+      sub.setName('theme')
+        .setDescription('Card color theme')
+        .addStringOption(opt =>
+          opt.setName('name')
+            .setDescription('crimson, gold, violet, or ocean')
+            .setRequired(true)
+            .addChoices(
+              { name: 'Crimson', value: 'crimson' },
+              { name: 'Gold', value: 'gold' },
+              { name: 'Violet', value: 'violet' },
+              { name: 'Ocean', value: 'ocean' })))
+    .addSubcommand(sub =>
+      sub.setName('goodbye')
+        .setDescription('Farewell channel + message (empty message = keep old)')
+        .addChannelOption(opt =>
+          opt.setName('channel')
+            .setDescription('Goodbye posts go here (omit to keep)')
+            .addChannelTypes(ChannelType.GuildText))
+        .addStringOption(opt =>
+          opt.setName('message')
+            .setDescription('Use {user}, {server}, {membercount}')))
+    .addSubcommand(sub =>
+      sub.setName('dm')
+        .setDescription('Also DM the welcome text to new members')
+        .addBooleanOption(opt =>
+          opt.setName('enabled').setDescription('true = DM on').setRequired(true)))
+    .addSubcommand(sub =>
+      sub.setName('bots')
+        .setDescription('Also greet bot joins with messages/cards')
+        .addBooleanOption(opt =>
+          opt.setName('enabled').setDescription('true = greet bots too').setRequired(true)))
+    .addSubcommand(sub =>
       sub.setName('show')
         .setDescription('Show current welcome configuration')),
 
   async execute(interaction) {
+    if (!interaction.guild) {
+      return interaction.reply({ content: '❌ Server-only command.', flags: MessageFlags.Ephemeral });
+    }
     const sub = interaction.options.getSubcommand();
     const guildId = interaction.guild.id;
 
@@ -92,6 +127,65 @@ module.exports = {
       });
     }
 
+    if (sub === 'theme') {
+      const name = interaction.options.getString('name');
+      await updateGreetSettings(guildId, { cardTheme: name });
+      return interaction.reply({
+        embeds: [new EmbedBuilder()
+          .setColor(0xDC143C)
+          .setTitle('✅ Card Theme Set')
+          .setDescription(`Welcome cards now use **${name}**.`)
+          .setFooter(footer)
+          .setTimestamp()],
+      });
+    }
+
+    if (sub === 'goodbye') {
+      const channel = interaction.options.getChannel('channel');
+      const message = interaction.options.getString('message');
+      const patch = {};
+      if (channel) patch.goodbyeChannelId = channel.id;
+      if (message) patch.goodbyeMessage = message;
+      if (Object.keys(patch).length === 0) {
+        return interaction.reply({ content: '❌ Give a channel, a message, or both.', flags: MessageFlags.Ephemeral });
+      }
+      await updateGreetSettings(guildId, patch);
+      return interaction.reply({
+        embeds: [new EmbedBuilder()
+          .setColor(0xDC143C)
+          .setTitle('✅ Goodbye Set')
+          .setDescription(`Farewells ${channel ? `post in ${channel}` : 'keep their channel'}${message ? ' with a new message' : ''}.`)
+          .setFooter(footer)
+          .setTimestamp()],
+      });
+    }
+
+    if (sub === 'dm') {
+      const enabled = interaction.options.getBoolean('enabled');
+      await updateGreetSettings(guildId, { dmWelcome: enabled });
+      return interaction.reply({
+        embeds: [new EmbedBuilder()
+          .setColor(0xDC143C)
+          .setTitle(enabled ? '✅ DM Welcome On' : '☑️ DM Welcome Off')
+          .setDescription(enabled ? 'New members also get the welcome text in DMs.' : 'No more welcome DMs.')
+          .setFooter(footer)
+          .setTimestamp()],
+      });
+    }
+
+    if (sub === 'bots') {
+      const enabled = interaction.options.getBoolean('enabled');
+      await updateGreetSettings(guildId, { greetBots: enabled });
+      return interaction.reply({
+        embeds: [new EmbedBuilder()
+          .setColor(0xDC143C)
+          .setTitle(enabled ? '✅ Bot Greetings On' : '☑️ Bot Greetings Off')
+          .setDescription(enabled ? 'Bot joins get messages and cards too (auto-role always applies).' : 'Bots only get the auto-role.')
+          .setFooter(footer)
+          .setTimestamp()],
+      });
+    }
+
     if (sub === 'show') {
       const settings = await getGreetSettings(guildId);
       const cardText = settings.cardEnabled === false ? 'Off' : 'On';
@@ -103,7 +197,11 @@ module.exports = {
             { name: 'Welcome Channel', value: settings.welcomeChannelId ? `<#${settings.welcomeChannelId}>` : 'Not set' },
             { name: 'Message Template', value: settings.welcomeMessage || 'Default' },
             { name: 'Auto-Role', value: settings.autoRoleId ? `<@&${settings.autoRoleId}>` : 'None' },
-            { name: 'Card', value: cardText },
+            { name: 'Card', value: `${cardText} (${settings.cardTheme || 'crimson'})` },
+            { name: 'Goodbye Channel', value: settings.goodbyeChannelId ? `<#${settings.goodbyeChannelId}>` : 'Not set' },
+            { name: 'Goodbye Message', value: settings.goodbyeMessage || 'Default' },
+            { name: 'DM Welcome', value: settings.dmWelcome ? 'On' : 'Off' },
+            { name: 'Greet Bots', value: settings.greetBots ? 'On' : 'Off' },
           )
           .setFooter(footer)
           .setTimestamp()],

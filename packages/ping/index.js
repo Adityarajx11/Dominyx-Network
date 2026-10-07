@@ -1,5 +1,7 @@
-require('dotenv').config();
 const path = require('path');
+// Load this bot's own .env first — cwd is the repo root when run via workspaces.
+require('dotenv').config({ path: path.join(__dirname, '.env') });
+require('dotenv').config();
 const { Client, GatewayIntentBits, MessageFlags } = require('discord.js');
 
 const { loadCommands, loadEvents } = require('@dominyx/core');
@@ -28,4 +30,7 @@ client.on('interactionCreate', async (interaction) => {
   }
 });
 
-client.login(process.env.BOT_TOKEN);
+client.login(process.env.BOT_TOKEN).catch((err) => {
+  console.error('❌ Login failed (bad BOT_TOKEN?):', err.message);
+  process.exit(1);
+});

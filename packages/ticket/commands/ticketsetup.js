@@ -1,7 +1,7 @@
 const { SlashCommandBuilder, PermissionFlagsBits, ChannelType, EmbedBuilder, MessageFlags } = require('discord.js');
 const { getConfig, setConfig } = require('../lib/ticketStore');
 
-const FOOTER = { text: 'Dominyx • Tickets', iconURL: null };
+const FOOTER = { text: 'Dominyx • Tickets' };
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -65,6 +65,9 @@ module.exports = {
         .setDescription('View current ticket configuration')),
 
   async execute(interaction) {
+    if (!interaction.guild) {
+      return interaction.reply({ content: '❌ Server-only command.', flags: MessageFlags.Ephemeral });
+    }
     const sub = interaction.options.getSubcommand();
     const guildId = interaction.guild.id;
 
@@ -90,6 +93,9 @@ module.exports = {
 
     if (sub === 'maxtickets') {
       const num = interaction.options.getInteger('number');
+      if (!Number.isInteger(num) || num < 1 || num > 10) {
+        return reply('❌ Pick 1–10 max tickets per user.');
+      }
       await setConfig(guildId, { max_tickets_per_user: num });
       return reply(`✅ Max tickets per user set to **${num}**.`);
     }
@@ -98,8 +104,18 @@ module.exports = {
       const label = interaction.options.getString('label');
       const emoji = interaction.options.getString('emoji') || null;
       const description = interaction.options.getString('description') || null;
+      if (label.length > 100 || (description && description.length > 100)) {
+        return reply('❌ Label and description must be 100 characters or less.');
+      }
       const cfg = await getConfig(guildId) || { categories: [] };
-      const categories = cfg.categories || [];
+      const raw = cfg.categories;
+      const categories = Array.isArray(raw) ? [...raw] : [];
+      if (categories.length >= 25) {
+        return reply('❌ Max 25 categories (Discord menu limit).');
+      }
+      if (categories.some((c) => c.label?.toLowerCase() === label.toLowerCase())) {
+        return reply(`❌ A category named **${label}** already exists.`);
+      }
       categories.push({ label, emoji, description });
       await setConfig(guildId, { categories });
       return reply(`✅ Added category **${label}**.`);

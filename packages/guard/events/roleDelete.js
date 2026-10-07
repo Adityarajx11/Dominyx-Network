@@ -18,7 +18,7 @@ module.exports = {
         const exec = await findExecutor(guild, AuditLogEvent.RoleDelete);
         let restored = 0;
         if (!settings || settings.nuke_rollback !== false) {
-          restored = await rollbackBurst(guild, client, guild.id);
+          restored = await rollbackBurst(guild, client, guild.id, 'role');
         }
         await alertModlog(
           client,

@@ -21,8 +21,9 @@ async function alertModlog(client, guildId, title, description) {
   try {
     const settings = await getGuardSettings(guildId).catch(() => null);
     if (!settings?.modlog_channel_id) return;
-    const channel = client.channels.cache.get(settings.modlog_channel_id);
-    if (!channel) return;
+    const channel = client.channels.cache.get(settings.modlog_channel_id)
+      ?? await client.channels.fetch(settings.modlog_channel_id).catch(() => null);
+    if (!channel?.isTextBased?.()) return;
     await channel.send(`🚨 **${title}**\n${description}`).catch(() => {});
   } catch {}
 }
@@ -43,7 +44,7 @@ async function rollbackChannel(guild, channel) {
     const overwrites = [];
     try {
       for (const ow of channel.permissionOverwrites.cache.values()) {
-        overwrites.push({ id: ow.id, allow: ow.allow.bitfield, deny: ow.deny.bitfield });
+        overwrites.push({ id: ow.id, allow: ow.allow.bitfield.toString(), deny: ow.deny.bitfield.toString() });
       }
     } catch {}
     const data = {
@@ -97,11 +98,11 @@ function stashSnapshot(guildId, entry) {
   stash.set(guildId, list);
 }
 
-// Roll back every stashed delete in the last 60s. Returns restored count.
-async function rollbackBurst(guild, client, guildId) {
+// Roll back stashed deletes of one kind in the last 60s. Returns restored count.
+async function rollbackBurst(guild, client, guildId, kind) {
   const now = Date.now();
-  const list = (stash.get(guildId) || []).filter((e) => now - e.at < 60000);
-  stash.set(guildId, []);
+  const list = (stash.get(guildId) || []).filter((e) => now - e.at < 60000 && (!kind || e.kind === kind));
+  stash.set(guildId, (stash.get(guildId) || []).filter((e) => now - e.at >= 60000 || (kind && e.kind !== kind)));
   let restored = 0;
   for (const entry of list) {
     try {
@@ -120,13 +121,16 @@ async function punishNuker(guild, executor, action) {
   if (!executor || executor.bot) return false;
   try {
     if (executor.id === guild.ownerId) return false;
+    const me = guild.members.me;
+    if (action === 'ban' && !me?.permissions?.has?.('BanMembers')) return false;
+    if (action !== 'ban' && !me?.permissions?.has?.('ModerateMembers')) return false;
     const member = await guild.members.fetch(executor.id).catch(() => null);
     if (!member) return false;
     if (!member.manageable) return false;
     if (action === 'ban') {
-      await member.ban({ reason: 'Guard anti-nuke: mass destruction detected' }).catch(() => null);
+      await member.ban({ reason: 'Guard anti-nuke: mass destruction detected' });
     } else {
-      await member.timeout(60 * 60 * 1000, 'Guard anti-nuke: mass destruction detected').catch(() => null);
+      await member.timeout(60 * 60 * 1000, 'Guard anti-nuke: mass destruction detected');
     }
     return true;
   } catch {

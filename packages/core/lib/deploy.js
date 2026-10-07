@@ -31,20 +31,22 @@ async function deployCommands(commandsDir) {
   const token = process.env.BOT_TOKEN;
   const clientId = process.env.CLIENT_ID;
   if (!token || !clientId) {
-    console.log('BOT_TOKEN or CLIENT_ID not set — skipping deployment.');
-    return;
+    throw new Error('BOT_TOKEN or CLIENT_ID not set — refusing to fake a deploy. Check the bot .env.');
   }
 
   const rest = new REST({ version: '10' }).setToken(token);
 
+  if (process.env.GUILD_ID) {
+    // Dev deploy: instant in one server.
+    console.log(`Deploying ${commands.length} slash command(s) to guild ${process.env.GUILD_ID}...`);
+    await rest.put(Routes.applicationGuildCommands(clientId, process.env.GUILD_ID), { body: commands });
+    console.log('✅ Guild commands deployed.');
+    return;
+  }
+
   console.log(`Deploying ${commands.length} slash command(s)...`);
   await rest.put(Routes.applicationCommands(clientId), { body: commands });
   console.log('✅ Global commands deployed.');
-
-  if (process.env.GUILD_ID) {
-    await rest.put(Routes.applicationGuildCommands(clientId, process.env.GUILD_ID), { body: [] });
-    console.log('🧹 Cleared guild-specific commands.');
-  }
 }
 
 module.exports = { deployCommands };

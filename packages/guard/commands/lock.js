@@ -15,13 +15,18 @@ module.exports = {
         .setDescription('Reason shown in the channel')),
 
   async execute(interaction) {
+    if (!interaction.guild) {
+      return interaction.reply({ content: '❌ Server-only command.', flags: MessageFlags.Ephemeral });
+    }
     const channel = interaction.options.getChannel('channel') || interaction.channel;
     const reason = interaction.options.getString('reason') || 'Locked by staff';
-    if (!channel?.isTextBased?.()) {
-      return interaction.reply({ content: '❌ That is not a text channel.', flags: MessageFlags.Ephemeral });
+    if (channel?.isThread?.() || channel?.type !== ChannelType.GuildText || typeof channel?.permissionOverwrites?.edit !== 'function') {
+      return interaction.reply({ content: '❌ Pick a normal text channel (not a thread).', flags: MessageFlags.Ephemeral });
     }
 
     const everyone = interaction.guild.roles.everyone;
+    // Confirm first: after the deny, the bot may itself lose send rights.
+    await channel.send(`🔒 **Channel locked** — ${reason}`).catch(() => {});
     try {
       await channel.permissionOverwrites.edit(everyone, { SendMessages: false }, { reason: `Guard /lock by ${interaction.user.tag}: ${reason}` });
     } catch {
@@ -36,7 +41,6 @@ module.exports = {
       }
     } catch {}
 
-    await channel.send(`🔒 **Channel locked** — ${reason}`).catch(() => {});
     return interaction.reply(`🔒 Locked ${channel}. Use \`/unlock\` to reopen it.`);
   },
 };

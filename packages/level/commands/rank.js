@@ -17,8 +17,8 @@ module.exports = {
     }
 
     const needed = xpForLevel(data.level);
-    const percent = Math.round((data.xp / needed) * 100);
-    const barLength = Math.round(percent / 10);
+    const percent = Math.max(0, Math.round((data.xp / needed) * 100));
+    const barLength = Math.min(10, Math.max(0, Math.round(percent / 10)));
     const bar = '█'.repeat(barLength) + '░'.repeat(10 - barLength);
 
     const embed = new EmbedBuilder()

@@ -1,6 +1,7 @@
 const { SlashCommandBuilder, EmbedBuilder, MessageFlags } = require('discord.js');
 const { getUserPlaylist, addToPlaylist, removeFromPlaylist, MAX_SONGS } = require('../lib/playlistStore');
 const { getOrCreatePlayer, searchTrack } = require('../lib/lavalink');
+const { getMusicSettings } = require('../lib/settings');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -30,7 +31,12 @@ module.exports = {
     if (sub === 'add') {
       await interaction.deferReply();
       const query = interaction.options.getString('song');
-      const result = await searchTrack(query, interaction.user.tag);
+      let result;
+      try {
+        result = await searchTrack(query, interaction.user.tag);
+      } catch (err) {
+        return interaction.editReply('🔌 Music server is unreachable — try again in a bit.');
+      }
       if (!result) return interaction.editReply('❌ Couldn\'t find that song.');
       const track = result.track;
 
@@ -62,7 +68,7 @@ module.exports = {
     }
 
     if (sub === 'play') {
-      const voiceChannel = interaction.member.voice.channel;
+      const voiceChannel = interaction.member?.voice?.channel;
       if (!voiceChannel) {
         return interaction.reply({ content: '🚫 Join a voice channel first.', flags: MessageFlags.Ephemeral });
       }
@@ -73,20 +79,34 @@ module.exports = {
 
       await interaction.deferReply();
 
-      const player = getOrCreatePlayer(interaction);
-      if (!player.connected) await player.connect();
+      const settings = await getMusicSettings(interaction.guild.id).catch(() => ({ maxQueue: 50 }));
+      let player;
+      try {
+        player = getOrCreatePlayer(interaction, { volume: settings.defaultVolume });
+        if (!player.connected) await player.connect();
+      } catch {
+        try { await player?.destroy?.().catch(() => {}); } catch {}
+        return interaction.editReply('🔌 Could not join voice. I cleaned up — try again.');
+      }
 
+      const room = Math.max((settings.maxQueue ?? 50) - player.queue.tracks.length, 0);
       let added = 0;
-      for (const song of list) {
-        const result = await searchTrack(song.url || song.title, interaction.user.tag);
-        if (result) {
-          player.queue.add(result.track);
-          added++;
-        }
+      for (const song of list.slice(0, Math.max(room, 0))) {
+        try {
+          const result = await searchTrack(song.url || song.title, interaction.user.tag);
+          if (result) {
+            player.queue.add(result.track);
+            added++;
+          }
+        } catch {}
       }
 
       if (!player.playing && !player.paused && added > 0) {
-        await player.play();
+        try {
+          await player.play();
+        } catch (err) {
+          return interaction.editReply(`❌ Couldn't start playback: ${err.message || err}`);
+        }
       }
 
       return interaction.editReply(`➕ Queued ${added} song(s) from your saved playlist.`);

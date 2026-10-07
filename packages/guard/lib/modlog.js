@@ -56,13 +56,13 @@ async function logCaseToChannel(client, guildId, { action, targetTag, targetId, 
   const settings = await getGuardSettings(guildId);
   if (!settings?.modlog_channel_id) return;
 
-  const channel = client.channels.cache.get(settings.modlog_channel_id);
-  if (!channel) return;
+  const channel = client.channels.cache.get(settings.modlog_channel_id)
+    ?? await client.channels.fetch(settings.modlog_channel_id).catch(() => null);
+  if (!channel?.isTextBased?.()) return;
 
   const embed = new EmbedBuilder()
     .setColor(0xDC143C)
     .setAuthor({ name: `Case #${caseNumber} — ${action.toUpperCase()}` })
-    .setThumbnail(undefined)
     .addFields(
       { name: 'User', value: `${targetTag} (<@${targetId}>)`, inline: true },
       { name: 'Moderator', value: `${moderatorTag}`, inline: true },

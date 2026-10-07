@@ -15,7 +15,7 @@ module.exports = {
   async execute(interaction, client) {
     const rawIds = interaction.options.getString('user_ids');
     const reason = interaction.options.getString('reason') || 'Bulk ban';
-    const ids = rawIds.split(/[\s,]+/).filter(Boolean);
+    const ids = rawIds.split(/[\s,]+/).map((id) => id.replace(/\D/g, '')).filter((id) => /^\d{17,20}$/.test(id));
 
     if (ids.length === 0) {
       return interaction.reply({ content: '❌ No valid user IDs provided.', flags: MessageFlags.Ephemeral });

@@ -88,16 +88,17 @@ async function getTicketByChannel(channelId) {
 
 async function claimTicket(ticketId, staffUserId) {
   const res = await pool.query(
-    `UPDATE tickets SET claimed_by = $2, status = 'claimed', last_activity = NOW() WHERE id = $1 RETURNING *`,
+    `UPDATE tickets SET claimed_by = $2, status = 'claimed', last_activity = NOW() WHERE id = $1 AND status != 'closed' RETURNING *`,
     [ticketId, staffUserId]
   );
   return res.rows[0] || null;
 }
 
 async function setPriority(ticketId, priority) {
+  const clean = String(priority || 'medium').toLowerCase();
   const res = await pool.query(
-    `UPDATE tickets SET priority = $2, last_activity = NOW() WHERE id = $1 RETURNING *`,
-    [ticketId, priority]
+    `UPDATE tickets SET priority = $2, last_activity = NOW() WHERE id = $1 AND status != 'closed' RETURNING *`,
+    [ticketId, clean]
   );
   return res.rows[0] || null;
 }
@@ -120,10 +121,14 @@ async function findStaleTickets() {
 
 async function closeTicket(ticketId) {
   const res = await pool.query(
-    `UPDATE tickets SET status = 'closed', closed_at = NOW() WHERE id = $1 RETURNING *`,
+    `UPDATE tickets SET status = 'closed', closed_at = NOW() WHERE id = $1 AND status != 'closed' RETURNING *`,
     [ticketId]
   );
   return res.rows[0] || null;
+}
+
+async function deleteTicket(ticketId) {
+  await pool.query('DELETE FROM tickets WHERE id = $1', [ticketId]);
 }
 
 async function saveTranscript(ticketId, content) {
@@ -143,6 +148,7 @@ module.exports = {
   claimTicket,
   setPriority,
   closeTicket,
+  deleteTicket,
   saveTranscript,
   touchTicketActivity,
   findStaleTickets,

@@ -12,9 +12,12 @@ module.exports = {
         .addChannelTypes(ChannelType.GuildText)),
 
   async execute(interaction) {
+    if (!interaction.guild) {
+      return interaction.reply({ content: '❌ Server-only command.', flags: MessageFlags.Ephemeral });
+    }
     const channel = interaction.options.getChannel('channel') || interaction.channel;
-    if (!channel?.isTextBased?.()) {
-      return interaction.reply({ content: '❌ That is not a text channel.', flags: MessageFlags.Ephemeral });
+    if (channel?.isThread?.() || channel?.type !== ChannelType.GuildText || typeof channel?.permissionOverwrites?.edit !== 'function') {
+      return interaction.reply({ content: '❌ Pick a normal text channel (not a thread).', flags: MessageFlags.Ephemeral });
     }
 
     const everyone = interaction.guild.roles.everyone;

@@ -80,6 +80,9 @@ module.exports = {
     if (sub === 'selfroleadd') {
       const role = interaction.options.getRole('role');
       const category = interaction.options.getString('category');
+      if (category.length > 40) {
+        return interaction.reply({ content: '❌ Category name must be 40 characters or less (button limit).', flags: MessageFlags.Ephemeral });
+      }
       await addSelfRole(guildId, category, role.id);
       return interaction.reply(`✅ **${role.name}** added to category **${category}**.`);
     }
@@ -171,7 +174,7 @@ module.exports = {
       const settings = await getGuardSettings(guildId);
       const categories = settings?.self_role_categories || {};
       const categorySummary = Object.entries(categories)
-        .map(([name, ids]) => `**${name}**: ${ids.length} role(s)`)
+        .map(([name, ids]) => `**${name}**: ${Array.isArray(ids) ? ids.length : 0} role(s)`)
         .join('\n') || 'None set up';
       const words = Array.isArray(settings?.bad_words) ? settings.bad_words.join(', ') : '';
       const locked = Array.isArray(settings?.locked_channels) ? settings.locked_channels.length : 0;

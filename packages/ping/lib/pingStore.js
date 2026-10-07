@@ -14,12 +14,13 @@ async function initPingSettings() {
   await pool.query(`ALTER TABLE ping_settings ADD COLUMN IF NOT EXISTS alert_message TEXT;`);
   await pool.query(`ALTER TABLE ping_settings ADD COLUMN IF NOT EXISTS mention_role_id TEXT;`);
   await pool.query(`ALTER TABLE ping_settings ADD COLUMN IF NOT EXISTS poll_minutes INTEGER DEFAULT 10;`);
+  await pool.query(`ALTER TABLE ping_settings ADD COLUMN IF NOT EXISTS last_video_id TEXT;`);
   console.log('📡 Ping settings table ready.');
 }
 
 async function getAllEnabledGuilds() {
   const res = await pool.query(
-    'SELECT guild_id, youtube_channel_id, live_alert_channel_id, alert_message, mention_role_id, poll_minutes FROM ping_settings WHERE enabled = true'
+    'SELECT guild_id, youtube_channel_id, live_alert_channel_id, alert_message, mention_role_id, poll_minutes, last_video_id FROM ping_settings WHERE enabled = true'
   );
   return res.rows;
 }
@@ -30,12 +31,17 @@ async function getPingSettings(guildId) {
 }
 
 async function updatePingSettings(guildId, patch) {
-  const allowed = ['youtube_channel_id', 'live_alert_channel_id', 'enabled', 'alert_message', 'mention_role_id', 'poll_minutes'];
-  const keys = Object.keys(patch).filter(k => allowed.includes(k));
+  const allowed = ['youtube_channel_id', 'live_alert_channel_id', 'enabled', 'alert_message', 'mention_role_id', 'poll_minutes', 'last_video_id'];
+  const clean = { ...patch };
+  if ('poll_minutes' in clean) {
+    const m = Number(clean.poll_minutes);
+    clean.poll_minutes = Number.isInteger(m) ? Math.min(60, Math.max(1, m)) : 10;
+  }
+  const keys = Object.keys(clean).filter(k => allowed.includes(k));
   if (keys.length === 0) return getPingSettings(guildId);
 
   const cols = ['guild_id', ...keys];
-  const values = [guildId, ...keys.map(k => patch[k])];
+  const values = [guildId, ...keys.map(k => clean[k])];
   const placeholders = cols.map((_, i) => `$${i + 1}`);
   const updateClause = keys.map(k => `${k} = EXCLUDED.${k}`).join(', ');
 
