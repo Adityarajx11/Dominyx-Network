@@ -64,8 +64,10 @@ module.exports = {
 
     let player;
     try {
+      const { clearStaleCurrent } = require('../lib/lavalink');
       player = getOrCreatePlayer(interaction, { volume: settings.defaultVolume });
       if (!player.connected) await player.connect();
+      clearStaleCurrent(player);
     } catch (err) {
       try { await player?.destroy?.().catch(() => {}); } catch {}
       const msg = /voice channel/i.test(err.message)

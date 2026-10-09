@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, EmbedBuilder, MessageFlags } = require('discord.js');
-const { getManager } = require('../lib/lavalink');
+const { getManager, requesterMention } = require('../lib/lavalink');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -19,10 +19,11 @@ module.exports = {
 
     const lines = [];
     if (player.queue.current) {
-      lines.push(`▶️ **${player.queue.current.info?.title || 'Unknown'}** — requested by ${player.queue.current.requester || 'someone'}`);
+      const cur = player.queue.current;
+      lines.push(`▶️ **${cur.info?.title || 'Unknown'}** — requested by ${requesterMention(cur)}`);
     }
     player.queue.tracks.slice(0, 15).forEach((t, i) => {
-      lines.push(`${i + 1}. **${t.info?.title || 'Unknown'}** — requested by ${t.requester || 'someone'}`);
+      lines.push(`${i + 1}. **${t.info?.title || 'Unknown'}** — requested by ${requesterMention(t)}`);
     });
 
     const embed = new EmbedBuilder()

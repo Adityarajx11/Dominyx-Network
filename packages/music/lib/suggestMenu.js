@@ -3,7 +3,7 @@ const { similarTracks } = require('./reco');
 const { searchTrack, getManager, getOrCreatePlayer } = require('./lavalink');
 const { getMusicSettings } = require('./settings');
 
-// messageId -> { items: [query], nextMode: bool }
+// messageId -> { items: [{title, url}], nextMode: bool }
 const menus = new Map();
 
 function rememberMenu(messageId, items) {
@@ -11,17 +11,40 @@ function rememberMenu(messageId, items) {
   if (menus.size > 200) menus.delete(menus.keys().next().value);
 }
 
-async function buildSuggestMessage(seedTitle, seedArtist) {
-  const queries = await similarTracks(seedTitle, seedArtist, 5);
-  const options = queries.map((q, i) => ({
-    label: q.slice(0, 100),
+// A result counts as a SONG (not a mix/jukebox/livestream) when it has a
+// normal song length.
+function isSongTrack(track) {
+  const d = track?.info?.duration || 0;
+  if (!d || d <= 0) return true; // unknown/live — let it through, player handles it
+  return d >= 45000 && d <= 1200000;
+}
+
+async function buildSuggestMessage(seedTitle, seedArtist, requestTag) {
+  const queries = await similarTracks(seedTitle, seedArtist, 7);
+  const items = [];
+  // Resolve now so the menu shows real song titles (never mix queries).
+  for (const q of queries) {
+    if (items.length >= 5) break;
+    let result;
+    try {
+      result = await searchTrack(q, requestTag || 'suggest', null);
+    } catch {
+      continue;
+    }
+    const t = result?.track;
+    const id = t?.info?.identifier || t?.info?.uri;
+    if (!t || !id || items.some((i) => i.id === id) || !isSongTrack(t)) continue;
+    items.push({ id, title: t.info.title, artist: t.info.author || '', url: t.info.uri });
+  }
+  const options = items.map((item, i) => ({
+    label: `${item.title}`.slice(0, 100),
     value: String(i),
-    description: 'Add to queue',
+    description: `${item.artist}`.slice(0, 100) || 'Add to queue',
   }));
   const menu = new StringSelectMenuBuilder()
     .setCustomId('suggest_pick')
-    .setPlaceholder('Pick a song to queue…')
-    .addOptions(options);
+    .setPlaceholder(items.length > 0 ? 'Pick a song to queue…' : 'No suggestions found')
+    .addOptions(options.length > 0 ? options : [{ label: 'Nothing found — try /suggest with a seed', value: '0' }]);
   const toggle = new ButtonBuilder()
     .setCustomId('suggest_mode')
     .setLabel('Mode: Add to queue')
@@ -37,7 +60,7 @@ async function buildSuggestMessage(seedTitle, seedArtist) {
       new ActionRowBuilder().addComponents(menu),
       new ActionRowBuilder().addComponents(toggle),
     ],
-    queries,
+    items,
   };
 }
 
@@ -47,14 +70,14 @@ async function handleSuggestMenu(interaction) {
     return interaction.reply({ content: '❌ This menu expired — run `/suggest` again.', flags: MessageFlags.Ephemeral });
   }
   const idx = Number(interaction.values[0]);
-  const query = state.items[idx];
-  if (!query) {
+  const item = state.items[idx];
+  if (!item) {
     return interaction.reply({ content: '❌ Bad pick.', flags: MessageFlags.Ephemeral });
   }
   await interaction.deferReply({ flags: MessageFlags.Ephemeral });
   let result;
   try {
-    result = await searchTrack(query, interaction.user.tag, interaction.user.id);
+    result = await searchTrack(item.url || item.title, interaction.user.tag, interaction.user.id);
   } catch {
     return interaction.editReply('🔌 Music server is unreachable — try again in a bit.');
   }
@@ -77,6 +100,8 @@ async function handleSuggestMenu(interaction) {
   if (player.queue.tracks.length >= (settings.maxQueue ?? 50)) {
     return interaction.editReply('🚫 Queue is full.');
   }
+  const { clearStaleCurrent } = require('./lavalink');
+  clearStaleCurrent(player);
   player.queue.add(track);
   if (!player.playing && !player.paused) {
     try {

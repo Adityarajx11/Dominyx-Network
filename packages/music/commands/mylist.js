@@ -90,6 +90,8 @@ module.exports = {
       }
 
       const room = Math.max((settings.maxQueue ?? 50) - player.queue.tracks.length, 0);
+      const { clearStaleCurrent } = require('../lib/lavalink');
+      clearStaleCurrent(player);
       let added = 0;
       for (const song of list.slice(0, Math.max(room, 0))) {
         try {

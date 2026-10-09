@@ -99,6 +99,8 @@ async function handleMoodButton(interaction, client) {
       } catch {}
     }
     if (added > 0 && !player.playing && !player.paused) {
+      const { clearStaleCurrent } = require('../lib/lavalink');
+      clearStaleCurrent(player);
       try {
         await player.play();
       } catch {}
@@ -118,6 +120,8 @@ async function handleMoodButton(interaction, client) {
   if (player.playing || player.paused) {
     await player.skip(0, false).catch(() => player.play().catch(() => {}));
   } else {
+    const { clearStaleCurrent } = require('../lib/lavalink');
+    clearStaleCurrent(player);
     try {
       await player.play();
     } catch (err) {

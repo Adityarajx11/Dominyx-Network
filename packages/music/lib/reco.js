@@ -73,9 +73,22 @@ async function lastfmSimilarArtists(artist, n = 5) {
 async function similarTracks(title, artist, n = 5) {
   const viaApi = await lastfmSimilarTracks(artist, title, n);
   if (viaApi && viaApi.length > 0) return dedupeQueries(viaApi, title).slice(0, n);
+  // Keyless: single-song-shaped queries only — never mixes/playlists.
+  const a = artist || '';
+  const t = title || '';
+  const seeds = [
+    `${t} cover`.trim(),
+    `songs like ${t} ${a}`.trim(),
+    `${a} unplugged`.trim(),
+    `${a} romantic`.trim(),
+    `${a} new song`.trim(),
+  ].filter((s) => s && s.toLowerCase() !== 'cover');
   const g = genreOf(artist, title);
-  const seeds = [`${artist} best songs`, `${artist} mix`, ...CURATED[g]];
-  return dedupeQueries(seeds, title).slice(0, n);
+  for (const s of CURATED[g]) {
+    if (seeds.length >= n + 2) break;
+    seeds.push(s);
+  }
+  return dedupeQueries(seeds, title).slice(0, n + 2);
 }
 
 async function similarArtists(artist, n = 5) {

@@ -33,8 +33,8 @@ module.exports = {
       }
     }
     await interaction.deferReply();
-    const built = await buildSuggestMessage(title, artist);
+    const built = await buildSuggestMessage(title, artist, interaction.user.tag);
     const msg = await interaction.editReply({ embeds: built.embeds, components: built.components });
-    rememberMenu(msg.id, built.queries);
+    rememberMenu(msg.id, built.items);
   },
 };

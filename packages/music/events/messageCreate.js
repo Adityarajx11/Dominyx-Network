@@ -82,9 +82,11 @@ module.exports = {
           return;
         }
         const { track, tracks, playlistName, isPlaylist } = result;
+        const { clearStaleCurrent } = require('../lib/lavalink');
         const pl = getOrCreatePlayer(message, { volume: settings.defaultVolume });
         try {
           if (!pl.connected) await pl.connect();
+          clearStaleCurrent(pl);
         } catch {
           try { await pl.destroy().catch(() => {}); } catch {}
           await message.reply('🔌 Voice connection went stale — run `!p` again once.').catch(() => {});
@@ -125,6 +127,11 @@ module.exports = {
         if (!pl) return message.reply('🚫 Nothing is playing.').catch(() => {});
         pl.queue.tracks.splice(0, pl.queue.tracks.length);
         await pl.stopPlaying(true).catch(() => {});
+        try {
+          pl.playing = false;
+          pl.paused = false;
+          pl.queue.current = null;
+        } catch {}
         return message.reply('⏹️ Stopped.').catch(() => {});
       }
 

@@ -1,5 +1,5 @@
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, MessageFlags } = require('discord.js');
-const { getManager } = require('./lavalink');
+const { getManager, requesterMention } = require('./lavalink');
 
 const ICONS = {
   voldown: '<:music_voldown:1543902056882896936>',
@@ -33,7 +33,7 @@ function buildNowPlayingEmbed(track, player) {
     .addFields(
       { name: 'Duration', value: formatDuration(track?.info?.duration), inline: true },
       { name: 'Artist', value: track?.info?.author || 'Unknown', inline: true },
-      { name: 'Requested by', value: `${track?.requester || 'someone'}`, inline: true },
+      { name: 'Requested by', value: `${requesterMention(track)}`, inline: true },
       { name: 'Volume', value: `${player?.volume ?? 100}%`, inline: true },
       { name: 'Loop', value: String(player?.repeatMode ?? 'off'), inline: true },
     );
@@ -163,10 +163,13 @@ async function handleMusicButton(interaction) {
 
     if (id === 'music_suggest') {
       if (!track) return interaction.reply({ content: '🚫 Nothing playing.', flags: MessageFlags.Ephemeral });
+      await interaction.deferReply({ flags: MessageFlags.Ephemeral });
       const { buildSuggestMessage, rememberMenu } = require('./suggestMenu');
-      const built = await buildSuggestMessage(track.info.title, track.info.author || '');
-      const msg = await interaction.reply({ embeds: built.embeds, components: built.components, fetchReply: true }).catch(() => null);
-      if (msg) rememberMenu(msg.id, built.queries);
+      const built = await buildSuggestMessage(track.info.title, track.info.author || '', interaction.user.tag);
+      const msg = await interaction.editReply({ embeds: built.embeds, components: built.components }).catch(() => null);
+      // editReply returns the message for deferred ephemeral replies; fall back to followUp.
+      const target = msg?.id ? msg : await interaction.followUp({ embeds: built.embeds, components: built.components, flags: MessageFlags.Ephemeral }).catch(() => null);
+      if (target) rememberMenu(target.id, built.items);
       return;
     }
 

@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, EmbedBuilder, MessageFlags } = require('discord.js');
-const { getManager } = require('../lib/lavalink');
+const { getManager, requesterMention } = require('../lib/lavalink');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -22,7 +22,7 @@ module.exports = {
       .setTitle('🎵 Now Playing')
       .setDescription(`**${track.info?.title || 'Unknown'}**`)
       .addFields(
-        { name: 'Requested by', value: `${track.requester || 'someone'}`, inline: true },
+        { name: 'Requested by', value: `${requesterMention(track)}`, inline: true },
         { name: 'Loop', value: String(player.repeatMode ?? 'off'), inline: true },
         { name: 'Volume', value: `${player.volume ?? 100}%`, inline: true },
       );

@@ -208,6 +208,23 @@ function cancelLeave(guildId) {
   }
 }
 
+// Embed-safe requester display: mention if we know the id (no ping in embeds),
+// plain name otherwise.
+function requesterMention(track) {
+  const id = track?.requesterId;
+  if (id && id !== 'unknown' && /^\d{17,20}$/.test(String(id))) return `<@${id}>`;
+  return track?.requester || 'someone';
+}
+
+// A finished/stopped track lingers as queue.current with stale flags.
+// Call before starting something new so it actually plays instead of queuing.
+function clearStaleCurrent(player) {
+  try {
+    if (player && !player.playing && !player.paused && player.queue?.current) {
+      player.queue.current = null;
+    }
+  } catch {}
+}
 // Consume the open history row for a guild (voice-leave early finish).
 function takeOpenPlay(guildId) {
   const id = openPlays.get(guildId);
@@ -300,4 +317,4 @@ function getOrCreatePlayer(interaction, opts = {}) {
   return player;
 }
 
-module.exports = { attachLavalink, initManager, getManager, searchTrack, getOrCreatePlayer, cancelLeave, takeOpenPlay };
+module.exports = { attachLavalink, initManager, getManager, searchTrack, getOrCreatePlayer, cancelLeave, takeOpenPlay, clearStaleCurrent };
