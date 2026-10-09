@@ -21,21 +21,47 @@ function isSongTrack(track) {
 
 async function buildSuggestMessage(seedTitle, seedArtist, requestTag) {
   const queries = await similarTracks(seedTitle, seedArtist, 7);
+  return buildMenuFromQueries(queries, seedTitle, seedArtist, requestTag);
+}
+
+// Artist-first menu: the artist's own popular songs, resolved to real titles.
+async function buildArtistSuggest(artist, requestTag) {
+  const a = String(artist || '').trim() || 'Unknown';
+  const queries = [
+    `${a} top songs`,
+    `best of ${a}`,
+    `${a} hit songs`,
+    `${a} popular songs`,
+    `${a} unplugged`,
+    `${a} romantic songs`,
+    `${a} new song`,
+  ];
+  return buildMenuFromQueries(queries, a, a, requestTag);
+}
+
+async function buildMenuFromQueries(queries, seedTitle, seedArtist, requestTag) {
   const items = [];
-  // Resolve now so the menu shows real song titles (never mix queries).
-  for (const q of queries) {
-    if (items.length >= 5) break;
-    let result;
-    try {
-      result = await searchTrack(q, requestTag || 'suggest', null);
-    } catch {
-      continue;
+  const resolvePass = async (maxMs) => {
+    for (const q of queries) {
+      if (items.length >= 5) break;
+      let result;
+      try {
+        result = await searchTrack(q, requestTag || 'suggest', null);
+      } catch {
+        continue;
+      }
+      const t = result?.track;
+      const id = t?.info?.identifier || t?.info?.uri;
+      if (!t || !id || items.some((i) => i.id === id)) continue;
+      const d = t.info?.duration || 0;
+      if (d > 0 && (d < 45000 || d > maxMs)) continue;
+      items.push({ id, title: t.info.title, artist: t.info.author || '', url: t.info.uri });
     }
-    const t = result?.track;
-    const id = t?.info?.identifier || t?.info?.uri;
-    if (!t || !id || items.some((i) => i.id === id) || !isSongTrack(t)) continue;
-    items.push({ id, title: t.info.title, artist: t.info.author || '', url: t.info.uri });
-  }
+  };
+  // Resolve now so the menu shows real song titles (never mix queries).
+  await resolvePass(1200000);
+  // Fallback: compilations run long — accept up to an hour before giving up.
+  if (items.length < 3) await resolvePass(3600000);
   const options = items.map((item, i) => ({
     label: `${item.title}`.slice(0, 100),
     value: String(i),
@@ -126,4 +152,4 @@ async function handleSuggestMode(interaction) {
   await interaction.update({ components: [row0, new ActionRowBuilder().addComponents(toggle)] }).catch(() => {});
 }
 
-module.exports = { buildSuggestMessage, handleSuggestMenu, handleSuggestMode, rememberMenu };
+module.exports = { buildSuggestMessage, buildArtistSuggest, handleSuggestMenu, handleSuggestMode, rememberMenu };

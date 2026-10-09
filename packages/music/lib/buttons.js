@@ -164,8 +164,8 @@ async function handleMusicButton(interaction) {
     if (id === 'music_suggest') {
       if (!track) return interaction.reply({ content: '🚫 Nothing playing.', flags: MessageFlags.Ephemeral });
       await interaction.deferReply({ flags: MessageFlags.Ephemeral });
-      const { buildSuggestMessage, rememberMenu } = require('./suggestMenu');
-      const built = await buildSuggestMessage(track.info.title, track.info.author || '', interaction.user.tag);
+      const { buildArtistSuggest, rememberMenu } = require('./suggestMenu');
+      const built = await buildArtistSuggest(track.info.author || track.info.title, interaction.user.tag);
       const msg = await interaction.editReply({ embeds: built.embeds, components: built.components }).catch(() => null);
       // editReply returns the message for deferred ephemeral replies; fall back to followUp.
       const target = msg?.id ? msg : await interaction.followUp({ embeds: built.embeds, components: built.components, flags: MessageFlags.Ephemeral }).catch(() => null);
