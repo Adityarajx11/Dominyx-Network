@@ -106,11 +106,11 @@ module.exports = {
             await message.reply(`➕ Playlist **${playlistName || 'mix'}** — **${toAdd.length}** songs queued.`).catch(() => {});
           }
         } else {
-          if (isPlaylist && toAdd.length > 1) {
-            await message.reply(`➕ Playlist **${playlistName || 'mix'}** — **${toAdd.length}** songs queued in order.`).catch(() => {});
-          } else {
-            await message.reply(`➕ Added: **${track.info.title}** (#${pl.queue.tracks.length})`).catch(() => {});
-          }
+          const confirm = isPlaylist && toAdd.length > 1
+            ? `➕ Playlist **${playlistName || 'mix'}** — **${toAdd.length}** songs queued in order.`
+            : `➕ Added: **${track.info.title}** (#${pl.queue.tracks.length})`;
+          const sent = await message.reply(confirm).catch(() => null);
+          if (sent) setTimeout(() => sent.delete().catch(() => {}), 30000);
         }
         return;
       }

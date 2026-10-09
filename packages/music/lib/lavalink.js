@@ -126,7 +126,9 @@ function attachLavalink(client) {
       }
     } catch {}
     const channel = client.channels.cache.get(player.textChannelId);
-    channel?.send('📭 Queue finished. Add more with `/play`.').catch(() => {});
+    channel?.send('📭 Queue finished. Add more with `/play`.')
+      .then((m) => setTimeout(() => m.delete().catch(() => {}), 30000))
+      .catch(() => {});
 
     let stay247 = false;
     let timeoutMinutes = 5;
@@ -139,7 +141,9 @@ function attachLavalink(client) {
     if (!stay247) {
       cancelLeave(player.guildId);
       const timer = setTimeout(() => {
-        channel?.send(`👋 Leaving voice — queue empty for ${timeoutMinutes} minute(s). Use \`/247\` to keep me connected permanently.`).catch(() => {});
+        channel?.send(`👋 Leaving voice — queue empty for ${timeoutMinutes} minute(s). Use \`/247\` to keep me connected permanently.`)
+          .then((m) => setTimeout(() => m.delete().catch(() => {}), 30000))
+          .catch(() => {});
         player.destroy().catch(() => {});
         leaveTimers.delete(player.guildId);
       }, timeoutMinutes * 60 * 1000);
@@ -317,4 +321,4 @@ function getOrCreatePlayer(interaction, opts = {}) {
   return player;
 }
 
-module.exports = { attachLavalink, initManager, getManager, searchTrack, getOrCreatePlayer, cancelLeave, takeOpenPlay, clearStaleCurrent };
+module.exports = { attachLavalink, initManager, getManager, searchTrack, getOrCreatePlayer, cancelLeave, takeOpenPlay, clearStaleCurrent, requesterMention };

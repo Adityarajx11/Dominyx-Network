@@ -115,6 +115,8 @@ module.exports = {
       } else {
         await interaction.editReply(`➕ Added to queue: **${track.info.title}** (position ${player.queue.tracks.length})`);
       }
+      // Confirmations fade: the Now Playing card is the permanent record.
+      setTimeout(() => interaction.deleteReply().catch(() => {}), 30000);
     }
   },
 };
