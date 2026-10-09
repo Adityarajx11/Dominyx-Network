@@ -25,16 +25,19 @@ async function buildSuggestMessage(seedTitle, seedArtist, requestTag) {
 }
 
 // Artist-first menu: the artist's own popular songs, resolved to real titles.
+// Result titles that scream compilation/mix, not a song.
+const MIX_TITLE_RE = /\bmix\b|jukebox|compilation|\btop\s?\d+\b|playlist|nonstop|mashup|\b1\s?hour\b|\bbest of\b|collection|hour loop|lofi beats to|radio 📚/i;
+
 async function buildArtistSuggest(artist, requestTag) {
   const a = String(artist || '').trim() || 'Unknown';
   const queries = [
-    `${a} top songs`,
-    `best of ${a}`,
-    `${a} hit songs`,
-    `${a} popular songs`,
+    `${a} official video`,
+    `${a} official music video`,
+    `${a} lyrical video`,
     `${a} unplugged`,
-    `${a} romantic songs`,
-    `${a} new song`,
+    `${a} cover song`,
+    `${a} live performance`,
+    `${a} romantic song`,
   ];
   return buildMenuFromQueries(queries, a, a, requestTag);
 }
@@ -53,6 +56,7 @@ async function buildMenuFromQueries(queries, seedTitle, seedArtist, requestTag) 
       const t = result?.track;
       const id = t?.info?.identifier || t?.info?.uri;
       if (!t || !id || items.some((i) => i.id === id)) continue;
+      if (MIX_TITLE_RE.test(t.info?.title || '')) continue;
       const d = t.info?.duration || 0;
       if (d > 0 && (d < 45000 || d > maxMs)) continue;
       items.push({ id, title: t.info.title, artist: t.info.author || '', url: t.info.uri });
