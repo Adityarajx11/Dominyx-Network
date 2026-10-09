@@ -12,6 +12,7 @@ module.exports = {
       return interaction.reply({ content: '🚫 Nothing is playing.', flags: MessageFlags.Ephemeral });
     }
     await player.resume();
-    return interaction.reply('▶️ Resumed.');
+    return interaction.reply({ content: '▶️ Resumed.', flags: MessageFlags.Ephemeral });
   },
 };
+

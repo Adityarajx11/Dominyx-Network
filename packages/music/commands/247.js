@@ -1,4 +1,4 @@
-const { SlashCommandBuilder } = require('discord.js');
+const { SlashCommandBuilder, MessageFlags } = require('discord.js');
 const { get247, set247, getMusicSettings } = require('../lib/settings');
 
 module.exports = {
@@ -11,13 +11,13 @@ module.exports = {
     try {
       current = await get247(interaction.guild.id);
     } catch {
-      return interaction.reply('⚠️ Database is unreachable — try again in a bit.');
+      return interaction.reply({ content: '⚠️ Database is unreachable — try again in a bit.', flags: MessageFlags.Ephemeral });
     }
     const next = !current;
     try {
       await set247(interaction.guild.id, next);
     } catch {
-      return interaction.reply('⚠️ Could not save — database is unreachable.');
+      return interaction.reply({ content: '⚠️ Could not save — database is unreachable.', flags: MessageFlags.Ephemeral });
     }
     let mins = 5;
     try {

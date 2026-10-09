@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, MessageFlags } = require('discord.js');
 const { getMusicSettings, setPrefix } = require('../lib/settings');
 
 module.exports = {
@@ -19,9 +19,10 @@ module.exports = {
       return interaction.reply(`🔧 Prefix is **${settings.prefix}**. Change it: \`/prefix set:?\``);
     }
     if (/\s/.test(next)) {
-      return interaction.reply('❌ Prefix cannot contain spaces.');
+      return interaction.reply({ content: '❌ Prefix cannot contain spaces.', flags: MessageFlags.Ephemeral });
     }
     await setPrefix(interaction.guild.id, next);
     return interaction.reply(`✅ Prefix → **${next}**. Try \`${next}p <song>\`.`);
   },
 };
+

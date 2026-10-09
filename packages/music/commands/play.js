@@ -18,7 +18,7 @@ module.exports = {
       return interaction.reply({ content: '🚫 Join a voice channel first.', flags: MessageFlags.Ephemeral });
     }
 
-    await interaction.deferReply();
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
     // Gate: if the Lavalink node is down, kick off a reconnect and wait briefly.
     // Re-fetch the node every tick: the manager may have replaced the object.

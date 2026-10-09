@@ -19,6 +19,7 @@ module.exports = {
     }
     const percent = interaction.options.getInteger('percent');
     await player.setVolume(percent);
-    return interaction.reply(`🔊 Volume set to ${percent}%.`);
+    return interaction.reply({ content: `🔊 Volume set to ${percent}%.`, flags: MessageFlags.Ephemeral });
   },
 };
+

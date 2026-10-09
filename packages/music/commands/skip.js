@@ -18,6 +18,7 @@ module.exports = {
     } catch (err) {
       return interaction.reply({ content: `❌ Skip failed: ${err.message || err}`, flags: MessageFlags.Ephemeral });
     }
-    return interaction.reply('⏭️ Skipped.');
+    return interaction.reply({ content: '⏭️ Skipped.', flags: MessageFlags.Ephemeral });
   },
 };
+

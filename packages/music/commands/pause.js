@@ -12,6 +12,7 @@ module.exports = {
       return interaction.reply({ content: '🚫 Nothing is playing.', flags: MessageFlags.Ephemeral });
     }
     await player.pause();
-    return interaction.reply('⏸️ Paused.');
+    return interaction.reply({ content: '⏸️ Paused.', flags: MessageFlags.Ephemeral });
   },
 };
+

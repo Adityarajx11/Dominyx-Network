@@ -59,7 +59,7 @@ function buildControlRow(player) {
   );
 
   const row3 = new ActionRowBuilder().addComponents(
-    new ButtonBuilder().setCustomId('music_suggest').setLabel('💡 Suggestions').setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder().setCustomId('music_suggest').setLabel('💡 Suggestions — more songs like this').setStyle(ButtonStyle.Secondary),
   );
 
   return [row1, row2, row3];

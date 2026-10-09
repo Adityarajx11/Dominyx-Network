@@ -15,7 +15,7 @@ module.exports = {
       return interaction.reply({ content: '🚫 Join a voice channel first.', flags: MessageFlags.Ephemeral });
     }
 
-    await interaction.deferReply();
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
     const manager = getManager();
     let player = manager.getPlayer(interaction.guild.id);
@@ -37,3 +37,4 @@ module.exports = {
     return interaction.editReply(`🎧 Joined <#${voiceChannel.id}>. Use \`/play\` to start the music.`);
   },
 };
+

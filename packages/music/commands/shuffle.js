@@ -12,6 +12,7 @@ module.exports = {
       return interaction.reply({ content: '🚫 Not enough songs in queue to shuffle.', flags: MessageFlags.Ephemeral });
     }
     await player.queue.shuffle();
-    return interaction.reply('🔀 Queue shuffled.');
+    return interaction.reply({ content: '🔀 Queue shuffled.', flags: MessageFlags.Ephemeral });
   },
 };
+

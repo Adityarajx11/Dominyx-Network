@@ -29,7 +29,7 @@ module.exports = {
     const userId = interaction.user.id;
 
     if (sub === 'add') {
-      await interaction.deferReply();
+      await interaction.deferReply({ flags: MessageFlags.Ephemeral });
       const query = interaction.options.getString('song');
       let result;
       try {
@@ -79,7 +79,7 @@ module.exports = {
         return interaction.reply({ content: '📭 Your playlist is empty.', flags: MessageFlags.Ephemeral });
       }
 
-      await interaction.deferReply();
+      await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
       const settings = await getMusicSettings(interaction.guild.id).catch(() => ({ maxQueue: 50 }));
       let player;

@@ -22,6 +22,7 @@ module.exports = {
     }
     const mode = interaction.options.getString('mode');
     player.setRepeatMode(mode);
-    return interaction.reply(`🔁 Loop mode set to **${mode}**.`);
+    return interaction.reply({ content: `🔁 Loop mode set to **${mode}**.`, flags: MessageFlags.Ephemeral });
   },
 };
+

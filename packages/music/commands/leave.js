@@ -19,6 +19,7 @@ module.exports = {
     try {
       await player.destroy();
     } catch {}
-    return interaction.reply('👋 Left the voice channel and cleared the queue.');
+    return interaction.reply({ content: '👋 Left the voice channel and cleared the queue.', flags: MessageFlags.Ephemeral });
   },
 };
+
