@@ -63,7 +63,7 @@ function attachLavalink(client) {
     console.warn(`🔌 Lavalink node "${node.id}" disconnected:`, reason?.message || reason || 'unknown reason');
   });
   manager.nodeManager.on('reconnecting', (node) => {
-    console.log(`🔄 Lavalink node "${node.id}" reconnecting…`);
+    console.log(`🔄 Lavalink node "${node.id}" reconnecting… (retry ${node.retryCount ?? '?'})`);
   });
 
   manager.on('trackStart', async (player, track) => {
