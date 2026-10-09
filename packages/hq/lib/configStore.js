@@ -75,6 +75,25 @@ async function ensureTables() {
     `ALTER TABLE ping_settings ADD COLUMN IF NOT EXISTS poll_minutes INTEGER DEFAULT 10`,
     `ALTER TABLE ping_settings ADD COLUMN IF NOT EXISTS last_video_id TEXT`,
     `ALTER TABLE music_settings ADD COLUMN IF NOT EXISTS prefix TEXT DEFAULT '!'`,
+    `ALTER TABLE music_settings ADD COLUMN IF NOT EXISTS xp_enabled BOOLEAN DEFAULT true`,
+    `ALTER TABLE music_settings ADD COLUMN IF NOT EXISTS xp_cooldown_sec INTEGER DEFAULT 300`,
+    `CREATE TABLE IF NOT EXISTS music_reward_tiers (
+      guild_id TEXT NOT NULL,
+      threshold INTEGER NOT NULL,
+      role_id TEXT NOT NULL,
+      PRIMARY KEY (guild_id, threshold)
+    )`,
+    `CREATE TABLE IF NOT EXISTS music_user_stats (
+      guild_id TEXT NOT NULL,
+      user_id TEXT NOT NULL,
+      lifetime_xp INTEGER DEFAULT 0,
+      season_xp INTEGER DEFAULT 0,
+      season TEXT DEFAULT '',
+      songs_requested INTEGER DEFAULT 0,
+      artists JSONB DEFAULT '[]'::jsonb,
+      last_request_at TIMESTAMPTZ,
+      PRIMARY KEY (guild_id, user_id)
+    )`,
     `CREATE TABLE IF NOT EXISTS guard_settings (
       guild_id TEXT PRIMARY KEY,
       modlog_channel_id TEXT,
@@ -134,8 +153,10 @@ async function querySafe(sql, params) {
 async function readConfigs(guildId) {
   await ensureTablesOnce().catch(() => {});
 
-  const [music, levelCfg, levelRoles, greet, ticket, ping, guard] = await Promise.all([
+  const [music, musicTiers, musicBoard, levelCfg, levelRoles, greet, ticket, ping, guard] = await Promise.all([
     querySafe('SELECT * FROM music_settings WHERE guild_id = $1', [guildId]),
+    querySafe('SELECT threshold, role_id FROM music_reward_tiers WHERE guild_id = $1 ORDER BY threshold ASC', [guildId]),
+    querySafe('SELECT user_id, lifetime_xp, songs_requested FROM music_user_stats WHERE guild_id = $1 ORDER BY lifetime_xp DESC LIMIT 10', [guildId]),
     querySafe('SELECT * FROM level_config WHERE guild_id = $1', [guildId]),
     querySafe('SELECT * FROM level_roles WHERE guild_id = $1 ORDER BY level ASC', [guildId]),
     querySafe('SELECT * FROM greet_settings WHERE guild_id = $1', [guildId]),
@@ -153,6 +174,10 @@ async function readConfigs(guildId) {
       leaveTimeoutMinutes: music[0]?.leave_timeout_minutes ?? 5,
       announceChannelId: music[0]?.announce_channel_id || null,
       prefix: music[0]?.prefix || '!',
+      xp_enabled: music[0]?.xp_enabled ?? true,
+      xp_cooldown_sec: music[0]?.xp_cooldown_sec ?? 300,
+      xp_tiers: musicTiers.map((t) => ({ threshold: t.threshold, role_id: t.role_id })),
+      xp_board: musicBoard.map((u) => ({ user_id: u.user_id, xp: u.lifetime_xp, songs: u.songs_requested })),
     },
     level: {
       channel_id: levelCfg[0]?.channel_id || null,
@@ -238,6 +263,8 @@ const SETTING_COLUMNS = {
     leaveTimeoutMinutes: 'leave_timeout_minutes',
     announceChannelId: 'announce_channel_id',
     prefix: 'prefix',
+    xpEnabled: 'xp_enabled',
+    xpCooldownSec: 'xp_cooldown_sec',
   },
   greet: {
     welcomeChannelId: 'welcome_channel_id',
@@ -367,6 +394,23 @@ async function applyPatch(guildId, { bot, op, data = {} }) {
     case 'level/removeRole': {
       await pool.query('DELETE FROM level_roles WHERE guild_id = $1 AND level = $2', [guildId, Number(data.level)]);
       return 'role removed';
+    }
+
+    case 'music/addTier': {
+      const threshold = Number(data.threshold);
+      if (!Number.isInteger(threshold) || threshold < 1) throw new Error('XP must be a positive integer');
+      if (!data.role_id) throw new Error('Role required');
+      await pool.query(
+        `INSERT INTO music_reward_tiers (guild_id, threshold, role_id) VALUES ($1, $2, $3)
+         ON CONFLICT (guild_id, threshold) DO UPDATE SET role_id = $3`,
+        [guildId, threshold, data.role_id]
+      );
+      return 'tier added';
+    }
+
+    case 'music/removeTier': {
+      await pool.query('DELETE FROM music_reward_tiers WHERE guild_id = $1 AND threshold = $2', [guildId, Number(data.threshold)]);
+      return 'tier removed';
     }
 
     case 'ticket/addCategory': {

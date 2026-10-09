@@ -290,6 +290,10 @@ function MusicPanel({ cfg, meta, onRefresh, guildId }) {
   const [leaveTimeoutMinutes, setLeaveTimeoutMinutes] = useState(cfg.leaveTimeoutMinutes ?? 5);
   const [announceChannelId, setAnnounceChannelId] = useState(cfg.announceChannelId || '');
   const [prefix, setPrefixState] = useState(cfg.prefix || '!');
+  const [xpEnabled, setXpEnabled] = useState(cfg.xp_enabled ?? true);
+  const [xpCooldownSec, setXpCooldownSec] = useState(cfg.xp_cooldown_sec ?? 300);
+  const [newTierXp, setNewTierXp] = useState('');
+  const [newTierRole, setNewTierRole] = useState('');
 
   const save = () => push('music', 'settings', {
     stay247,
@@ -299,6 +303,8 @@ function MusicPanel({ cfg, meta, onRefresh, guildId }) {
     leaveTimeoutMinutes: Math.min(120, Math.max(1, Number(leaveTimeoutMinutes) || 5)),
     announceChannelId: announceChannelId || null,
     prefix: (prefix || '!').slice(0, 3),
+    xpEnabled,
+    xpCooldownSec: Math.min(3600, Math.max(30, Number(xpCooldownSec) || 300)),
   });
 
   return (
@@ -339,6 +345,57 @@ function MusicPanel({ cfg, meta, onRefresh, guildId }) {
         </div>
       </Field>
       <SaveBar state={state} onSave={save} />
+
+      <h3 style={{ marginTop: 32 }}>Music XP + reward roles</h3>
+      <p className="muted" style={{ fontSize: 13 }}>+10 XP per played request (+5 new artist), 100/day cap. Seasons reset monthly, lifetime kept. See live board with <code>/music-leaderboard</code>.</p>
+      <Field hint="Turn off to stop awarding (stats still record).">
+        <Toggle checked={xpEnabled} onChange={setXpEnabled} label="Music XP on" />
+      </Field>
+      <Field label="XP cooldown (seconds)" hint="Same user earns again only after this long. 30–3600.">
+        <input type="number" min="30" max="3600" value={xpCooldownSec} onChange={(e) => setXpCooldownSec(e.target.value)} />
+      </Field>
+      <div className="rows">
+        {(cfg.xp_tiers || []).length === 0 && <div className="empty">No tiers yet — top fans earn nothing. Add one below.</div>}
+        {(cfg.xp_tiers || []).map((t) => (
+          <div key={t.threshold} className="row-item">
+            <div><strong>{t.threshold} XP</strong> → <span className="muted">{meta.roleNames[t.role_id] || 'Unknown role'}</span></div>
+            <div className="row-actions">
+              <button className="btn btn-danger btn-sm" onClick={() => push('music', 'music/removeTier', { threshold: t.threshold })}>Remove</button>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="form-row" style={{ marginTop: 12 }}>
+        <Field label="Season XP needed">
+          <input type="number" min="1" value={newTierXp} onChange={(e) => setNewTierXp(e.target.value)} placeholder="e.g. 500" />
+        </Field>
+        <Field label="Role">
+          <Select value={newTierRole} onChange={setNewTierRole} options={meta.roles} placeholder="Pick a role" />
+        </Field>
+      </div>
+      <div className="save-bar">
+        <button
+          className="btn btn-primary"
+          disabled={!newTierXp || !newTierRole}
+          onClick={() => {
+            push('music', 'music/addTier', { threshold: Number(newTierXp), role_id: newTierRole });
+            setNewTierXp('');
+            setNewTierRole('');
+          }}
+        >
+          Add tier
+        </button>
+      </div>
+
+      <h3 style={{ marginTop: 32 }}>Top fans (lifetime)</h3>
+      <div className="rows">
+        {(cfg.xp_board || []).length === 0 && <div className="empty">No XP yet — play something first.</div>}
+        {(cfg.xp_board || []).slice(0, 5).map((u, i) => (
+          <div key={u.user_id} className="row-item">
+            <div>{['🥇', '🥈', '🥉'][i] || `${i + 1}.`} <strong>{u.xp} XP</strong> <span className="muted">({u.songs} songs)</span></div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
