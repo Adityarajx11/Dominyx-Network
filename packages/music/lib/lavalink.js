@@ -3,6 +3,7 @@ const { get247 } = require('./settings');
 
 let manager;
 const leaveTimers = new Map();
+const openPlays = new Map(); // guildId -> play_history id of the live track
 
 function attachLavalink(client) {
   const lavalinkHost = process.env.LAVALINK_HOST;
@@ -73,6 +74,29 @@ function attachLavalink(client) {
       leaveTimers.delete(player.guildId);
     }
 
+    // Phase 1 stats: record actual playback (not the /play command).
+    // Phase 2 XP: award requester, then sync tier role.
+    try {
+      const { startPlay } = require('./history');
+      const id = await startPlay({
+        guildId: player.guildId,
+        userId: track.requesterId || 'unknown',
+        userTag: track.requester || null,
+        title: track.info?.title || 'Unknown',
+        artist: track.info?.author || 'Unknown',
+        trackId: track.info?.identifier || track.info?.uri || null,
+        durationSec: Math.round((track.info?.duration || 0) / 1000),
+      });
+      openPlays.set(player.guildId, id);
+    } catch {}
+    if (track.requesterId && track.requesterId !== 'unknown') {
+      try {
+        const { awardTrackXp, syncTierRole } = require('./musicXp');
+        await awardTrackXp(player.guildId, track.requesterId, track.info?.author || 'Unknown');
+        await syncTierRole(client, player.guildId, track.requesterId);
+      } catch {}
+    }
+
     let channel = client.channels.cache.get(player.textChannelId);
     try {
       const { getMusicSettings } = require('./settings');
@@ -92,6 +116,15 @@ function attachLavalink(client) {
   });
 
   manager.on('queueEnd', async (player) => {
+    // Sleep timer: queue-end mode fires here instead of the normal leave flow.
+    try {
+      const { getTimer, fireTimer } = require('./sleepTimer');
+      const timer = await getTimer(player.guildId).catch(() => null);
+      if (timer && timer.mode === 'queue') {
+        await fireTimer(client, player.guildId);
+        return;
+      }
+    } catch {}
     const channel = client.channels.cache.get(player.textChannelId);
     channel?.send('📭 Queue finished. Add more with `/play`.').catch(() => {});
 
@@ -112,6 +145,34 @@ function attachLavalink(client) {
       }, timeoutMinutes * 60 * 1000);
       leaveTimers.set(player.guildId, timer);
     }
+  });
+
+  manager.on('trackEnd', async (player, track, payload) => {
+    const id = openPlays.get(player.guildId);
+    openPlays.delete(player.guildId);
+    const reason = payload?.reason || '';
+    if (id) {
+      try {
+        const { finishPlay } = require('./history');
+        const posSec = Math.round((player.position || 0) / 1000);
+        const durSec = Math.round((track?.info?.duration || 0) / 1000);
+        const completed = reason === 'finished' || (durSec > 0 && posSec >= durSec - 2);
+        await finishPlay(id, {
+          listenedSec: durSec > 0 ? Math.min(posSec, durSec) : posSec,
+          status: completed ? 'completed' : 'skipped',
+        });
+      } catch {}
+    }
+    // Sleep timer: song/count modes tick on normal completions only.
+    try {
+      const { onTrackEnd } = require('./sleepTimer');
+      await onTrackEnd(client, player.guildId, reason === 'finished' || reason === '');
+    } catch {}
+    // Radio: refill when the queue runs low.
+    try {
+      const { refillRadio } = require('./radio');
+      await refillRadio(client, player.guildId);
+    } catch {}
   });
 
   manager.on('trackError', (player, track, payload) => {
@@ -147,7 +208,14 @@ function cancelLeave(guildId) {
   }
 }
 
-async function searchTrack(query, requestUser) {
+// Consume the open history row for a guild (voice-leave early finish).
+function takeOpenPlay(guildId) {
+  const id = openPlays.get(guildId);
+  openPlays.delete(guildId);
+  return id || null;
+}
+
+async function searchTrack(query, requestUser, requestUserId) {
   if (!manager) throw new Error('Lavalink not initialized yet — try again in a few seconds.');
   let node = manager.nodeManager.leastUsedNodes().find((n) => n.connected);
   if (!node) {
@@ -167,6 +235,7 @@ async function searchTrack(query, requestUser) {
   // those are never playlists, take #1. (Some hosts mislabel searches.)
   const tracks = res.tracks.map((t) => {
     t.requester = requestUser;
+    t.requesterId = requestUserId || null;
     return t;
   });
   console.log(`[music] search "${String(query).slice(0, 60)}" → loadType=${res.loadType} tracks=${tracks.length} isUrl=${isUrl}`);
@@ -231,4 +300,4 @@ function getOrCreatePlayer(interaction, opts = {}) {
   return player;
 }
 
-module.exports = { attachLavalink, initManager, getManager, searchTrack, getOrCreatePlayer, cancelLeave };
+module.exports = { attachLavalink, initManager, getManager, searchTrack, getOrCreatePlayer, cancelLeave, takeOpenPlay };

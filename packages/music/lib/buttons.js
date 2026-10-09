@@ -58,7 +58,11 @@ function buildControlRow(player) {
     new ButtonBuilder().setCustomId('music_seekforward').setEmoji(ICONS.seekforward).setStyle(ButtonStyle.Danger),
   );
 
-  return [row1, row2];
+  const row3 = new ActionRowBuilder().addComponents(
+    new ButtonBuilder().setCustomId('music_suggest').setLabel('💡 Suggestions').setStyle(ButtonStyle.Secondary),
+  );
+
+  return [row1, row2, row3];
 }
 
 async function handleMusicButton(interaction) {
@@ -155,6 +159,15 @@ async function handleMusicButton(interaction) {
       const newPos = Math.min(track.info.duration, Math.max(0, (player.position || 0) + delta));
       await player.seek(newPos);
       return interaction.reply({ content: id === 'music_seekforward' ? '⏩ Skipped forward 10s.' : '⏪ Rewound 10s.', flags: MessageFlags.Ephemeral });
+    }
+
+    if (id === 'music_suggest') {
+      if (!track) return interaction.reply({ content: '🚫 Nothing playing.', flags: MessageFlags.Ephemeral });
+      const { buildSuggestMessage, rememberMenu } = require('./suggestMenu');
+      const built = await buildSuggestMessage(track.info.title, track.info.author || '');
+      const msg = await interaction.reply({ embeds: built.embeds, components: built.components, fetchReply: true }).catch(() => null);
+      if (msg) rememberMenu(msg.id, built.queries);
+      return;
     }
 
     return interaction.reply({ content: '❓ Unknown button.', flags: MessageFlags.Ephemeral });

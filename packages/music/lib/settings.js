@@ -15,6 +15,8 @@ async function initMusicSettings() {
   await pool.query(`ALTER TABLE music_settings ADD COLUMN IF NOT EXISTS leave_timeout_minutes INTEGER DEFAULT 5;`);
   await pool.query(`ALTER TABLE music_settings ADD COLUMN IF NOT EXISTS announce_channel_id TEXT;`);
   await pool.query(`ALTER TABLE music_settings ADD COLUMN IF NOT EXISTS prefix TEXT DEFAULT '!';`);
+  await pool.query(`ALTER TABLE music_settings ADD COLUMN IF NOT EXISTS xp_enabled BOOLEAN DEFAULT true;`);
+  await pool.query(`ALTER TABLE music_settings ADD COLUMN IF NOT EXISTS xp_cooldown_sec INTEGER DEFAULT 300;`);
   await pool.query(`
     CREATE TABLE IF NOT EXISTS user_playlists (
       user_id TEXT PRIMARY KEY,

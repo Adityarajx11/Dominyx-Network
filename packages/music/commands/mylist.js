@@ -33,7 +33,7 @@ module.exports = {
       const query = interaction.options.getString('song');
       let result;
       try {
-        result = await searchTrack(query, interaction.user.tag);
+        result = await searchTrack(query, interaction.user.tag, interaction.user.id);
       } catch (err) {
         return interaction.editReply('🔌 Music server is unreachable — try again in a bit.');
       }
@@ -93,7 +93,7 @@ module.exports = {
       let added = 0;
       for (const song of list.slice(0, Math.max(room, 0))) {
         try {
-          const result = await searchTrack(song.url || song.title, interaction.user.tag);
+          const result = await searchTrack(song.url || song.title, interaction.user.tag, interaction.user.id);
           if (result) {
             player.queue.add(result.track);
             added++;

@@ -49,7 +49,7 @@ module.exports = {
 
     let result;
     try {
-      result = await searchTrack(query, interaction.user.tag);
+      result = await searchTrack(query, interaction.user.tag, interaction.user.id);
     } catch (err) {
       const msg = /No Lavalink node|not initialized/i.test(err.message)
         ? '🔌 Music server is unreachable — try again in a bit. If it persists, the Lavalink host is offline.'

@@ -72,7 +72,7 @@ module.exports = {
         const settings = await getMusicSettings(message.guild.id);
         let result;
         try {
-          result = await searchTrack(query, message.author.tag);
+          result = await searchTrack(query, message.author.tag, message.author.id);
         } catch {
           await message.reply('🔌 Music server is waking up — try again in ~20 seconds.').catch(() => {});
           return;
