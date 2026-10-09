@@ -40,11 +40,12 @@ module.exports = {
 
     if (sub === 'user') {
       const target = interaction.options.getUser('user') || interaction.user;
+      await interaction.deferReply();
       let s;
       try {
         s = await getUserStats(interaction.guild.id, target.id, period);
       } catch {
-        return interaction.reply({ content: '⚠️ Stats unavailable — database is unreachable.', flags: MessageFlags.Ephemeral });
+        return interaction.editReply({ content: '⚠️ Stats unavailable — database is unreachable.' });
       }
       const artists = s.topArtists.map((a, i) => `${i + 1}. **${a.artist}** — ${a.plays} plays`).join('\n') || 'No data yet.';
       const hist = s.history.map((h) => `• **${h.title}** — ${h.artist} (${fmtTime(h.listened_sec)}, ${h.status})`).join('\n').slice(0, 1500) || 'No plays yet.';
@@ -61,14 +62,17 @@ module.exports = {
         )
         .setFooter({ text: 'Dominyx • Stats' })
         .setTimestamp();
-      return interaction.reply({ embeds: [embed] });
+      const sent = await interaction.editReply({ embeds: [embed] });
+      setTimeout(() => interaction.deleteReply().catch(() => {}), 120000);
+      return sent;
     }
 
     let s;
+    await interaction.deferReply();
     try {
       s = await getServerStats(interaction.guild.id, period);
     } catch {
-      return interaction.reply({ content: '⚠️ Stats unavailable — database is unreachable.', flags: MessageFlags.Ephemeral });
+      return interaction.editReply({ content: '⚠️ Stats unavailable — database is unreachable.' });
     }
     const artists = s.topArtists.map((a, i) => `${i + 1}. **${a.artist}** — ${a.plays} plays`).join('\n') || 'No data yet.';
     const songs = s.topSongs.map((t, i) => `${i + 1}. **${t.title}** — ${t.artist} (${t.plays}×)`).join('\n').slice(0, 1000) || 'No data yet.';
@@ -84,6 +88,8 @@ module.exports = {
       )
       .setFooter({ text: 'Dominyx • Stats' })
       .setTimestamp();
-    return interaction.reply({ embeds: [embed] });
+    const sent = await interaction.editReply({ embeds: [embed] });
+    setTimeout(() => interaction.deleteReply().catch(() => {}), 120000);
+    return sent;
   },
 };

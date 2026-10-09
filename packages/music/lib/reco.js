@@ -73,22 +73,19 @@ async function lastfmSimilarArtists(artist, n = 5) {
 async function similarTracks(title, artist, n = 5) {
   const viaApi = await lastfmSimilarTracks(artist, title, n);
   if (viaApi && viaApi.length > 0) return dedupeQueries(viaApi, title).slice(0, n);
-  // Keyless: single-song-shaped queries only — never mixes/playlists.
-  const a = artist || '';
+  // Keyless: artist-popular singles first (these resolve to real hit songs),
+  // vibe queries last. Mixes/playlists are filtered at resolve time anyway.
+  const a = artist && artist !== 'Unknown' ? artist : '';
   const t = title || '';
-  const seeds = [
-    `${t} cover`.trim(),
-    `songs like ${t} ${a}`.trim(),
-    `${a} unplugged`.trim(),
-    `${a} romantic`.trim(),
-    `${a} new song`.trim(),
-  ].filter((s) => s && s.toLowerCase() !== 'cover');
+  const seeds = [];
+  if (a) seeds.push(`${a} top songs`, `best of ${a}`, `${a} hit songs`, `${a} unplugged`, `${a} romantic songs`);
+  if (t) seeds.push(`songs like ${t}`, `${t} cover`, `${t} reprise`, `${t} unplugged`);
   const g = genreOf(artist, title);
   for (const s of CURATED[g]) {
-    if (seeds.length >= n + 2) break;
+    if (seeds.length >= n + 3) break;
     seeds.push(s);
   }
-  return dedupeQueries(seeds, title).slice(0, n + 2);
+  return dedupeQueries(seeds, title).slice(0, n + 3);
 }
 
 async function similarArtists(artist, n = 5) {

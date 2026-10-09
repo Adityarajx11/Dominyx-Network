@@ -32,6 +32,8 @@ module.exports = {
       .setDescription(lines.join('\n').slice(0, 4000))
       .setFooter({ text: `${player.queue.tracks.length} upcoming • Loop: ${String(player.repeatMode ?? 'off')}` });
 
-    return interaction.reply({ embeds: [embed] });
+    const sent = await interaction.reply({ embeds: [embed] });
+    setTimeout(() => interaction.deleteReply().catch(() => {}), 120000);
+    return sent;
   },
 };

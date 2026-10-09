@@ -18,14 +18,16 @@ module.exports = {
       return interaction.reply({ content: '❌ Server-only command.', flags: MessageFlags.Ephemeral });
     }
     const period = interaction.options.getString('period') || 'season';
+    await interaction.deferReply();
+
     let board;
     try {
       board = await getBoard(interaction.guild.id, period, 10);
     } catch {
-      return interaction.reply({ content: '⚠️ Board unavailable — database is unreachable.', flags: MessageFlags.Ephemeral });
+      return interaction.editReply({ content: '⚠️ Board unavailable — database is unreachable.' });
     }
     if (board.length === 0) {
-      return interaction.reply({ content: '📭 No XP yet — request a song to earn (+10, +5 for a new artist).', flags: MessageFlags.Ephemeral });
+      return interaction.editReply({ content: '📭 No XP yet — request a song to earn (+10, +5 for a new artist).' });
     }
     const medals = ['🥇', '🥈', '🥉'];
     const lines = board.map((u, i) => {
@@ -38,6 +40,8 @@ module.exports = {
       .setDescription(lines.join('\n'))
       .setFooter({ text: 'Dominyx • Music XP' })
       .setTimestamp();
-    return interaction.reply({ embeds: [embed] });
+    const sent = await interaction.editReply({ embeds: [embed] });
+    setTimeout(() => interaction.deleteReply().catch(() => {}), 120000);
+    return sent;
   },
 };

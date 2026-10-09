@@ -55,7 +55,9 @@ module.exports = {
         .setColor(0x5865F2)
         .setTitle(`🎶 ${interaction.user.username}'s Playlist`)
         .setDescription(text.slice(0, 4000));
-      return interaction.reply({ embeds: [embed] });
+      const sent = await interaction.reply({ embeds: [embed] });
+      setTimeout(() => interaction.deleteReply().catch(() => {}), 120000);
+      return sent;
     }
 
     if (sub === 'remove') {

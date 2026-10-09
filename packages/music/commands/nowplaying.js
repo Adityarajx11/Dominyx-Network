@@ -26,6 +26,8 @@ module.exports = {
         { name: 'Loop', value: String(player.repeatMode ?? 'off'), inline: true },
         { name: 'Volume', value: `${player.volume ?? 100}%`, inline: true },
       );
-    return interaction.reply({ embeds: [embed] });
+    const sent = await interaction.reply({ embeds: [embed] });
+    setTimeout(() => interaction.deleteReply().catch(() => {}), 120000);
+    return sent;
   },
 };
