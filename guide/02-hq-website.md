@@ -1,7 +1,7 @@
 # 02 — HQ Website
 
 Next.js 14 app in `packages/hq`. Dev: `npm.cmd run dev` → `http://localhost:3000`.
-Live: `https://dominyx-network-hq.vercel.app/` (Vercel, root dir `packages/hq`).
+Live: `https://dominyx.vercel.app/` (Vercel, root dir `packages/hq`).
 
 ## Pages
 - **`/` Home**: hero, 6 bot cards (tagline, features, Add-to-Discord buttons), login/logout.
@@ -21,3 +21,4 @@ Live: `https://dominyx-network-hq.vercel.app/` (Vercel, root dir `packages/hq`).
 - Key files: `lib/discord.js`, `lib/auth.js`, `lib/session.js`, `lib/env.js`, `lib/db.js`,
   `app/api/auth/{login,callback,logout}/route.js`, `app/api/guild/[guildId]/config/route.js`,
   `components/GuildConfig.jsx`, `GuildPicker.jsx`, `ui.jsx`, `SiteNav.jsx`.
+

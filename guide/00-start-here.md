@@ -14,5 +14,6 @@ Start here. One file per topic:
 | `08-session-history.md` | What was done, step by step, first → last |
 
 Quick facts: repo `https://github.com/Adityarajx11/Dominyx-Network.git` (`main`).
-HQ live: `https://dominyx-network-hq.vercel.app/`. Local code: `F:\dominyx-network`.
+HQ live: `https://dominyx.vercel.app/`. Local code: `F:\dominyx-network`.
 Shell rule: PowerShell blocks `npm.ps1` → always use `npm.cmd`.
+
