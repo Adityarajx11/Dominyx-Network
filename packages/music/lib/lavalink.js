@@ -85,6 +85,7 @@ function attachLavalink(client) {
         title: track.info?.title || 'Unknown',
         artist: track.info?.author || 'Unknown',
         trackId: track.info?.identifier || track.info?.uri || null,
+        url: track.info?.uri || null,
         durationSec: Math.round((track.info?.duration || 0) / 1000),
       });
       openPlays.set(player.guildId, id);

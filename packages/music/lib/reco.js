@@ -22,6 +22,57 @@ const ARTIST_GENRE = [
   [/acoustic|unplugged/i, 'acoustic'],
 ];
 
+const INVIDIOUS = [
+  'https://inv.nadeko.net',
+  'https://invidious.nerdvpn.de',
+  'https://iv.duti.dev',
+];
+
+// Result titles that scream compilation/mix, not a song.
+const MIX_TITLE_RE = /\bmix\b|jukebox|compilation|\btop\s?\d+\b|playlist|nonstop|mashup|\b1\s?hour\b|\bbest of\b|collection|hour loop|lofi beats to|radio 📚/i;
+
+function youtubeIdFromUrl(url) {
+  try {
+    const u = new URL(url);
+    if (u.hostname.includes('youtu.be')) return u.pathname.slice(1);
+    return u.searchParams.get('v');
+  } catch {
+    return null;
+  }
+}
+
+// Free, keyless: YouTube's own "related videos" via public Invidious API.
+// Returns [{ title, artist, url, id }] of real single videos.
+async function youtubeRelated(videoId, n = 5) {
+  if (!videoId) return null;
+  for (const base of INVIDIOUS) {
+    try {
+      const res = await fetch(`${base}/api/v1/videos/${videoId}`, { signal: AbortSignal.timeout(8000) });
+      if (!res.ok) continue;
+      const data = await res.json();
+      const recs = Array.isArray(data?.recommendedVideos) ? data.recommendedVideos : [];
+      const out = [];
+      for (const r of recs) {
+        if (out.length >= n) break;
+        const id = r.videoId;
+        const len = Number(r.lengthSeconds || 0);
+        if (!id || (len > 0 && (len < 45 || len > 1200))) continue;
+        if (MIX_TITLE_RE.test(r.title || '')) continue;
+        out.push({
+          id,
+          title: r.title || 'Unknown',
+          artist: r.author || '',
+          url: `https://www.youtube.com/watch?v=${id}`,
+        });
+      }
+      if (out.length > 0) return out;
+    } catch {
+      continue;
+    }
+  }
+  return null;
+}
+
 function genreOf(artist, title) {
   const s = `${artist || ''} ${title || ''}`;
   for (const [re, g] of ARTIST_GENRE) {
@@ -108,4 +159,4 @@ function dedupeQueries(queries, currentTitle) {
   return out;
 }
 
-module.exports = { similarTracks, similarArtists, genreOf, CURATED };
+module.exports = { similarTracks, similarArtists, genreOf, CURATED, youtubeRelated, youtubeIdFromUrl };

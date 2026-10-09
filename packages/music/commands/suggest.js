@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, MessageFlags } = require('discord.js');
-const { buildArtistSuggest, rememberMenu } = require('../lib/suggestMenu');
+const { buildArtistSuggest, buildRelatedSuggest, rememberMenu } = require('../lib/suggestMenu');
 const { getManager } = require('../lib/lavalink');
 const { getLastGuildTrack } = require('../lib/history');
 
@@ -11,26 +11,30 @@ module.exports = {
 
   async execute(interaction) {
     const seedOpt = (interaction.options.getString('artist') || '').trim();
-    let artist = seedOpt;
-    if (!artist) {
+    await interaction.deferReply();
+    let built;
+    if (seedOpt) {
+      built = await buildArtistSuggest(seedOpt, interaction.user.tag);
+    } else {
       let cur;
       try {
         cur = getManager()?.getPlayer(interaction.guild.id)?.queue?.current;
       } catch {
         cur = null;
       }
-      if (cur?.info?.author) {
-        artist = cur.info.author;
+      if (cur?.info?.title) {
+        built = await buildRelatedSuggest(cur, interaction.user.tag);
       } else {
         const last = await getLastGuildTrack(interaction.guild.id).catch(() => null);
         if (!last?.artist) {
           return interaction.reply({ content: '❌ Nothing playing and no history — give me an artist: `/suggest artist:arijit`.', flags: MessageFlags.Ephemeral });
         }
-        artist = last.artist;
+        built = await buildRelatedSuggest(
+          { info: { title: last.title, author: last.artist, uri: last.url } },
+          interaction.user.tag
+        );
       }
     }
-    await interaction.deferReply();
-    const built = await buildArtistSuggest(artist, interaction.user.tag);
     const msg = await interaction.editReply({ embeds: built.embeds, components: built.components });
     rememberMenu(msg.id, built.items);
   },

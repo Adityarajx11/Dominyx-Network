@@ -10,6 +10,7 @@ async function initHistoryTables() {
       title TEXT,
       artist TEXT,
       track_id TEXT,
+      url TEXT,
       started_at TIMESTAMPTZ DEFAULT NOW(),
       duration_sec INTEGER DEFAULT 0,
       listened_sec INTEGER DEFAULT 0,
@@ -17,16 +18,17 @@ async function initHistoryTables() {
     );
   `);
   await pool.query(`CREATE INDEX IF NOT EXISTS idx_history_guild_time ON play_history (guild_id, started_at);`);
+  await pool.query(`ALTER TABLE play_history ADD COLUMN IF NOT EXISTS url TEXT;`);
   await pool.query(`CREATE INDEX IF NOT EXISTS idx_history_guild_user_time ON play_history (guild_id, user_id, started_at);`);
   await pool.query(`CREATE INDEX IF NOT EXISTS idx_history_guild_artist ON play_history (guild_id, artist);`);
   console.log('🎵 Play history table ready.');
 }
 
-async function startPlay({ guildId, userId, userTag, title, artist, trackId, durationSec }) {
+async function startPlay({ guildId, userId, userTag, title, artist, trackId, url, durationSec }) {
   const res = await pool.query(
-    `INSERT INTO play_history (guild_id, user_id, user_tag, title, artist, track_id, duration_sec)
-     VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
-    [guildId, userId, userTag || null, title || 'Unknown', artist || 'Unknown', trackId || null, durationSec || 0]
+    `INSERT INTO play_history (guild_id, user_id, user_tag, title, artist, track_id, url, duration_sec)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`,
+    [guildId, userId, userTag || null, title || 'Unknown', artist || 'Unknown', trackId || null, url || null, durationSec || 0]
   );
   return res.rows[0].id;
 }
@@ -121,7 +123,7 @@ async function getServerStats(guildId, period = 'week') {
 
 async function getLastGuildTrack(guildId) {
   const res = await pool.query(
-    `SELECT title, artist FROM play_history WHERE guild_id = $1 ORDER BY started_at DESC LIMIT 1`,
+    `SELECT title, artist, url FROM play_history WHERE guild_id = $1 ORDER BY started_at DESC LIMIT 1`,
     [guildId]
   );
   return res.rows[0] || null;
