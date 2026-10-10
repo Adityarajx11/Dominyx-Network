@@ -18,7 +18,7 @@ function periodChoices() {
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('stats')
-    .setDescription('Listening stats from actual playback')
+    .setDescription('Your listening stats — songs, time, top artists')
     .addSubcommand(sub =>
       sub.setName('user')
         .setDescription('Stats for you or someone else')

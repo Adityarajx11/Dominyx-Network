@@ -4,7 +4,7 @@ const { getManager } = require('../lib/lavalink');
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('skip')
-    .setDescription('Skip the current song'),
+    .setDescription('Skip to the next song in queue'),
 
   async execute(interaction) {
     const player = getManager().getPlayer(interaction.guild.id);

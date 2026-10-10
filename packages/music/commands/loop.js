@@ -4,7 +4,7 @@ const { getManager } = require('../lib/lavalink');
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('loop')
-    .setDescription('Set loop mode')
+    .setDescription('Loop off, one song, or whole queue')
     .addStringOption(opt =>
       opt.setName('mode')
         .setDescription('off, track, or queue')

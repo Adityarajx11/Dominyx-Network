@@ -4,7 +4,7 @@ const { createCase, logCaseToChannel } = require('../lib/modlog');
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('kick')
-    .setDescription('Kick a member from the server')
+    .setDescription('Kick a member (logged as a case)')
     .setDefaultMemberPermissions(PermissionFlagsBits.KickMembers)
     .addUserOption(opt => opt.setName('user').setDescription('User to kick').setRequired(true))
     .addStringOption(opt => opt.setName('reason').setDescription('Reason for the kick').setRequired(false)),

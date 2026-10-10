@@ -4,7 +4,7 @@ const { createCase, logCaseToChannel } = require('../lib/modlog');
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('ban')
-    .setDescription('Ban a member from the server')
+    .setDescription('Ban a member (logged as a case)')
     .setDefaultMemberPermissions(PermissionFlagsBits.BanMembers)
     .addUserOption(opt => opt.setName('user').setDescription('User to ban').setRequired(true))
     .addStringOption(opt => opt.setName('reason').setDescription('Reason for the ban').setRequired(false)),

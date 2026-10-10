@@ -4,7 +4,7 @@ const { getBoard, currentSeason } = require('../lib/musicXp');
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('music-leaderboard')
-    .setDescription('Top music XP earners')
+    .setDescription('Top music XP fans — season or lifetime')
     .addStringOption(opt =>
       opt.setName('period')
         .setDescription('Season (this month) or lifetime')

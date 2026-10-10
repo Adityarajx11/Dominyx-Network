@@ -5,7 +5,7 @@ const { xpForLevel } = require('../lib/leveling');
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('rank')
-    .setDescription('Check your (or someone else\'s) level and XP')
+    .setDescription('Your level card — XP bar included')
     .addUserOption(opt => opt.setName('user').setDescription('User to check').setRequired(false)),
 
   async execute(interaction) {

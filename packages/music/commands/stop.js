@@ -4,7 +4,7 @@ const { getManager } = require('../lib/lavalink');
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('stop')
-    .setDescription('Stop playback and clear the queue'),
+    .setDescription('Stop everything and clear the queue'),
 
   async execute(interaction) {
     try {

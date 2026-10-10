@@ -4,7 +4,7 @@ const { getGuardSettings, updateGuardSettings } = require('../lib/guardStore');
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('lock')
-    .setDescription('Lock a channel (or the current one) so @everyone cannot send messages')
+    .setDescription('Lock this channel — nobody can talk')
     .setDefaultMemberPermissions(PermissionFlagsBits.ManageChannels)
     .addChannelOption(opt =>
       opt.setName('channel')

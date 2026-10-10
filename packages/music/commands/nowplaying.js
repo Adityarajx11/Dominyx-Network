@@ -4,7 +4,7 @@ const { getManager, requesterMention } = require('../lib/lavalink');
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('nowplaying')
-    .setDescription('Show the currently playing song'),
+    .setDescription('Show the song playing right now'),
 
   async execute(interaction) {
     let player;

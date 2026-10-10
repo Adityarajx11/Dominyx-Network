@@ -7,7 +7,7 @@ const PRESETS = { '10m': 10, '30m': 30, '1h': 60, '2h': 120 };
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('sleep')
-    .setDescription('Sleep timer: stop music later')
+    .setDescription('Sleep timer — stop music later, auto or on schedule')
     .addSubcommand(sub =>
       sub.setName('set')
         .setDescription('Arm the sleep timer')

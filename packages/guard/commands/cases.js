@@ -4,7 +4,7 @@ const { getCases } = require('../lib/modlog');
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('cases')
-    .setDescription('Show moderation case history for a member')
+    .setDescription('Case history for a member — bans, kicks, warns')
     .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers)
     .addUserOption(opt => opt.setName('user').setDescription('User to check').setRequired(true)),
 

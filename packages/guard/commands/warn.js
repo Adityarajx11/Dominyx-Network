@@ -5,7 +5,7 @@ const { getGuardSettings } = require('../lib/guardStore');
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('warn')
-    .setDescription('Warn a member (logged as a case, no punishment applied)')
+    .setDescription('Warn a member — X warns auto-mute/ban')
     .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers)
     .addUserOption(opt => opt.setName('user').setDescription('User to warn').setRequired(true))
     .addStringOption(opt => opt.setName('reason').setDescription('Reason for the warning').setRequired(true)),

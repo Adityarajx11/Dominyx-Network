@@ -6,7 +6,7 @@ const { getLastGuildTrack } = require('../lib/history');
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('suggest')
-    .setDescription('More songs from an artist')
+    .setDescription('More songs from an artist — pick from a menu')
     .addStringOption(opt => opt.setName('artist').setDescription('Artist name (default: current song\u2019s artist)')),
 
   async execute(interaction) {
@@ -23,7 +23,10 @@ module.exports = {
         cur = null;
       }
       if (cur?.info?.title) {
-        built = await buildRelatedSuggest(cur, interaction.user.tag);
+        built = await buildRelatedSuggest(cur, interaction.user.tag, {
+          guildId: interaction.guild.id,
+          userId: interaction.user.id,
+        });
       } else {
         const last = await getLastGuildTrack(interaction.guild.id).catch(() => null);
         if (!last?.artist) {
@@ -31,7 +34,8 @@ module.exports = {
         }
         built = await buildRelatedSuggest(
           { info: { title: last.title, author: last.artist, uri: last.url } },
-          interaction.user.tag
+          interaction.user.tag,
+          { guildId: interaction.guild.id, userId: interaction.user.id }
         );
       }
     }

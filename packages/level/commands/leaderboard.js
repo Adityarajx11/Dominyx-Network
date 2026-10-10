@@ -4,7 +4,7 @@ const { getLeaderboard } = require('../lib/db');
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('leaderboard')
-    .setDescription('Show the top members by level/XP'),
+    .setDescription('Top chatters by level and XP'),
 
   async execute(interaction) {
     const top = await getLeaderboard(interaction.guild.id, 10);

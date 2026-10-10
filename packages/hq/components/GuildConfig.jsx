@@ -129,7 +129,7 @@ export default function GuildConfig({ guildId, guildName = '', botsPresent = {},
                     <div className="tag">{present ? '✓ In server' : '＋ Not added'}</div>
                   </div>
                   <h3>{b.name}</h3>
-                  <p>{b.tagline}</p>
+                  <p>{b.description}</p>
                   <div className="features">
                     {b.features.slice(0, 3).map((f) => (
                       <span key={f} className="pill">{f}</span>

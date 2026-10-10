@@ -134,7 +134,7 @@ async function handleMoodButton(interaction, client) {
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('recommend')
-    .setDescription('Music for a mood')
+    .setDescription('Music for a mood — Chill, Party, Workout and more')
     .addStringOption(opt =>
       opt.setName('mood')
         .setDescription('Pick a vibe')

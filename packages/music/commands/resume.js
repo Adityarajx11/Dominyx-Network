@@ -4,7 +4,7 @@ const { getManager } = require('../lib/lavalink');
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('resume')
-    .setDescription('Resume the paused song'),
+    .setDescription('Resume the paused music'),
 
   async execute(interaction) {
     const player = getManager().getPlayer(interaction.guild.id);

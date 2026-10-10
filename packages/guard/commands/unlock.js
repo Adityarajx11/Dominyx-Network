@@ -4,7 +4,7 @@ const { getGuardSettings, updateGuardSettings } = require('../lib/guardStore');
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('unlock')
-    .setDescription('Unlock a channel locked with /lock')
+    .setDescription('Unlock a locked channel')
     .setDefaultMemberPermissions(PermissionFlagsBits.ManageChannels)
     .addChannelOption(opt =>
       opt.setName('channel')

@@ -4,7 +4,7 @@ const { createCase, logCaseToChannel } = require('../lib/modlog');
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('bulkban')
-    .setDescription('Ban multiple users at once by ID')
+    .setDescription('Ban up to 50 users at once by ID')
     .setDefaultMemberPermissions(PermissionFlagsBits.BanMembers)
     .addStringOption(opt =>
       opt.setName('user_ids')

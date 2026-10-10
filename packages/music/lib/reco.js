@@ -63,6 +63,7 @@ async function youtubeRelated(videoId, n = 5) {
           title: r.title || 'Unknown',
           artist: r.author || '',
           url: `https://www.youtube.com/watch?v=${id}`,
+          lengthSeconds: len,
         });
       }
       if (out.length > 0) return out;

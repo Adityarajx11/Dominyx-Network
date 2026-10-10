@@ -15,10 +15,10 @@ export default function GuildPicker({ guilds, bot = null, botName = null, detect
   const shortName = botName ? botName.replace('Dominyx ', '') : 'this bot';
   const botColor = bot && BOT_MAP[bot] ? BOT_MAP[bot].color : null;
   const inviteUrl = bot ? inviteUrls[bot] : null;
-  // Bot-filtered tabs (?bot=x) render as vertical rows in the bot's color;
-  // the plain Servers tab stays a horizontal card grid. Never the same look.
-  const listClass = bot ? 'server-list' : 'server-grid';
-  const cardClass = (absent) => bot ? `bot-server-row${absent ? ' is-absent' : ''}` : `server-card glass${absent ? ' is-absent' : ''}`;
+  // Both tabs use the same block-card grid; the bot tab tints cards
+  // in the bot color and labels badges per bot.
+  const listClass = 'server-grid';
+  const cardClass = (absent) => `server-card glass${absent ? ' is-absent' : ''}`;
 
   return (
     <div className="wrap">
@@ -48,26 +48,32 @@ export default function GuildPicker({ guilds, bot = null, botName = null, detect
               <div key={g.id} className={cardClass(absent)} onClick={() => openGuild(g.id)} style={botColor ? { ['--card-color']: botColor } : undefined}>
                 {bot ? (
                   <>
-                    <div className="avatar">
-                      {iconUrl(g) ? <img src={iconUrl(g)} alt={g.name} /> : g.name[0]}
+                <div className="server-row">
+                  <div className="avatar">
+                    {iconUrl(g) ? <img src={iconUrl(g)} alt={g.name} /> : g.name[0]}
+                  </div>
+                  <div style={{ minWidth: 0 }}>
+                    <div className="bot-eyebrow">{shortName}</div>
+                    <div className="server-name">{g.name}</div>
+                    <div className="server-sub">
+                      {g.hasBot ? 'Manage config' : (absent ? 'Not in this server — add it' : 'No bot yet')}
                     </div>
-                    <div style={{ minWidth: 0 }}>
-                      <div className="bot-eyebrow">{shortName}</div>
-                      <div className="server-name">{g.name} {g.hasBot ? <span className="status status-ok" style={{ marginLeft: 6 }}>✓</span> : <span className="status status-missing" style={{ marginLeft: 6 }}>＋</span>}</div>
-                      <div className="server-sub">
-                        {g.hasBot ? 'Manage config' : (absent ? 'Not in this server — add it' : 'No bot yet')}
-                      </div>
-                    </div>
-                    {absent ? (
-                      canOfferInvite ? (
-                        <a className="btn btn-sm bot-add-btn" href={inviteUrl} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} style={{ marginLeft: 'auto' }}>
-                          ＋ Add {shortName}
-                        </a>
-                      ) : (
-                        <span className="status status-missing" style={{ marginLeft: 'auto' }}>✗ Add {shortName}</span>
-                      )
-                    ) : null}
-                    <span className="server-go">›</span>
+                  </div>
+                </div>
+                {g.hasBot ? (
+                  <span className="status status-ok">✓ {shortName} ready</span>
+                ) : absent ? (
+                  canOfferInvite ? (
+                    <a className="btn btn-discord btn-sm server-invite" href={inviteUrl} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()}>
+                      ＋ Add {shortName}
+                    </a>
+                  ) : (
+                    <span className="status status-missing">✗ Add {shortName}</span>
+                  )
+                ) : (
+                  <span className="status status-missing">○ Open server</span>
+                )}
+                <span className="server-go">→</span>
                   </>
                 ) : (
                   <>

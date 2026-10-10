@@ -26,38 +26,55 @@ async function buildSuggestMessage(seedTitle, seedArtist, requestTag) {
 
 // Track-first menu: YouTube's own related videos (Dhun/Barbaad-style siblings),
 // falling back to the artist's popular songs when unavailable.
-async function buildRelatedSuggest(track, requestTag) {
+async function buildRelatedSuggest(track, requestTag, ctx) {
   const title = track?.info?.title || 'Unknown';
   const artist = track?.info?.author || '';
   const vid = youtubeIdFromUrl(track?.info?.uri || '');
   if (vid) {
-    const related = await youtubeRelated(vid, 5);
+    const related = await youtubeRelated(vid, 8);
     if (related && related.length > 0) {
-      const embed = new EmbedBuilder()
-        .setColor(0x8B5CF6)
-        .setTitle('💡 You may also like')
-        .setDescription(`Because you played **${title}** — ${artist}`)
-        .setFooter({ text: 'Dominyx • Suggestions' });
-      const menu = new StringSelectMenuBuilder()
-        .setCustomId('suggest_pick')
-        .setPlaceholder('Pick a song to queue…')
-        .addOptions(related.map((item, i) => ({
-          label: `${item.title}`.slice(0, 100),
-          value: String(i),
-          description: `${item.artist}`.slice(0, 100) || 'Add to queue',
-        })));
-      const toggle = new ButtonBuilder()
-        .setCustomId('suggest_mode')
-        .setLabel('Mode: Add to queue')
-        .setStyle(ButtonStyle.Secondary);
-      return {
-        embeds: [embed],
-        components: [
-          new ActionRowBuilder().addComponents(menu),
-          new ActionRowBuilder().addComponents(toggle),
-        ],
-        items: related,
+      const { scoreCandidate, requesterArtists, logSuggestionDebug } = require('./suggestRank');
+      const seed = {
+        title: title,
+        artist: artist,
+        durationMs: track?.info?.duration || 0,
+        uri: track?.info?.uri,
       };
+      const hist = ctx?.guildId && ctx?.userId
+        ? await requesterArtists(ctx.guildId, ctx.userId).catch(() => new Set())
+        : new Set();
+      const ranked = related
+        .map((r) => ({ ...r, score: scoreCandidate(seed, { title: r.title, artist: r.artist, durationMs: (r.lengthSeconds || 0) * 1000 }, hist) }))
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 5);
+      logSuggestionDebug(seed, ranked, null);
+      if (ranked.length > 0) {
+        const embed = new EmbedBuilder()
+          .setColor(0x8B5CF6)
+          .setTitle('💡 You may also like')
+          .setDescription(`Because you played **${title}** — ${artist}`)
+          .setFooter({ text: 'Dominyx • Suggestions' });
+        const menu = new StringSelectMenuBuilder()
+          .setCustomId('suggest_pick')
+          .setPlaceholder('Pick a song to queue…')
+          .addOptions(ranked.map((item, i) => ({
+            label: `${item.title}`.slice(0, 100),
+            value: String(i),
+            description: `${item.artist}`.slice(0, 100) || 'Add to queue',
+          })));
+        const toggle = new ButtonBuilder()
+          .setCustomId('suggest_mode')
+          .setLabel('Mode: Add to queue')
+          .setStyle(ButtonStyle.Secondary);
+        return {
+          embeds: [embed],
+          components: [
+            new ActionRowBuilder().addComponents(menu),
+            new ActionRowBuilder().addComponents(toggle),
+          ],
+          items: ranked,
+        };
+      }
     }
   }
   return buildArtistSuggest(artist || title, requestTag);

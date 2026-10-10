@@ -5,10 +5,10 @@ const { getMusicSettings } = require('../lib/settings');
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('play')
-    .setDescription('Play a song by name or link, or add it to the queue')
+    .setDescription('Play a song — name, link, or full playlist in order')
     .addStringOption(opt =>
       opt.setName('song')
-        .setDescription('Song name or YouTube link')
+        .setDescription('Song, video/playlist link, or artist name')
         .setRequired(true)),
 
   async execute(interaction) {
