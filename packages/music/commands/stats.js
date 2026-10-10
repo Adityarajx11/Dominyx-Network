@@ -47,8 +47,8 @@ module.exports = {
       } catch {
         return interaction.editReply({ content: '⚠️ Stats unavailable — database is unreachable.' });
       }
-      const artists = s.topArtists.map((a, i) => `${i + 1}. **${a.artist}** — ${a.plays} plays`).join('\n') || 'No data yet.';
-      const hist = s.history.map((h) => `• **${h.title}** — ${h.artist} (${fmtTime(h.listened_sec)}, ${h.status})`).join('\n').slice(0, 1500) || 'No plays yet.';
+      const artists = s.topArtists.map((a, i) => `${i + 1}. **${String(a.artist).slice(0, 60)}** — ${a.plays} plays`).join('\n').slice(0, 900) || 'No data yet.';
+      const hist = s.history.slice(0, 6).map((h) => `• **${String(h.title).slice(0, 60)}** — ${String(h.artist).slice(0, 30)} (${fmtTime(h.listened_sec)})`).join('\n').slice(0, 900) || 'No plays yet.';
       const embed = new EmbedBuilder()
         .setColor(0x8B5CF6)
         .setAuthor({ name: target.tag, iconURL: target.displayAvatarURL() })
@@ -74,8 +74,8 @@ module.exports = {
     } catch {
       return interaction.editReply({ content: '⚠️ Stats unavailable — database is unreachable.' });
     }
-    const artists = s.topArtists.map((a, i) => `${i + 1}. **${a.artist}** — ${a.plays} plays`).join('\n') || 'No data yet.';
-    const songs = s.topSongs.map((t, i) => `${i + 1}. **${t.title}** — ${t.artist} (${t.plays}×)`).join('\n').slice(0, 1000) || 'No data yet.';
+    const artists = s.topArtists.map((a, i) => `${i + 1}. **${String(a.artist).slice(0, 60)}** — ${a.plays} plays`).join('\n').slice(0, 900) || 'No data yet.';
+    const songs = s.topSongs.map((t, i) => `${i + 1}. **${String(t.title).slice(0, 60)}** — ${String(t.artist).slice(0, 30)} (${t.plays}×)`).join('\n').slice(0, 900) || 'No data yet.';
     const embed = new EmbedBuilder()
       .setColor(0x8B5CF6)
       .setTitle(`📊 ${interaction.guild.name} — ${period}`)

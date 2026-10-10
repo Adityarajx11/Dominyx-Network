@@ -35,7 +35,7 @@ function attachLavalink(client) {
         // retryAmount: max attempts before giving up
         // retryDelay: initial delay in ms; increases by 250ms per attempt, capped at 30 seconds
         retryAmount: 5,
-        retryDelay: 5000,
+        retryDelay: 20000,
         resuming: {
           enabled: true,
           timeout: 60,

@@ -34,10 +34,11 @@ module.exports = {
       const rank = medals[i] || `${i + 1}.`;
       return `${rank} <@${u.user_id}> — **${u.xp}** XP (${u.songs_requested} songs)`;
     });
+    const linesText = lines.join('\n').slice(0, 3500);
     const embed = new EmbedBuilder()
       .setColor(0xF59E0B)
       .setTitle(`🏆 Music XP — ${period === 'season' ? 'this season' : 'lifetime'}`)
-      .setDescription(lines.join('\n'))
+      .setDescription(linesText)
       .setFooter({ text: 'Dominyx • Music XP' })
       .setTimestamp();
     const sent = await interaction.editReply({ embeds: [embed] });
