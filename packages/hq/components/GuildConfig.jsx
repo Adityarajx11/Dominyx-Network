@@ -371,7 +371,7 @@ function MusicPanel({ cfg, meta, onRefresh, guildId }) {
         {(cfg.xp_board || []).length === 0 && <div className="empty">No XP yet — play something first.</div>}
         {(cfg.xp_board || []).slice(0, 5).map((u, i) => (
           <div key={u.user_id} className="row-item">
-            <div>{['🥇', '🥈', '🥉'][i] || `${i + 1}.`} <strong>{u.xp} XP</strong> <span className="muted">({u.songs} songs)</span></div>
+            <div>{['🥇', '🥈', '🥉'][i] || `${i + 1}.`} <strong>{u.name || `User ${String(u.user_id).slice(-4)}`}</strong> — <strong>{u.xp} XP</strong> <span className="muted">({u.songs} songs)</span></div>
           </div>
         ))}
       </div>

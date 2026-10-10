@@ -150,6 +150,31 @@ async function querySafe(sql, params) {
   }
 }
 
+// Resolve Discord display names for board rows (10-min cache).
+const nameCache = new Map();
+async function withUsernames(rows) {
+  const token = process.env.BOT_TOKEN_MUSIC || process.env.BOT_TOKEN;
+  const out = await Promise.all(rows.map(async (r) => {
+    const hit = nameCache.get(r.user_id);
+    if (hit && Date.now() - hit.at < 10 * 60 * 1000) return { ...r, name: hit.name };
+    let name = null;
+    if (token) {
+      try {
+        const res = await fetch(`https://discord.com/api/v10/users/${r.user_id}`, {
+          headers: { Authorization: `Bot ${token.trim()}` },
+        });
+        if (res.ok) {
+          const u = await res.json();
+          name = u.global_name || u.username || null;
+        }
+      } catch {}
+    }
+    if (name) nameCache.set(r.user_id, { name, at: Date.now() });
+    return { ...r, name };
+  }));
+  return out;
+}
+
 async function readConfigs(guildId) {
   await ensureTablesOnce().catch(() => {});
 
@@ -177,7 +202,7 @@ async function readConfigs(guildId) {
       xp_enabled: music[0]?.xp_enabled ?? true,
       xp_cooldown_sec: music[0]?.xp_cooldown_sec ?? 300,
       xp_tiers: musicTiers.map((t) => ({ threshold: t.threshold, role_id: t.role_id })),
-      xp_board: musicBoard.map((u) => ({ user_id: u.user_id, xp: u.lifetime_xp, songs: u.songs_requested })),
+      xp_board: await withUsernames(musicBoard.map((u) => ({ user_id: u.user_id, xp: u.lifetime_xp, songs: u.songs_requested }))),
     },
     level: {
       channel_id: levelCfg[0]?.channel_id || null,
