@@ -14,6 +14,8 @@ async function initRadioTables() {
       updated_at TIMESTAMPTZ DEFAULT NOW()
     );
   `);
+  await pool.query(`ALTER TABLE radio_sessions ADD COLUMN IF NOT EXISTS radio_channel_id TEXT;`);
+  await pool.query(`ALTER TABLE radio_sessions ADD COLUMN IF NOT EXISTS radio_message_id TEXT;`);
   await pool.query(`
     CREATE TABLE IF NOT EXISTS user_favs (
       user_id TEXT NOT NULL,
@@ -40,6 +42,47 @@ async function startRadio(guildId, seedArtist, mode = 'mix') {
 
 async function stopRadio(guildId) {
   await pool.query('UPDATE radio_sessions SET active = false WHERE guild_id = $1', [guildId]);
+}
+
+async function setRadioMessage(guildId, channelId, messageId) {
+  await pool.query(
+    'UPDATE radio_sessions SET radio_channel_id = $2, radio_message_id = $3 WHERE guild_id = $1',
+    [guildId, channelId || null, messageId || null]
+  ).catch(() => {});
+}
+
+// Refresh the posted radio card: now-playing + up-next. Silent on failure.
+async function updateRadioMessage(client, guildId) {
+  try {
+    const session = await getRadio(guildId).catch(() => null);
+    if (!session?.radio_channel_id || !session?.radio_message_id) return;
+    let player;
+    try {
+      player = getManager()?.getPlayer(guildId);
+    } catch {
+      return;
+    }
+    if (!player) return;
+    const channel = client.channels.cache.get(session.radio_channel_id)
+      ?? await client.channels.fetch(session.radio_channel_id).catch(() => null);
+    if (!channel?.isTextBased?.()) return;
+    const msg = await channel.messages.fetch(session.radio_message_id).catch(() => null);
+    if (!msg || !msg.editable) return;
+    const { EmbedBuilder } = require('discord.js');
+    const cur = player.queue.current;
+    const upNext = player.queue.tracks.slice(0, 3).map((t, i) => `${i + 1}. **${t.info?.title || 'Unknown'}**`).join('\n') || '_Queue empty — refilling…_';
+    const embed = new EmbedBuilder()
+      .setColor(0xEC4899)
+      .setTitle(`📻 Radio: ${session.seed_artist}`)
+      .setDescription(
+        `Mode: **${session.mode === 'only' ? 'Artist Only' : 'Artist Mix'}**\n` +
+        `▶️ Now: **${cur?.info?.title || '—'}**\n\n**Up next:**\n${upNext}`
+      )
+      .setFooter({ text: 'Dominyx • Radio' })
+      .setTimestamp();
+    const { sessionRows } = require('../commands/radio');
+    await msg.edit({ embeds: [embed], components: sessionRows() }).catch(() => {});
+  } catch {}
 }
 
 async function getRadio(guildId) {
@@ -128,4 +171,4 @@ async function favCurrent(userId, guildId) {
   return { title: cur.info?.title || 'Unknown' };
 }
 
-module.exports = { initRadioTables, startRadio, stopRadio, getRadio, refillRadio, favCurrent };
+module.exports = { initRadioTables, startRadio, stopRadio, getRadio, refillRadio, favCurrent, setRadioMessage, updateRadioMessage };

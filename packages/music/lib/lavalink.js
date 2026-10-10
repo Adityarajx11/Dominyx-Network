@@ -173,10 +173,11 @@ function attachLavalink(client) {
       const { onTrackEnd } = require('./sleepTimer');
       await onTrackEnd(client, player.guildId, reason === 'finished' || reason === '');
     } catch {}
-    // Radio: refill when the queue runs low.
+    // Radio: refill when the queue runs low + refresh the radio card.
     try {
-      const { refillRadio } = require('./radio');
+      const { refillRadio, updateRadioMessage } = require('./radio');
       await refillRadio(client, player.guildId);
+      await updateRadioMessage(client, player.guildId);
     } catch {}
   });
 

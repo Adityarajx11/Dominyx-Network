@@ -128,11 +128,15 @@ module.exports = {
     await startRadio(interaction.guild.id, artist, mode);
     const added = await refillRadio(client, interaction.guild.id, interaction.user.tag).catch(() => 0);
     const session = await getRadio(interaction.guild.id);
-    await interaction.editReply({
+    const reply = await interaction.editReply({
       content: added > 0 ? `📻 Radio on — **${added}** track(s) queued.` : '📻 Radio on — filling the queue…',
       embeds: [sessionEmbed(session || { seed_artist: artist, mode })],
       components: sessionRows(),
     });
+    try {
+      const { setRadioMessage } = require('../lib/radio');
+      await setRadioMessage(interaction.guild.id, interaction.channel.id, reply?.id || null);
+    } catch {}
   },
 
   autocompleteArtists,
