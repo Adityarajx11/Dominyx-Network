@@ -53,22 +53,20 @@ export default function GuildPicker({ guilds, bot = null, botName = null, detect
                     </div>
                     <div style={{ minWidth: 0 }}>
                       <div className="bot-eyebrow">{shortName}</div>
-                      <div className="server-name">{g.name}</div>
+                      <div className="server-name">{g.name} {g.hasBot ? <span className="status status-ok" style={{ marginLeft: 6 }}>✓</span> : <span className="status status-missing" style={{ marginLeft: 6 }}>＋</span>}</div>
                       <div className="server-sub">
                         {g.hasBot ? 'Manage config' : (absent ? 'Not in this server — add it' : 'No bot yet')}
                       </div>
                     </div>
                     {absent ? (
                       canOfferInvite ? (
-                        <a className="btn btn-discord btn-sm" href={inviteUrl} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} style={{ marginLeft: 'auto' }}>
+                        <a className="btn btn-sm bot-add-btn" href={inviteUrl} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} style={{ marginLeft: 'auto' }}>
                           ＋ Add {shortName}
                         </a>
                       ) : (
                         <span className="status status-missing" style={{ marginLeft: 'auto' }}>✗ Add {shortName}</span>
                       )
-                    ) : (
-                      <span className="status status-ok" style={{ marginLeft: 'auto' }}>✓</span>
-                    )}
+                    ) : null}
                     <span className="server-go">›</span>
                   </>
                 ) : (
