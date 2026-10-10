@@ -46,36 +46,53 @@ export default function GuildPicker({ guilds, bot = null, botName = null, detect
             const canOfferInvite = absent && inviteUrl;
             return (
               <div key={g.id} className={cardClass(absent)} onClick={() => openGuild(g.id)} style={botColor ? { ['--card-color']: botColor } : undefined}>
+                {bot ? (
+                  <>
+                    <div className="avatar">
+                      {iconUrl(g) ? <img src={iconUrl(g)} alt={g.name} /> : g.name[0]}
+                    </div>
+                    <div style={{ minWidth: 0 }}>
+                      <div className="bot-eyebrow">{shortName}</div>
+                      <div className="server-name">{g.name}</div>
+                      <div className="server-sub">
+                        {g.hasBot ? 'Manage config' : (absent ? 'Not in this server — add it' : 'No bot yet')}
+                      </div>
+                    </div>
+                    {absent ? (
+                      canOfferInvite ? (
+                        <a className="btn btn-discord btn-sm" href={inviteUrl} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} style={{ marginLeft: 'auto' }}>
+                          ＋ Add {shortName}
+                        </a>
+                      ) : (
+                        <span className="status status-missing" style={{ marginLeft: 'auto' }}>✗ Add {shortName}</span>
+                      )
+                    ) : (
+                      <span className="status status-ok" style={{ marginLeft: 'auto' }}>✓</span>
+                    )}
+                    <span className="server-go">›</span>
+                  </>
+                ) : (
+                  <>
                 <div className="server-row">
                   <div className="avatar">
                     {iconUrl(g) ? <img src={iconUrl(g)} alt={g.name} /> : g.name[0]}
                   </div>
                   <div style={{ minWidth: 0 }}>
-                    {bot ? (
-                      <div className="server-sub" style={{ textTransform: 'uppercase', letterSpacing: 1, fontSize: 11 }}>{shortName}</div>
-                    ) : (
-                      <div className="server-sub" style={{ textTransform: 'uppercase', letterSpacing: 1, fontSize: 11 }}>Server</div>
-                    )}
+                    <div className="server-sub" style={{ textTransform: 'uppercase', letterSpacing: 1, fontSize: 11 }}>Server</div>
                     <div className="server-name">{g.name}</div>
                     <div className="server-sub">
-                      {g.hasBot ? 'Manage config' : (absent ? 'Not in this server — add it' : (detectionOn ? 'No Dominyx bot yet' : 'Tap to open'))}
+                      {g.hasBot ? 'Manage config' : (detectionOn ? 'No Dominyx bot yet' : 'Tap to open')}
                     </div>
                   </div>
                 </div>
                 {g.hasBot ? (
-                  <span className="status status-ok">✓ {bot ? `${shortName} ready` : 'Bot ready'}</span>
-                ) : absent ? (
-                  canOfferInvite ? (
-                    <a className="btn btn-discord btn-sm server-invite" href={inviteUrl} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()}>
-                      ＋ Add {shortName}
-                    </a>
-                  ) : (
-                    <span className="status status-missing">✗ Add {shortName} to configure</span>
-                  )
+                  <span className="status status-ok">✓ Bot ready</span>
                 ) : (
                   <span className="status status-missing">{detectionOn ? '✗ Invite a bot to configure' : '○ Open server'}</span>
                 )}
                 <span className="server-go">→</span>
+                  </>
+                )}
               </div>
             );
           })}

@@ -667,9 +667,10 @@ a {
 }
 
 .server-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 780px;
   padding: 24px 0 60px;
 }
 
@@ -686,35 +687,68 @@ a {
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 14px 18px;
-  border-radius: 14px;
-  background: linear-gradient(90deg, color-mix(in srgb, var(--card-color, var(--violet)) 12%, var(--bg-card)), var(--bg-soft));
-  border: 1px solid var(--border);
+  padding: 13px 18px 13px 16px;
+  border-radius: 16px;
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--card-color, var(--violet)) 16%, transparent) 0%, transparent 45%),
+    linear-gradient(160deg, var(--bg-card), var(--bg-soft));
+  border: 1px solid color-mix(in srgb, var(--card-color, var(--violet)) 35%, transparent);
   border-left: 4px solid var(--card-color, var(--violet));
+  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.35), 0 0 16px color-mix(in srgb, var(--card-color, var(--violet)) 12%, transparent);
   cursor: pointer;
   animation: fadeUp 0.5s ease both;
-  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
 .bot-server-row:hover {
   transform: translateX(4px);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45), 0 0 20px color-mix(in srgb, var(--card-color, var(--violet)) 25%, transparent);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 26px color-mix(in srgb, var(--card-color, var(--violet)) 30%, transparent);
 }
 
 .bot-server-row .avatar {
-  width: 48px;
-  height: 48px;
+  width: 46px;
+  height: 46px;
   border-radius: 50%;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--card-color, var(--violet)) 55%, transparent), 0 0 14px color-mix(in srgb, var(--card-color, var(--violet)) 30%, transparent);
 }
 
 .bot-server-row .server-name {
-  font-size: 16px;
+  font-size: 15px;
+}
+
+.bot-server-row .bot-eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  font-size: 10.5px;
+  font-weight: 800;
+  color: var(--card-color, var(--violet));
+  text-shadow: 0 0 12px color-mix(in srgb, var(--card-color, var(--violet)) 50%, transparent);
 }
 
 .bot-server-row .server-go {
   position: static;
   transform: none;
   margin-left: auto;
+  width: auto;
+  height: auto;
+  background: none;
+  border: none;
+  color: var(--card-color, var(--violet));
+  font-size: 20px;
+  border-radius: 0;
+}
+
+.bot-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #5b6472;
+  flex-shrink: 0;
+}
+
+.bot-dot.in {
+  background: var(--card-color, #2ECC71);
+  box-shadow: 0 0 10px var(--card-color, #2ECC71);
 }
 
 .bot-server-row.is-absent {
@@ -723,22 +757,22 @@ a {
 }
 
 .server-card {
-  background: linear-gradient(160deg, var(--bg-card), var(--bg-soft));
+  background: linear-gradient(90deg, var(--bg-card), var(--bg-soft));
   border: 1px solid var(--border);
+  border-left: 3px solid var(--violet);
   border-radius: 15px;
-  padding: 20px;
-  padding-right: 64px;
+  padding: 16px 18px;
   display: flex;
-  flex-direction: column;
-  gap: 12px;
+  flex-direction: row;
+  align-items: center;
+  gap: 16px;
   cursor: pointer;
-  position: relative;
   transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
   animation: fadeUp 0.5s ease both;
 }
 
 .server-card:hover {
-  transform: translateY(-3px);
+  transform: translateX(4px);
   border-color: var(--violet);
   box-shadow: 0 10px 34px rgba(0, 0, 0, 0.45), 0 0 20px rgba(139, 92, 246, 0.2);
 }
@@ -759,11 +793,7 @@ a {
 }
 
 .server-go {
-  position: absolute;
-  right: 16px;
-  top: 50%;
-  transform: translateY(-50%);
-  margin-left: 0;
+  margin-left: auto;
   flex-shrink: 0;
   width: 38px;
   height: 38px;
