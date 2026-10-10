@@ -1,7 +1,6 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { BOT_MAP } from '@/lib/bots';
 
 function iconUrl(guild, size = 128) {
   return guild.icon
@@ -13,11 +12,10 @@ export default function GuildPicker({ guilds, bot = null, botName = null, detect
   const router = useRouter();
   const openGuild = (id) => router.push(bot ? `/dashboard/${id}?bot=${bot}` : `/dashboard/${id}`);
   const shortName = botName ? botName.replace('Dominyx ', '') : 'this bot';
-  const botColor = bot && BOT_MAP[bot] ? BOT_MAP[bot].color : null;
   const inviteUrl = bot ? inviteUrls[bot] : null;
-  // Bot tabs use chunky near-square blocks; plain Servers tab uses rows.
-  const listClass = bot ? 'bot-block-grid' : 'server-grid';
-  const cardClass = (absent) => `server-card glass${absent ? ' is-absent' : ''}`;
+  // One shared card design on both tabs; only the badge text differs per bot.
+  const listClass = 'server-grid';
+  const readyBadge = bot ? `✓ ${shortName} ready` : '✓ Bot ready';
 
   return (
     <div className="wrap">
@@ -44,50 +42,33 @@ export default function GuildPicker({ guilds, bot = null, botName = null, detect
             const absent = bot && detectionOn && !g.hasBot;
             const canOfferInvite = absent && inviteUrl;
             return (
-              <div key={g.id} className="bot-block" onClick={() => openGuild(g.id)} style={botColor ? { ['--card-color']: botColor } : undefined}>
-                {bot ? (
-                  <>
-                    <div className="bot-block-emoji">
-                      {iconUrl(g) ? <img src={iconUrl(g)} alt={g.name} /> : g.name[0]}
-                    </div>
-                    <div className="bot-block-name">{g.name}</div>
-                    <div className={`bot-pick-badge${g.hasBot ? ' in' : ''}`}>
-                      {g.hasBot ? `✓ ${shortName} ready` : '＋ Not here'}
-                    </div>
-                    {absent ? (
-                      canOfferInvite ? (
-                        <a className="btn btn-discord btn-sm" href={inviteUrl} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()}>
-                          ＋ Add {shortName}
-                        </a>
-                      ) : (
-                        <span className="status status-missing">✗ Add {shortName}</span>
-                      )
-                    ) : (
-                      <span className="btn btn-primary btn-sm bot-block-btn">Configure →</span>
-                    )}
-                  </>
-                ) : (
-                  <>
+              <div key={g.id} className={`server-card glass${absent ? ' is-absent' : ''}`} onClick={() => openGuild(g.id)}>
                 <div className="server-row">
                   <div className="avatar">
                     {iconUrl(g) ? <img src={iconUrl(g)} alt={g.name} /> : g.name[0]}
                   </div>
                   <div style={{ minWidth: 0 }}>
-                    <div className="server-sub" style={{ textTransform: 'uppercase', letterSpacing: 1, fontSize: 11 }}>Server</div>
+                    <div className="server-sub" style={{ textTransform: 'uppercase', letterSpacing: 1, fontSize: 11 }}>{bot ? shortName : 'Server'}</div>
                     <div className="server-name">{g.name}</div>
                     <div className="server-sub">
-                      {g.hasBot ? 'Manage config' : (detectionOn ? 'No Dominyx bot yet' : 'Tap to open')}
+                      {g.hasBot ? 'Manage config' : (absent ? 'Not in this server — add it' : (detectionOn ? 'No Dominyx bot yet' : 'Tap to open'))}
                     </div>
                   </div>
                 </div>
                 {g.hasBot ? (
-                  <span className="status status-ok">✓ Bot ready</span>
+                  <span className="status status-ok">{readyBadge}</span>
+                ) : absent ? (
+                  canOfferInvite ? (
+                    <a className="btn btn-discord btn-sm server-invite" href={inviteUrl} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()}>
+                      ＋ Add {shortName}
+                    </a>
+                  ) : (
+                    <span className="status status-missing">✗ Add {shortName}</span>
+                  )
                 ) : (
                   <span className="status status-missing">{detectionOn ? '✗ Invite a bot to configure' : '○ Open server'}</span>
                 )}
                 <span className="server-go">→</span>
-                  </>
-                )}
               </div>
             );
           })}
