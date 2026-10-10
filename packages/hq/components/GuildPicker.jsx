@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { BOT_MAP } from '@/lib/bots';
 
 function iconUrl(guild, size = 128) {
   return guild.icon
@@ -12,7 +13,12 @@ export default function GuildPicker({ guilds, bot = null, botName = null, detect
   const router = useRouter();
   const openGuild = (id) => router.push(bot ? `/dashboard/${id}?bot=${bot}` : `/dashboard/${id}`);
   const shortName = botName ? botName.replace('Dominyx ', '') : 'this bot';
+  const botColor = bot && BOT_MAP[bot] ? BOT_MAP[bot].color : null;
   const inviteUrl = bot ? inviteUrls[bot] : null;
+  // Bot-filtered tabs (?bot=x) render as vertical rows in the bot's color;
+  // the plain Servers tab stays a horizontal card grid. Never the same look.
+  const listClass = bot ? 'server-list' : 'server-grid';
+  const cardClass = (absent) => bot ? `bot-server-row${absent ? ' is-absent' : ''}` : `server-card glass${absent ? ' is-absent' : ''}`;
 
   return (
     <div className="wrap">
@@ -34,18 +40,22 @@ export default function GuildPicker({ guilds, bot = null, botName = null, detect
           We couldn't find any servers you can manage. Make sure you're admin or have Manage Server permission on at least one server, and that a Dominyx bot is in it.
         </div>
       ) : (
-        <div className="server-grid">
+        <div className={listClass}>
           {guilds.map((g) => {
             const absent = bot && detectionOn && !g.hasBot;
             const canOfferInvite = absent && inviteUrl;
             return (
-              <div key={g.id} className={`server-card glass${absent ? ' is-absent' : ''}`} onClick={() => openGuild(g.id)}>
+              <div key={g.id} className={cardClass(absent)} onClick={() => openGuild(g.id)} style={botColor ? { ['--card-color']: botColor } : undefined}>
                 <div className="server-row">
                   <div className="avatar">
                     {iconUrl(g) ? <img src={iconUrl(g)} alt={g.name} /> : g.name[0]}
                   </div>
                   <div style={{ minWidth: 0 }}>
-                    <div className="server-sub" style={{ textTransform: 'uppercase', letterSpacing: 1, fontSize: 11 }}>Server</div>
+                    {bot ? (
+                      <div className="server-sub" style={{ textTransform: 'uppercase', letterSpacing: 1, fontSize: 11 }}>{shortName}</div>
+                    ) : (
+                      <div className="server-sub" style={{ textTransform: 'uppercase', letterSpacing: 1, fontSize: 11 }}>Server</div>
+                    )}
                     <div className="server-name">{g.name}</div>
                     <div className="server-sub">
                       {g.hasBot ? 'Manage config' : (absent ? 'Not in this server — add it' : (detectionOn ? 'No Dominyx bot yet' : 'Tap to open'))}
@@ -53,7 +63,7 @@ export default function GuildPicker({ guilds, bot = null, botName = null, detect
                   </div>
                 </div>
                 {g.hasBot ? (
-                  <span className="status status-ok">✓ Bot ready</span>
+                  <span className="status status-ok">✓ {bot ? `${shortName} ready` : 'Bot ready'}</span>
                 ) : absent ? (
                   canOfferInvite ? (
                     <a className="btn btn-discord btn-sm server-invite" href={inviteUrl} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()}>

@@ -673,6 +673,55 @@ a {
   padding: 24px 0 60px;
 }
 
+/* ---------- bot-tab server list: vertical stacked rows, never grid cards ---------- */
+.server-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 780px;
+  padding: 24px 0 60px;
+}
+
+.bot-server-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  border-radius: 14px;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--card-color, var(--violet)) 12%, var(--bg-card)), var(--bg-soft));
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--card-color, var(--violet));
+  cursor: pointer;
+  animation: fadeUp 0.5s ease both;
+  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.bot-server-row:hover {
+  transform: translateX(4px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45), 0 0 20px color-mix(in srgb, var(--card-color, var(--violet)) 25%, transparent);
+}
+
+.bot-server-row .avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+}
+
+.bot-server-row .server-name {
+  font-size: 16px;
+}
+
+.bot-server-row .server-go {
+  position: static;
+  transform: none;
+  margin-left: auto;
+}
+
+.bot-server-row.is-absent {
+  border-style: dashed;
+  opacity: 0.9;
+}
+
 .server-card {
   background: linear-gradient(160deg, var(--bg-card), var(--bg-soft));
   border: 1px solid var(--border);
