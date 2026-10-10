@@ -117,40 +117,30 @@ export default function GuildConfig({ guildId, guildName = '', botsPresent = {},
         <div className="notice">
           Pick a bot to configure for <strong>{guildName || 'this server'}</strong>. Added bots open their config — missing ones show an add button.
         </div>
-        <div className="grid" style={{ marginTop: 18 }}>
+        <div className="bot-square-grid" style={{ marginTop: 18 }}>
           {BOTS.map((b) => {
             const present = isPresent(b.id);
             const url = inviteUrls[b.id];
             return (
-              <div key={b.id} className="card-halo" style={{ ['--card-color']: b.color }}>
-                <div className="card" style={{ display: 'flex', flexDirection: 'column' }}>
-                  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
-                    <div className="emoji">{b.emoji}</div>
-                    <div className="tag">{present ? '✓ In server' : '＋ Not added'}</div>
-                  </div>
-                  <h3>{b.name}</h3>
-                  <p>{b.description}</p>
-                  <div className="features">
-                    {b.features.slice(0, 3).map((f) => (
-                      <span key={f} className="pill">{f}</span>
-                    ))}
-                  </div>
-                  <div style={{ marginTop: 'auto' }}>
-                    {present ? (
-                      <button className="btn btn-primary btn-sm" onClick={() => selectBot(b.id)} style={{ width: '100%', justifyContent: 'center', marginTop: 16 }}>
-                        Configure →
-                      </button>
-                    ) : url ? (
-                      <a className="btn btn-discord btn-sm" href={url} target="_blank" rel="noreferrer" style={{ width: '100%', justifyContent: 'center', marginTop: 16 }}>
-                        Add to server
-                      </a>
-                    ) : (
-                      <a className="btn btn-primary btn-sm" href="/invite" style={{ width: '100%', justifyContent: 'center', marginTop: 16 }}>
-                        Invite
-                      </a>
-                    )}
-                  </div>
+              <div key={b.id} className="bot-square" style={{ ['--card-color']: b.color }}>
+                <div className="bot-square-emoji">{b.emoji}</div>
+                <div className="bot-square-name">{b.name.replace('Dominyx ', '')}</div>
+                <div className={`bot-pick-badge${present ? ' in' : ''}`}>
+                  {present ? '✓ In server' : '＋ Not added'}
                 </div>
+                {present ? (
+                  <button className="btn btn-primary btn-sm" onClick={() => selectBot(b.id)}>
+                    Configure →
+                  </button>
+                ) : url ? (
+                  <a className="btn btn-discord btn-sm" href={url} target="_blank" rel="noreferrer">
+                    Add to server
+                  </a>
+                ) : (
+                  <a className="btn btn-primary btn-sm" href="/invite">
+                    Invite
+                  </a>
+                )}
               </div>
             );
           })}
