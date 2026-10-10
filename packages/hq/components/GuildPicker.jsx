@@ -63,7 +63,7 @@ export default function GuildPicker({ guilds, bot = null, botName = null, detect
                         <span className="status status-missing">✗ Add {shortName}</span>
                       )
                     ) : (
-                      <span className="server-go">→</span>
+                      <span className="btn btn-primary btn-sm bot-block-btn">Configure →</span>
                     )}
                   </>
                 ) : (
