@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, EmbedBuilder, MessageFlags } = require('discord.js');
-const { getBoard } = require('../lib/musicXp');
+const { getBoard, currentSeason } = require('../lib/musicXp');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -31,15 +31,17 @@ module.exports = {
     }
     const medals = ['🥇', '🥈', '🥉'];
     const lines = board.map((u, i) => {
-      const rank = medals[i] || `${i + 1}.`;
-      return `${rank} <@${u.user_id}> — **${u.xp}** XP (${u.songs_requested} songs)`;
+      const rank = medals[i] || `**${i + 1}.**`;
+      return `${rank} <@${u.user_id}> — **${u.xp} XP** · ${u.songs_requested} songs`;
     });
     const linesText = lines.join('\n').slice(0, 3500);
+    const top = board[0];
     const embed = new EmbedBuilder()
       .setColor(0xF59E0B)
-      .setTitle(`🏆 Music XP — ${period === 'season' ? 'this season' : 'lifetime'}`)
-      .setDescription(linesText)
-      .setFooter({ text: 'Dominyx • Music XP' })
+      .setTitle(`🏆 Music leaderboard — ${period === 'season' ? 'this season' : 'lifetime'}`)
+      .setDescription(`*${interaction.guild.name} · 👑 leader: <@${top.user_id}> with **${top.xp} XP***\n\n${linesText}`)
+      .setThumbnail(interaction.guild.iconURL() ?? undefined)
+      .setFooter({ text: `Dominyx • Music XP • +10/song, +5 new artist • season ${currentSeason()}`, iconURL: interaction.client.user.displayAvatarURL() })
       .setTimestamp();
     const sent = await interaction.editReply({ embeds: [embed] });
     setTimeout(() => interaction.deleteReply().catch(() => {}), 120000);

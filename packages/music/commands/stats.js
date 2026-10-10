@@ -1,7 +1,10 @@
 const { SlashCommandBuilder, EmbedBuilder, MessageFlags } = require('discord.js');
 const { getUserStats, getServerStats, fmtTime } = require('../lib/history');
+const { getSeasonXp, currentSeason } = require('../lib/musicXp');
 
 const PERIODS = ['today', 'week', 'month', 'all'];
+
+const PERIOD_LABEL = { today: 'Today', week: 'This week', month: 'This month', all: 'All time' };
 
 function periodChoices() {
   return [
@@ -47,20 +50,22 @@ module.exports = {
       } catch {
         return interaction.editReply({ content: '⚠️ Stats unavailable — database is unreachable.' });
       }
-      const artists = s.topArtists.map((a, i) => `${i + 1}. **${String(a.artist).slice(0, 60)}** — ${a.plays} plays`).join('\n').slice(0, 900) || 'No data yet.';
-      const hist = s.history.slice(0, 6).map((h) => `• **${String(h.title).slice(0, 60)}** — ${String(h.artist).slice(0, 30)} (${fmtTime(h.listened_sec)})`).join('\n').slice(0, 900) || 'No plays yet.';
+      const artists = s.topArtists.map((a, i) => `${i + 1}. **${String(a.artist).slice(0, 60)}** — ${a.plays} plays`).join('\n').slice(0, 900) || '_No data yet — play something first._';
+      const hist = s.history.slice(0, 6).map((h) => `• **${String(h.title).slice(0, 60)}** — ${String(h.artist).slice(0, 30)} (${fmtTime(h.listened_sec)})`).join('\n').slice(0, 900) || '_No plays yet._';
+      const seasonXp = await getSeasonXp(interaction.guild.id, target.id).catch(() => 0);
       const embed = new EmbedBuilder()
         .setColor(0x8B5CF6)
-        .setAuthor({ name: target.tag, iconURL: target.displayAvatarURL() })
-        .setTitle(`📊 ${period} stats`)
+        .setAuthor({ name: `${target.username} — listening stats`, iconURL: target.displayAvatarURL() })
+        .setTitle(`📊 ${PERIOD_LABEL[period]} · ${interaction.guild.name}`)
+        .setThumbnail(target.displayAvatarURL())
         .addFields(
-          { name: 'Songs requested', value: `**${s.songs}**`, inline: true },
-          { name: 'Listening time', value: `**${fmtTime(s.listened)}**`, inline: true },
-          { name: 'Artists', value: `**${s.artists}**`, inline: true },
-          { name: 'Favourite artists', value: artists },
-          { name: 'Recent history', value: hist },
+          { name: '🎵 Songs requested', value: `**${s.songs}**`, inline: true },
+          { name: '⏱️ Listening time', value: `**${fmtTime(s.listened)}**`, inline: true },
+          { name: '✨ Season XP', value: `**${seasonXp}**`, inline: true },
+          { name: '💿 Favourite artists', value: artists },
+          { name: '🕘 Recent plays', value: hist },
         )
-        .setFooter({ text: 'Dominyx • Stats' })
+        .setFooter({ text: `Dominyx • Stats • ${target.tag}`, iconURL: interaction.client.user.displayAvatarURL() })
         .setTimestamp();
       const sent = await interaction.editReply({ embeds: [embed] });
       setTimeout(() => interaction.deleteReply().catch(() => {}), 120000);
@@ -74,19 +79,21 @@ module.exports = {
     } catch {
       return interaction.editReply({ content: '⚠️ Stats unavailable — database is unreachable.' });
     }
-    const artists = s.topArtists.map((a, i) => `${i + 1}. **${String(a.artist).slice(0, 60)}** — ${a.plays} plays`).join('\n').slice(0, 900) || 'No data yet.';
-    const songs = s.topSongs.map((t, i) => `${i + 1}. **${String(t.title).slice(0, 60)}** — ${String(t.artist).slice(0, 30)} (${t.plays}×)`).join('\n').slice(0, 900) || 'No data yet.';
+    const artists = s.topArtists.map((a, i) => `${i + 1}. **${String(a.artist).slice(0, 60)}** — ${a.plays} plays`).join('\n').slice(0, 900) || '_No data yet — play something first._';
+    const songs = s.topSongs.map((t, i) => `${i + 1}. **${String(t.title).slice(0, 60)}** — ${String(t.artist).slice(0, 30)} (${t.plays}×)`).join('\n').slice(0, 900) || '_No data yet._';
     const embed = new EmbedBuilder()
       .setColor(0x8B5CF6)
-      .setTitle(`📊 ${interaction.guild.name} — ${period}`)
+      .setTitle(`📊 ${interaction.guild.name}`)
+      .setDescription(`*${PERIOD_LABEL[period]} · ${s.tracks} tracks · ${fmtTime(s.listened)} listened*`)
+      .setThumbnail(interaction.guild.iconURL() ?? undefined)
       .addFields(
-        { name: 'Tracks played', value: `**${s.tracks}**`, inline: true },
-        { name: 'Listening time', value: `**${fmtTime(s.listened)}**`, inline: true },
-        { name: 'Unique requesters', value: `**${s.requesters}**`, inline: true },
-        { name: 'Top artists', value: artists },
-        { name: 'Top songs', value: songs },
+        { name: '🎵 Tracks played', value: `**${s.tracks}**`, inline: true },
+        { name: '⏱️ Listening time', value: `**${fmtTime(s.listened)}**`, inline: true },
+        { name: '🙋 Unique requesters', value: `**${s.requesters}**`, inline: true },
+        { name: '💿 Top artists', value: artists },
+        { name: '🔥 Top songs', value: songs },
       )
-      .setFooter({ text: 'Dominyx • Stats' })
+      .setFooter({ text: `Dominyx • Stats • season ${currentSeason()}`, iconURL: interaction.client.user.displayAvatarURL() })
       .setTimestamp();
     const sent = await interaction.editReply({ embeds: [embed] });
     setTimeout(() => interaction.deleteReply().catch(() => {}), 120000);
