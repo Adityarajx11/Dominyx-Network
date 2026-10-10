@@ -667,30 +667,29 @@ a {
 }
 
 .server-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  max-width: 760px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
   padding: 24px 0 60px;
 }
 
 .server-card {
-  background: linear-gradient(90deg, var(--bg-card), var(--bg-soft));
+  background: linear-gradient(160deg, var(--bg-card), var(--bg-soft));
   border: 1px solid var(--border);
-  border-left: 3px solid var(--violet);
   border-radius: 15px;
-  padding: 16px 18px;
+  padding: 20px;
+  padding-right: 64px;
   display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 16px;
+  flex-direction: column;
+  gap: 12px;
   cursor: pointer;
+  position: relative;
   transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
   animation: fadeUp 0.5s ease both;
 }
 
 .server-card:hover {
-  transform: translateX(4px);
+  transform: translateY(-3px);
   border-color: var(--violet);
   box-shadow: 0 10px 34px rgba(0, 0, 0, 0.45), 0 0 20px rgba(139, 92, 246, 0.2);
 }
@@ -711,7 +710,11 @@ a {
 }
 
 .server-go {
-  margin-left: auto;
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  margin-left: 0;
   flex-shrink: 0;
   width: 38px;
   height: 38px;
