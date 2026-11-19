@@ -1,0 +1,21 @@
+documentation:
+  - changed-files:
+      - any-glob-to-any-file:
+          - '**/*.md'
+          - 'guide/**'
+          - 'docs/**'
+
+hq:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'packages/hq/**'
+
+bot:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'packages/{music,level,greet,ticket,ping,guard}/**'
+
+core:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'packages/core/**'

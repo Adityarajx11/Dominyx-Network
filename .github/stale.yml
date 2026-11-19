@@ -1,0 +1,13 @@
+daysUntilStale: 60
+daysUntilClose: 14
+exemptLabels:
+  - pinned
+  - security
+  - in-progress
+staleLabel: stale
+markComment: >-
+  This issue has been inactive for 60 days. It will remain open for another 14 days;
+  please comment if it is still relevant or add the `pinned` label to keep it active.
+closeComment: >-
+  Closing this inactive issue for now. If the problem is still present, please reopen it
+  with current reproduction details.
