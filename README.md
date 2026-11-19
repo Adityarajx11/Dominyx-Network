@@ -1,6 +1,6 @@
 # Dominyx Network
 
-[![CI](https://github.com/Adityarajx11/Dominyx-Network/actions/workflows/ci.yml/badge.svg)](https://github.com/Adityarajx11/Dominyx-Network/actions/workflows/ci.yml) [![License: pending](https://img.shields.io/badge/license-pending-orange.svg)](./SECURITY.md)
+[![CI](https://github.com/Adityarajx11/Dominyx-Network/actions/workflows/ci.yml/badge.svg)](https://github.com/Adityarajx11/Dominyx-Network/actions/workflows/ci.yml) [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](./LICENSE)
 
 ![Dominyx Network demo placeholder](./docs/demo-placeholder.svg)
 
@@ -73,4 +73,8 @@ Please follow [`SECURITY.md`](./SECURITY.md) for private vulnerability reporting
 
 ## License
 
-A project license is not yet selected. Choose a license before the first public release; the recommended default for this repository is MIT.
+This project is licensed under the [MIT License](./LICENSE).
+
+## Launch materials
+
+Draft launch posts and saved issue replies are in [`docs/launch-posts.md`](./docs/launch-posts.md). They are drafts only and should be reviewed before publishing.
