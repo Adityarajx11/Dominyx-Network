@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="600" viewBox="0 0 1200 600" role="img" aria-labelledby="title desc">
+  <title id="title">Dominyx Network demo placeholder</title>
+  <desc id="desc">A terminal-style placeholder explaining that the demo requires local Discord credentials.</desc>
+  <rect width="1200" height="600" rx="24" fill="#0b1020"/>
+  <rect x="0" y="0" width="1200" height="54" rx="24" fill="#171d32"/>
+  <circle cx="32" cy="27" r="8" fill="#fb7185"/><circle cx="58" cy="27" r="8" fill="#fbbf24"/><circle cx="84" cy="27" r="8" fill="#34d399"/>
+  <text x="64" y="180" fill="#67e8f9" font-family="monospace" font-size="30">$ npm test</text>
+  <text x="64" y="238" fill="#cbd5e1" font-family="monospace" font-size="26">Dominyx Network</text>
+  <text x="64" y="300" fill="#a5b4fc" font-family="monospace" font-size="24">Demo recording pending</text>
+  <text x="64" y="350" fill="#94a3b8" font-family="monospace" font-size="20">Run a bot locally with Discord and database credentials,</text>
+  <text x="64" y="386" fill="#94a3b8" font-family="monospace" font-size="20">then replace this placeholder with a &lt;15s recording.</text>
+  <rect x="64" y="446" width="1072" height="3" fill="#334155"/>
+  <text x="64" y="500" fill="#64748b" font-family="monospace" font-size="18">No credentials are stored in this repository.</text>
+</svg>

@@ -1,0 +1,38 @@
+name: Bug report
+description: Report a reproducible problem in a Dominyx bot or the HQ dashboard.
+title: "bug: "
+labels: [bug]
+body:
+  - type: input
+    id: version
+    attributes:
+      label: Version or commit
+      description: Which release, commit, or deployment are you using?
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: Node.js version, OS, bot package, and deployment provider.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior and logs
+      description: Remove tokens, passwords, and other secrets before posting.
+    validations:
+      required: true

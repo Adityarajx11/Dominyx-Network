@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+    branches: [main, launch-readiness]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql://ci:ci@127.0.0.1:5432/dominyx
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm test
+
+  build-hq:
+    name: Build HQ
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/hq
+    env:
+      DATABASE_URL: postgresql://ci:ci@127.0.0.1:5432/dominyx
+      DISCORD_CLIENT_ID: ci-client-id
+      DISCORD_CLIENT_SECRET: ci-client-secret
+      BOT_TOKEN: ci-bot-token
+      PUBLIC_APP_URL: http://localhost:3000
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+        working-directory: .
+      - run: npm run build
